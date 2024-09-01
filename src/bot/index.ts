@@ -1,6 +1,6 @@
 
 import type { BotConfig, StorageAdapter } from 'grammy'
-import { Bot as TelegramBot } from 'grammy'
+import { Bot as TelegramBot, Api } from 'grammy'
 import type { Context, SessionData } from '#root/bot/context.js'
 import { createContextConstructor } from '#root/bot/context.js'
 import type { Logger } from '#root/logger.js'
@@ -67,13 +67,7 @@ export function createBot(token: string, dependencies: Dependencies, options: Op
   // // must be the last handler
   protectedBot.use(unhandledFeature)
 
-  Reflect.set(bot, 'getContext', createContextConstructor({ logger, config }))
-
-  return bot as typeof bot & {
-    getContext: () => Context
-  }
+  return bot
 }
 
-export type Bot = ReturnType<typeof createBot> & {
-  getContext: () => Context
-}
+export type Bot = ReturnType<typeof createBot>

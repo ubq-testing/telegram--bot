@@ -1,6 +1,7 @@
 import { Composer } from 'grammy'
 import type { Context } from '#root/bot/context.js'
 import { PluginContext } from '#root/utils/plugin-context-single.js'
+import { Bot as TelegramBot, RawApi } from 'grammy'
 
 const composer = new Composer<Context>()
 

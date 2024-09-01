@@ -20,13 +20,17 @@ export const env = T.Object({
     BOT_TOKEN: T.String(),
     BOT_MODE: T.String(),
     LOG_LEVEL: T.String(),
-    DEBUG: T.Transform(T.String()).Decode((str) => str === "true").Encode((bool) => bool ? "true" : "false"),
+    DEBUG: T.Transform(T.Union([T.String(), T.Boolean()])).Decode((str) => str === "true" || str === "false" ? str === "true" : str).Encode((bool) => bool.toString()),
     BOT_WEBHOOK: T.String(),
     BOT_WEBHOOK_SECRET: T.String(),
     SERVER_HOST: T.String(),
-    SERVER_PORT: T.Transform(T.String()).Decode((str) => parseInt(str)).Encode((num) => num.toString()),
-    BOT_ADMINS: T.Transform(T.String()).Decode((str) => JSON.parse(str)).Encode((arr) => JSON.stringify(arr)),
-    ALLOWED_UPDATES: T.Optional(T.Array(T.KeyOf(allowedUpdates)))
+    SERVER_PORT: T.Transform(T.Union([T.String(), T.Number()])).Decode((str) => Number(str)).Encode((num) => num.toString()),
+    BOT_ADMINS: T.Transform(T.Union([T.String(), T.Array(T.String())])).Decode((str) => Array.isArray(str) ? str : [str]).Encode((arr) => arr.length === 1 ? arr[0] : arr),
+    ALLOWED_UPDATES: T.Optional(T.Array(T.KeyOf(allowedUpdates))),
+
+    // Taken from a personal telegram account not from the bot auth above
+    TELEGRAM_APP_ID: T.Transform(T.Union([T.String(), T.Number()])).Decode((str) => Number(str)).Encode((num) => num.toString()),
+    TELEGRAM_API_HASH: T.String(),
 });
 
 /**

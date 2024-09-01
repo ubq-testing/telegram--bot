@@ -1,4 +1,4 @@
-import { Env, PluginInputs } from "./types";
+import { Env, envValidator, PluginInputs } from "./types";
 import { isGithubPayload, isTelegramPayload } from "./types/typeguards";
 import { handleGithubWebhook } from "./handlers/github/webhook";
 import { handleTelegramWebhook } from "./handlers/telegram/webhook";
@@ -6,6 +6,7 @@ import manifest from "../manifest.json";
 import { handleUncaughtError } from "./utils/errors";
 import { TelegramBotSingleton } from "./utils/telegram-bot-single";
 import { PluginContext } from "./utils/plugin-context-single";
+import { Value } from "@sinclair/typebox/value";
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -37,6 +38,20 @@ export default {
       payload = await request.clone().json();
     } catch (err) {
       return new Response(JSON.stringify({ error: "Invalid JSON payload" }), {
+        status: 400,
+        headers: { "content-type": "application/json" },
+      });
+    }
+
+    const envSettings = Value.Decode(envValidator.schema, Value.Default(envValidator.schema, env));
+
+    if (!envValidator.test(envSettings)) {
+      const errors: string[] = [];
+      for (const error of envValidator.errors(envSettings)) {
+        console.error(error);
+        errors.push(`${error.path}: ${error.message}`);
+      }
+      return new Response(JSON.stringify({ error: `Error: "Invalid environment provided. ${errors.join("; ")}"` }), {
         status: 400,
         headers: { "content-type": "application/json" },
       });

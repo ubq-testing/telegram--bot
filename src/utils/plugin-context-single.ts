@@ -1,5 +1,6 @@
-import { Context, Env, PluginInputs } from "#root/types";
+import { Context, Env, envValidator, PluginInputs } from "#root/types";
 import { Octokit } from "@octokit/rest";
+import { Value } from "@sinclair/typebox/value";
 import { Logs } from "@ubiquity-dao/ubiquibot-logger";
 
 export class PluginContext {
@@ -7,8 +8,15 @@ export class PluginContext {
 
     private constructor(
         public readonly inputs: PluginInputs,
-        public readonly env: Env,
+        public _env: Env,
     ) { }
+
+    get env() {
+        return Value.Decode(envValidator.schema, Value.Default(envValidator.schema, this._env));
+    }
+    set env(env: Env) {
+        this._env = env;
+    }
 
     static initialize(inputs: PluginInputs, env: Env): Context {
         if (!PluginContext.instance) {
@@ -19,7 +27,7 @@ export class PluginContext {
 
     static getInstance(): PluginContext {
         if (!PluginContext.instance) {
-            throw new Error("PluginContext is not initialized. Call initialize() first.");
+            throw new Error("PluginContext not initialized");
         }
         return PluginContext.instance;
     }
