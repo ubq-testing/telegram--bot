@@ -5,11 +5,10 @@ import { PluginSettings } from "./plugin-inputs";
 import { Logs } from "@ubiquity-dao/ubiquibot-logger";
 
 /**
- * Update `manifest.json` with any events you want to support like so:
- *
- * ubiquity:listeners: ["issue_comment.created", ...]
+ * If we let this run on all events it'll be easier to handle multiple
+ * "plugins" in the future.
  */
-export type SupportedEventsU = "issues.opened"
+export type SupportedEventsU = WebhookEventName
 
 export type SupportedEvents = {
   [K in SupportedEventsU]: K extends WebhookEventName ? WebhookEvent<K> : never;

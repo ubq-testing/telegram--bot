@@ -1,7 +1,7 @@
 import { Composer } from 'grammy'
 import type { Context } from '#root/bot/context.js'
 import { logHandle } from '#root/bot/helpers/logging.js'
-import { STRINGS } from '../strings'
+import { STRINGS } from '../../strings'
 
 const composer = new Composer<Context>()
 

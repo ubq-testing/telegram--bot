@@ -25,12 +25,8 @@ export const env = T.Object({
     BOT_WEBHOOK_SECRET: T.String(),
     SERVER_HOST: T.String(),
     SERVER_PORT: T.Transform(T.Union([T.String(), T.Number()])).Decode((str) => Number(str)).Encode((num) => num.toString()),
-    BOT_ADMINS: T.Transform(T.Union([T.String(), T.Array(T.String())])).Decode((str) => Array.isArray(str) ? str : [str]).Encode((arr) => arr.length === 1 ? arr[0] : arr),
+    BOT_ADMINS: T.Transform(T.Union([T.String(), T.Array(T.String())])).Decode((str) => Array.isArray(str) ? str.map(Number) : [Number(str)]).Encode((arr) => arr.map(String)),
     ALLOWED_UPDATES: T.Optional(T.Array(T.KeyOf(allowedUpdates))),
-
-    // Taken from a personal telegram account not from the bot auth above
-    TELEGRAM_APP_ID: T.Transform(T.Union([T.String(), T.Number()])).Decode((str) => Number(str)).Encode((num) => num.toString()),
-    TELEGRAM_API_HASH: T.String(),
 });
 
 /**
