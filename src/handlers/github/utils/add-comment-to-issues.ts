@@ -1,8 +1,20 @@
 import { Context } from "#root/types/context.js";
+import { getDeepValue } from "#root/utils/get-deep-value.js";
 
-export async function addCommentToIssue(context: Context, msg: string, owner: string, repo: string, issueNumber: number) {
+export async function addCommentToIssue(context: Context, msg: string, owner?: string, repo?: string, issueNumber?: number) {
     const { logger, octokit } = context;
     logger.info(`Adding comment to issue ${issueNumber}`);
+
+
+    if (!owner || !repo || !issueNumber) {
+        owner = getDeepValue(context, "payload.repository.owner.login");
+        repo = getDeepValue(context, "payload.repository.name");
+        issueNumber = getDeepValue(context, "payload.issue.number");
+    }
+
+    if (!owner || !repo || !issueNumber) {
+        throw new Error(logger.error("Missing owner, repo, or issue number", { owner, repo, issueNumber }).logMessage.raw);
+    }
 
     try {
         await octokit.issues.createComment({

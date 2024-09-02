@@ -2,6 +2,8 @@ import { Context, Env, envValidator, PluginInputs } from "#root/types";
 import { Octokit } from "@octokit/rest";
 import { Value } from "@sinclair/typebox/value";
 import { Logs } from "@ubiquity-dao/ubiquibot-logger";
+import { createAdapters } from "../adapters";
+import { createClient } from "@supabase/supabase-js";
 
 export class PluginContext {
     private static instance: PluginContext;
@@ -34,14 +36,18 @@ export class PluginContext {
 
     getContext(): Context {
         const octokit = new Octokit({ auth: this.inputs.authToken });
-
-        return {
+        const ctx: Context = {
             eventName: this.inputs.eventName,
             payload: this.inputs.eventPayload,
             config: this.inputs.settings,
             octokit,
             env: this.env,
             logger: new Logs("info"),
+            adapters: {} as ReturnType<typeof createAdapters>,
         };
+
+        ctx.adapters = createAdapters(createClient(ctx.env.SUPABASE_URL, ctx.env.SUPABASE_KEY), ctx);
+
+        return ctx;
     }
 }
