@@ -1,9 +1,10 @@
 import { Chat } from "#root/adapters/supabase/helpers/chats.js";
 import { TelegramBotSingleton } from "#root/utils/telegram-bot-single.js";
 import { Context, SupportedEvents } from "../../types";
+import { CallbackResult } from "../callbacks-proxy";
 import { addCommentToIssue } from "./utils/add-comment-to-issues";
 
-export async function createChatroom(context: Context<"issues.labeled", SupportedEvents["issues.labeled"]>) {
+export async function createChatroom(context: Context<"issues.labeled", SupportedEvents["issues.labeled"]>): Promise<CallbackResult> {
     const { logger, config, adapters: { supabase: { chats } } } = context;
     const bot = TelegramBotSingleton.getInstance().getBot();
     const title = context.payload.issue.title
@@ -14,7 +15,7 @@ export async function createChatroom(context: Context<"issues.labeled", Supporte
     const chatroom = await chats.getChatByTaskNodeId(issue.node_id);
 
     if (chatroom) {
-        return { status: "skipped", reason: "chatroom_exists" };
+        return { status: 404, reason: "chatroom_already_exists" };
     }
 
     logger.info(`Creating chatroom for issue ${title}`);
@@ -25,15 +26,15 @@ export async function createChatroom(context: Context<"issues.labeled", Supporte
 
         await chats.saveChat(forum?.message_thread_id, title, issue.node_id);
 
-        return { status: "success", content: forum, reason: "chatroom_created" };
+        return { status: 201, reason: "chatroom_created" };
     } catch (er) {
         await addCommentToIssue(context, logger.error(`Failed to create chatroom for issue ${title}`, { er }).logMessage.diff, owner, repo, issue.number);
-        return { status: "failed", reason: "chatroom_creation_failed" };
+        return { status: 500, reason: "chatroom_creation_failed" };
     }
 
 }
 
-export async function closeChatroom(context: Context<"issues.closed", SupportedEvents["issues.closed"]>) {
+export async function closeChatroom(context: Context<"issues.closed", SupportedEvents["issues.closed"]>): Promise<CallbackResult> {
     const { logger, config, adapters: { supabase: { chats } } } = context;
     const bot = TelegramBotSingleton.getInstance().getBot();
     const title = context.payload.issue.title
@@ -46,17 +47,17 @@ export async function closeChatroom(context: Context<"issues.closed", SupportedE
     const chatroom = await chats.getChatByTaskNodeId(issue.node_id) as Chat
 
     if (!chatroom) {
-        return { status: "skipped", reason: "chatroom_not_found" };
+        return { status: 404, reason: "chatroom_not_found" };
     }
 
     try {
         await bot.api?.closeForumTopic(config.supergroupChatId, chatroom.chatId);
         await chats.updateChatStatus("closed", issue.node_id);
         await addCommentToIssue(context, `Workroom closed for issue ${title}`, owner, repo, issue.number);
-        return { status: "success", reason: "chatroom_closed" };
+        return { status: 200, reason: "chatroom_closed" };
     } catch (er) {
         await addCommentToIssue(context, logger.error(`Failed to close chatroom for issue ${title}`, { er }).logMessage.diff, owner, repo, issue.number);
-        return { status: "failed", reason: "chatroom_closing_failed" };
+        return { status: 500, reason: "chatroom_closing_failed" };
     }
 }
 

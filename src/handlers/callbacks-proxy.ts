@@ -1,7 +1,7 @@
 import { Context, SupportedEvents, SupportedEventsU } from "../types";
 import { closeChatroom, createChatroom } from "./github/workrooms";
 
-type Result = { status: "success" } | { status: string; reason: string; content?: string | Record<string, any> };
+export type CallbackResult = { status: 200 | 201 | 204 | 404 | 500, reason: string; content?: string | Record<string, any> };
 
 /**
  * The `Context` type is a generic type defined as `Context<TEvent, TPayload>`,
@@ -22,7 +22,7 @@ type Result = { status: "success" } | { status: string; reason: string; content?
 
 type ProxyCallbacks = Partial<ProxyTypeHelper>;
 type ProxyTypeHelper = {
-    [K in SupportedEventsU]: Array<(context: Context<K, SupportedEvents[K]>) => Promise<Result>>;
+    [K in SupportedEventsU]: Array<(context: Context<K, SupportedEvents[K]>) => Promise<CallbackResult>>;
 };
 
 /**
@@ -77,18 +77,17 @@ export function proxyCallbacks({ logger }: Context) {
         get(target, prop: SupportedEventsU) {
             return async (context: Context) => {
                 if (!target[prop]) {
-                    return { status: "skipped", reason: "unsupported_event" };
+                    logger.info(`No callbacks found for event ${prop}`);
+                    return { status: 204, reason: "skipped" };
                 }
                 try {
                     for (const callback of target[prop]) {
                         await handleCallback(callback, context);
                     }
-
                     // @TODO: better handling for returning the outcome of multiple callbacks
-                    return { status: "success" };
                 } catch (er) {
                     logger.error(`Failed to handle event ${prop}`, { er });
-                    return { status: "failed", reason: "callback_error" };
+                    return { status: 500, reason: "failed" };
                 }
             };
         },
