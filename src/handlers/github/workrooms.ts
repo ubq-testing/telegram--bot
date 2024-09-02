@@ -1,3 +1,4 @@
+import { Chat } from "#root/adapters/supabase/helpers/chats.js";
 import { TelegramBotSingleton } from "#root/utils/telegram-bot-single.js";
 import { Context, SupportedEvents } from "../../types";
 import { addCommentToIssue } from "./utils/add-comment-to-issues";
@@ -42,7 +43,7 @@ export async function closeChatroom(context: Context<"issues.closed", SupportedE
 
     logger.info(`Closing chatroom for issue ${title}`);
 
-    const chatroom = await chats.getChatByTaskNodeId(issue.node_id);
+    const chatroom = await chats.getChatByTaskNodeId(issue.node_id) as Chat
 
     if (!chatroom) {
         return { status: "skipped", reason: "chatroom_not_found" };
@@ -52,10 +53,10 @@ export async function closeChatroom(context: Context<"issues.closed", SupportedE
         await bot.api?.closeForumTopic(config.supergroupChatId, chatroom.chatId);
         await chats.updateChatStatus("closed", issue.node_id);
         await addCommentToIssue(context, `Workroom closed for issue ${title}`, owner, repo, issue.number);
+        return { status: "success", reason: "chatroom_closed" };
     } catch (er) {
         await addCommentToIssue(context, logger.error(`Failed to close chatroom for issue ${title}`, { er }).logMessage.diff, owner, repo, issue.number);
+        return { status: "failed", reason: "chatroom_closing_failed" };
     }
-
-    return { status: "success", reason: "chatroom_closed" };
 }
 
