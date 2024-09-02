@@ -5,18 +5,21 @@ import { CallbackResult } from "../callbacks-proxy";
 import { addCommentToIssue } from "./utils/add-comment-to-issues";
 
 /**
- * V1 specifications for the `createChatroom` feature.
+ * V1 specifications for the `workrooms` feature.
  * 
- * - A "workroom" (chatroom) is created when an issue is labeled.
- * - The chatroom is created in a Telegram supergroup as a forum topic, not a new group.
- * - The chatroom is associated with the issue by storing the issue's node_id.
- * - The chatroom is closed when the issue is closed.
- * - The chatroom is closed by closing the forum topic in the supergroup.
- * - The chatroom status is updated to "closed" in the database.
- * - A comment is added to the issue when the chatroom is created or closed.
+ * - A workroom is created when an issue is labeled.
+ * - The workroom is created in a Telegram supergroup as a forum topic, not a new group.
+ * - The workroom is associated with the issue by storing the issue's node_id.
+ * - The workroom is closed when the issue is closed.
+ * - The workroom status is updated to "closed" in the database.
+ * - A comment is added to the issue when the workroom is created or closed.
+ * 
+ * V2 specifications:
+ * 
+ * - Replace the `Bot` api with the `MTProto` api in order to create new group chats.
  */
 
-export async function createChatroom(context: Context<"issues.labeled", SupportedEvents["issues.labeled"]>): Promise<CallbackResult> {
+export async function createWorkroom(context: Context<"issues.labeled", SupportedEvents["issues.labeled"]>): Promise<CallbackResult> {
     const { logger, config, adapters: { supabase: { chats } } } = context;
     const bot = TelegramBotSingleton.getInstance().getBot();
     const title = context.payload.issue.title
@@ -24,13 +27,13 @@ export async function createChatroom(context: Context<"issues.labeled", Supporte
     const { full_name } = repository;
     const [owner, repo] = full_name.split("/");
 
-    const chatroom = await chats.getChatByTaskNodeId(issue.node_id);
+    const workroom = await chats.getChatByTaskNodeId(issue.node_id);
 
-    if (chatroom) {
-        return { status: 404, reason: "chatroom_already_exists" };
+    if (workroom) {
+        return { status: 404, reason: "workroom_already_exists" };
     }
 
-    logger.info(`Creating chatroom for issue ${title}`);
+    logger.info(`Creating workroom for issue ${title}`);
 
     try {
         const forum = await bot.api?.createForumTopic(config.supergroupChatId, title);
@@ -38,15 +41,15 @@ export async function createChatroom(context: Context<"issues.labeled", Supporte
 
         await chats.saveChat(forum?.message_thread_id, title, issue.node_id);
 
-        return { status: 201, reason: "chatroom_created" };
+        return { status: 201, reason: "workroom_created" };
     } catch (er) {
-        await addCommentToIssue(context, logger.error(`Failed to create chatroom for issue ${title}`, { er }).logMessage.diff, owner, repo, issue.number);
-        return { status: 500, reason: "chatroom_creation_failed" };
+        await addCommentToIssue(context, logger.error(`Failed to create workroom for issue ${title}`, { er }).logMessage.diff, owner, repo, issue.number);
+        return { status: 500, reason: "workroom_creation_failed" };
     }
 
 }
 
-export async function closeChatroom(context: Context<"issues.closed", SupportedEvents["issues.closed"]>): Promise<CallbackResult> {
+export async function closeWorkroom(context: Context<"issues.closed", SupportedEvents["issues.closed"]>): Promise<CallbackResult> {
     const { logger, config, adapters: { supabase: { chats } } } = context;
     const bot = TelegramBotSingleton.getInstance().getBot();
     const title = context.payload.issue.title
@@ -54,26 +57,26 @@ export async function closeChatroom(context: Context<"issues.closed", SupportedE
     const { full_name } = repository;
     const [owner, repo] = full_name.split("/");
 
-    logger.info(`Closing chatroom for issue ${title}`);
+    logger.info(`Closing workroom for issue ${title}`);
 
-    const chatroom = await chats.getChatByTaskNodeId(issue.node_id) as Chat
+    const workroom = await chats.getChatByTaskNodeId(issue.node_id) as Chat
 
-    if (!chatroom) {
-        return { status: 404, reason: "chatroom_not_found" };
+    if (!workroom) {
+        return { status: 404, reason: "workroom_not_found" };
     }
 
     try {
-        await bot.api?.closeForumTopic(config.supergroupChatId, chatroom.chatId);
+        await bot.api?.closeForumTopic(config.supergroupChatId, workroom.chatId);
         await chats.updateChatStatus("closed", issue.node_id);
         await addCommentToIssue(context, `Workroom closed for issue ${title}`, owner, repo, issue.number);
-        return { status: 200, reason: "chatroom_closed" };
+        return { status: 200, reason: "workroom_closed" };
     } catch (er) {
-        await addCommentToIssue(context, logger.error(`Failed to close chatroom for issue ${title}`, { er }).logMessage.diff, owner, repo, issue.number);
-        return { status: 500, reason: "chatroom_closing_failed" };
+        await addCommentToIssue(context, logger.error(`Failed to close workroom for issue ${title}`, { er }).logMessage.diff, owner, repo, issue.number);
+        return { status: 500, reason: "workroom_closing_failed" };
     }
 }
 
-export async function reOpenChatroom(context: Context<"issues.reopened", SupportedEvents["issues.reopened"]>): Promise<CallbackResult> {
+export async function reOpenWorkroom(context: Context<"issues.reopened", SupportedEvents["issues.reopened"]>): Promise<CallbackResult> {
     const { config, logger, adapters: { supabase: { chats } } } = context;
     const bot = TelegramBotSingleton.getInstance().getBot();
     const title = context.payload.issue.title
@@ -81,21 +84,21 @@ export async function reOpenChatroom(context: Context<"issues.reopened", Support
     const { full_name } = repository;
     const [owner, repo] = full_name.split("/");
 
-    logger.info(`Reopening chatroom for issue ${title}`);
+    logger.info(`Reopening workroom for issue ${title}`);
 
-    const chatroom = await chats.getChatByTaskNodeId(issue.node_id) as Chat
+    const workroom = await chats.getChatByTaskNodeId(issue.node_id) as Chat
 
-    if (!chatroom) {
-        return { status: 404, reason: "chatroom_not_found" };
+    if (!workroom) {
+        return { status: 404, reason: "workroom_not_found" };
     }
 
     try {
-        await bot.api?.reopenForumTopic(config.supergroupChatId, chatroom.chatId);
+        await bot.api?.reopenForumTopic(config.supergroupChatId, workroom.chatId);
         await chats.updateChatStatus("open", issue.node_id);
         await addCommentToIssue(context, `Workroom reopened for issue ${title}`, owner, repo, issue.number);
-        return { status: 200, reason: "chatroom_reopened" };
+        return { status: 200, reason: "workroom_reopened" };
     } catch (er) {
-        await addCommentToIssue(context, logger.error(`Failed to reopen chatroom for issue ${title}`, { er }).logMessage.diff, owner, repo, issue.number);
-        return { status: 500, reason: "chatroom_reopening_failed" };
+        await addCommentToIssue(context, logger.error(`Failed to reopen workroom for issue ${title}`, { er }).logMessage.diff, owner, repo, issue.number);
+        return { status: 500, reason: "workroom_reopening_failed" };
     }
 }

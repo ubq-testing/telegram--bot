@@ -1,10 +1,13 @@
 import { Context } from "#root/types/context.js";
 import { getDeepValue } from "#root/utils/get-deep-value.js";
 
+/**
+ * Ideally pass in owner, repo, and issueNumber, but if not provided,
+ * attempt to get them from the context.
+ */
 export async function addCommentToIssue(context: Context, msg: string, owner?: string, repo?: string, issueNumber?: number) {
     const { logger, octokit } = context;
     logger.info(`Adding comment to issue ${issueNumber}`);
-
 
     if (!owner || !repo || !issueNumber) {
         owner = getDeepValue(context, "payload.repository.owner.login");
