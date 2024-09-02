@@ -10,30 +10,37 @@ export class Chats extends Super {
         super(supabase, context);
     }
 
-    async getChatById(chatId: number) {
-        const { data, error } = (await this.supabase.from("chats").select("*").eq("id", chatId).single()) as { data: unknown; error: unknown };
-        if (error || !data) {
-            this.context.logger.error("No chat found", { chatId });
-        } else {
-            this.context.logger.info("Successfully fetched chat", { chatId });
+    async updateChatStatus(status: string, taskNodeId?: string, chatId?: number) {
+        if (!taskNodeId && !chatId) {
+            this.context.logger.error("No taskNodeId or chatId provided to update chat status");
+            return;
         }
 
-        return data;
-    }
+        let chat;
 
-    async getChatByName(chatName: string) {
-        const { data, error } = (await this.supabase.from("chats").select("*").eq("name", chatName).single()) as { data: unknown; error: unknown };
-        if (error || !data) {
-            this.context.logger.error("No chat found", { chatName });
-        } else {
-            this.context.logger.info("Successfully fetched chat", { chatName });
+        if (taskNodeId) {
+            chat = await this.getChatByTaskNodeId(taskNodeId);
+        } else if (chatId) {
+            chat = await this.getChatByChatId(chatId);
         }
 
-        return data;
+        if (!chat) {
+            this.context.logger.error("No chat found to update chat status");
+            return;
+        }
+
+        const { data, error } = (await this.supabase.from("chats").upsert({ ...chat, status })) as { data: unknown; error: unknown };
+
+        if (error || !data) {
+            this.context.logger.error("Failed to update chat status", { chatId, taskNodeId });
+        } else {
+            this.context.logger.info("Successfully updated chat status", { chatId, taskNodeId });
+        }
     }
 
-    async saveChat(chatId: number, chatName: string) {
-        const { data, error } = (await this.supabase.from("chats").upsert({ id: chatId, name: chatName })) as { data: unknown; error: unknown };
+
+    async saveChat(chatId: number, chatName: string, taskNodeId: string) {
+        const { data, error } = (await this.supabase.from("chats").upsert({ chatId, chatName, taskNodeId })) as { data: unknown; error: unknown };
         if (error || !data) {
             this.context.logger.error("Failed to save chat", { chatId, chatName });
         } else {
@@ -43,12 +50,34 @@ export class Chats extends Super {
         return data;
     }
 
-    async updateChat(chatId: number, chatName: string) {
-        const { data, error } = (await this.supabase.from("chats").update({ name: chatName }).eq("id", chatId)) as { data: unknown; error: unknown };
+    async getChatByChatId(chatId: number) {
+        const { data, error } = (await this.supabase.from("chats").select("*").eq("chatId", chatId).single()) as { data: unknown; error: unknown };
         if (error || !data) {
-            this.context.logger.error("Failed to update chat", { chatId, chatName });
+            this.context.logger.error("No chat found", { chatId });
         } else {
-            this.context.logger.info("Successfully updated chat", { chatId, chatName });
+            this.context.logger.info("Successfully fetched chat", { chatId });
+        }
+
+        return data;
+    }
+
+    async getChatByChatName(chatName: string) {
+        const { data, error } = (await this.supabase.from("chats").select("*").eq("chatName", chatName).single()) as { data: unknown; error: unknown };
+        if (error || !data) {
+            this.context.logger.error("No chat found", { chatName });
+        } else {
+            this.context.logger.info("Successfully fetched chat", { chatName });
+        }
+
+        return data;
+    }
+
+    async getChatByTaskNodeId(taskNodeId: string) {
+        const { data, error } = (await this.supabase.from("chats").select("*").eq("taskNodeId", taskNodeId).single()) as { data: unknown; error: unknown };
+        if (error || !data) {
+            this.context.logger.error("No chat found", { taskNodeId });
+        } else {
+            this.context.logger.info("Successfully fetched chat", { taskNodeId });
         }
 
         return data;
