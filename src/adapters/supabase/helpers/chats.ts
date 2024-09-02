@@ -47,9 +47,9 @@ export class Chats extends Super {
 
 
     async saveChat(chatId: number, chatName: string, taskNodeId: string) {
-        const { data, error } = (await this.supabase.from("chats").upsert({ chatId, chatName, taskNodeId })) as { data: unknown; error: unknown };
-        if (error || !data) {
-            this.context.logger.error("Failed to save chat", { chatId, chatName });
+        const { data, error } = (await this.supabase.from("chats").insert([{ chatId, chatName, taskNodeId, status: "open" }]) as { data: unknown; error: unknown });
+        if (error) {
+            this.context.logger.error("Failed to save chat", { chatId, chatName, taskNodeId, er: error });
         } else {
             this.context.logger.info("Successfully saved chat", { chatId, chatName });
         }
@@ -80,13 +80,19 @@ export class Chats extends Super {
     }
 
     async getChatByTaskNodeId(taskNodeId: string) {
-        const { data, error } = (await this.supabase.from("chats").select("*").eq("taskNodeId", taskNodeId).single()) as { data: unknown; error: unknown };
-        if (error || !data) {
-            this.context.logger.error("No chat found", { taskNodeId });
-        } else {
-            this.context.logger.info("Successfully fetched chat", { taskNodeId });
+        try {
+            const { data, error } = await this.supabase.from("chats").select("*").eq("taskNodeId", taskNodeId).single()
+            if (error || !data) {
+                this.context.logger.error("No chat found", { taskNodeId });
+            } else {
+                this.context.logger.info("Successfully fetched chat", { taskNodeId });
+            }
+
+            return data;
+        } catch (e) {
+            console.error(e)
+            throw new Error("Failed to fetch chat by task node id")
         }
 
-        return data;
     }
 }

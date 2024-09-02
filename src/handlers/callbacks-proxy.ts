@@ -20,7 +20,7 @@ export type CallbackResult = { status: 200 | 201 | 204 | 404 | 500, reason: stri
  * ```
  */
 
-type ProxyCallbacks = Partial<ProxyTypeHelper>;
+type ProxyCallbacks = ProxyTypeHelper;
 type ProxyTypeHelper = {
     [K in SupportedEventsU]: Array<(context: Context<K, SupportedEvents[K]>) => Promise<CallbackResult>>;
 };
@@ -47,7 +47,7 @@ function handleCallback(callback: Function, context: Context) {
  * callback in an array. This design allows for extensibility and flexibility, enabling 
  * us to add more callbacks for a particular event without modifying the core logic.
  */
-const callbacks: ProxyCallbacks = {
+const callbacks = {
     "issues.labeled": [
         createWorkroom,
     ],
@@ -57,7 +57,7 @@ const callbacks: ProxyCallbacks = {
     "issues.reopened": [
         reOpenWorkroom
     ]
-};
+} as ProxyCallbacks;
 
 /**
  * The `proxyCallbacks` function returns a Proxy object that intercepts access to the 
@@ -75,24 +75,21 @@ const callbacks: ProxyCallbacks = {
  * callbacks based on the event type, ensuring that the correct context is passed to 
  * each callback.
  */
-export function proxyCallbacks({ logger }: Context) {
+export function proxyCallbacks(context: Context): ProxyCallbacks {
     return new Proxy(callbacks, {
         get(target, prop: SupportedEventsU) {
-            return async (context: Context) => {
-                if (!target[prop]) {
-                    logger.info(`No callbacks found for event ${prop}`);
-                    return { status: 204, reason: "skipped" };
-                }
+            if (!target[prop]) {
+                context.logger.info(`No callbacks found for event ${prop}`);
+                return { status: 204, reason: "skipped" };
+            }
+            return (async () => {
                 try {
-                    for (const callback of target[prop]) {
-                        await handleCallback(callback, context);
-                    }
-                    // @TODO: better handling for returning the outcome of multiple callbacks
+                    return await Promise.all(target[prop].map((callback) => handleCallback(callback, context)));
                 } catch (er) {
-                    logger.error(`Failed to handle event ${prop}`, { er });
+                    context.logger.error(`Failed to handle event ${prop}`, { er });
                     return { status: 500, reason: "failed" };
                 }
-            };
+            })();
         },
     });
 }

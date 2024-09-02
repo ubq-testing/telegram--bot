@@ -1,13 +1,10 @@
-import { Env, PluginInputs, SupportedEvents, SupportedEventsU } from "./types";
+import { Env, PluginInputs } from "./types";
 import { Context } from "./types";
 import { PluginContext } from "./utils/plugin-context-single";
 import { proxyCallbacks } from "./handlers/callbacks-proxy";
 import { LogReturn } from "@ubiquity-dao/ubiquibot-logger";
 import { addCommentToIssue } from "./handlers/github/utils/add-comment-to-issues";
 
-/**
- * The main plugin function. Split for easier testing.
- */
 export async function runPlugin(context: Context) {
   const { logger, eventName } = context;
 
@@ -39,5 +36,6 @@ function sanitizeMetadata(obj: LogReturn["metadata"]): string {
 export async function plugin(inputs: PluginInputs, env: Env) {
   PluginContext.initialize(inputs, env)
   const context = PluginContext.getInstance().getContext()
-  return runPlugin(context);
+  const res = await runPlugin(context);
+  return res;
 }

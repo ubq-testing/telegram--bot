@@ -72,7 +72,10 @@ export default {
         });
       }
 
-      return new Response("OK", { status: 200, headers: { "content-type": "application/json" } });
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
     } catch (err) {
       return handleUncaughtError(err);
     }

@@ -2,6 +2,9 @@
   "name": "ts-template",
   "description": "ts-template for Ubiquibot plugins.",
   "ubiquity:listeners": [
-    "issues.opened"
+    "issues.opened",
+    "issues.labeled",
+    "issues.closed",
+    "issues.reopened"
   ]
 }

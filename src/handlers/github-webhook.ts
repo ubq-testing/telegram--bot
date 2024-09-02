@@ -21,7 +21,10 @@ export async function handleGithubWebhook(request: Request, env: Env): Promise<R
 
         webhookPayload.settings = settings;
         await plugin(webhookPayload, env);
-        return new Response(JSON.stringify("OK"), { status: 200, headers: { "content-type": "application/json" } });
+        return new Response(JSON.stringify({ success: true }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+        });
     } catch (error) {
         console.log("Error in handleGithubWebhook", error);
         throw new Error("Error in handleGithubWebhook");

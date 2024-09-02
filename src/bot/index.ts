@@ -47,7 +47,7 @@ export function createBot(token: string, dependencies: Dependencies, options: Op
   })
   const protectedBot = bot.errorBoundary(errorHandler)
 
-  // // Middlewares
+  // // createForumsFeature
   bot.api.config.use(parseMode('HTML'))
 
   protectedBot.use(autoChatAction(bot.api))
@@ -60,7 +60,7 @@ export function createBot(token: string, dependencies: Dependencies, options: Op
   protectedBot.use(adminFeature)
   protectedBot.use(userIdFeature)
   protectedBot.use(chatIdFeature)
-  protectedBot.use(createForumsFeature)
+  // protectedBot.use(createForumsFeature)
   // if (isMultipleLocales)
   // protectedBot.use(languageFeature)
 

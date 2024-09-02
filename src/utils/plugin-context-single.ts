@@ -42,7 +42,7 @@ export class PluginContext {
             config: this.inputs.settings,
             octokit,
             env: this.env,
-            logger: new Logs("info"),
+            logger: new Logs("verbose"),
             adapters: {} as ReturnType<typeof createAdapters>,
         };
 

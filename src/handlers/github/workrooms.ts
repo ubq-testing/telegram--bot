@@ -30,6 +30,7 @@ export async function createWorkroom(context: Context<"issues.labeled", Supporte
     const workroom = await chats.getChatByTaskNodeId(issue.node_id);
 
     if (workroom) {
+        logger.debug("Workroom already exists for issue", { title });
         return { status: 404, reason: "workroom_already_exists" };
     }
 
@@ -38,9 +39,7 @@ export async function createWorkroom(context: Context<"issues.labeled", Supporte
     try {
         const forum = await bot.api?.createForumTopic(config.supergroupChatId, title);
         await addCommentToIssue(context, `Workroom created: https://t.me/${config.supergroupChatName}/${forum?.message_thread_id}`, owner, repo, issue.number);
-
         await chats.saveChat(forum?.message_thread_id, title, issue.node_id);
-
         return { status: 201, reason: "workroom_created" };
     } catch (er) {
         await addCommentToIssue(context, logger.error(`Failed to create workroom for issue ${title}`, { er }).logMessage.diff, owner, repo, issue.number);
@@ -94,7 +93,7 @@ export async function reOpenWorkroom(context: Context<"issues.reopened", Support
 
     try {
         await bot.api?.reopenForumTopic(config.supergroupChatId, workroom.chatId);
-        await chats.updateChatStatus("open", issue.node_id);
+        await chats.updateChatStatus("reopened", issue.node_id);
         await addCommentToIssue(context, `Workroom reopened for issue ${title}`, owner, repo, issue.number);
         return { status: 200, reason: "workroom_reopened" };
     } catch (er) {
