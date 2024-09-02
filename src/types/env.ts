@@ -27,6 +27,9 @@ export const env = T.Object({
     SERVER_PORT: T.Transform(T.Union([T.String(), T.Number()])).Decode((str) => Number(str)).Encode((num) => num.toString()),
     BOT_ADMINS: T.Transform(T.Union([T.String(), T.Array(T.String())])).Decode((str) => Array.isArray(str) ? str.map(Number) : [Number(str)]).Encode((arr) => arr.map(String)),
     ALLOWED_UPDATES: T.Optional(T.Array(T.KeyOf(allowedUpdates))),
+
+    SUPABASE_URL: T.String(),
+    SUPABASE_KEY: T.String(),
 });
 
 /**

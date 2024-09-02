@@ -3,6 +3,7 @@ import { EmitterWebhookEvent as WebhookEvent, EmitterWebhookEventName as Webhook
 import { Env } from "./env";
 import { PluginSettings } from "./plugin-inputs";
 import { Logs } from "@ubiquity-dao/ubiquibot-logger";
+import { createAdapters } from "../adapters";
 
 /**
  * If we let this run on all events it'll be easier to handle multiple
@@ -21,4 +22,5 @@ export interface Context<T extends SupportedEventsU = SupportedEventsU, TU exten
   config: PluginSettings;
   env: Env;
   logger: Logs;
+  adapters: ReturnType<typeof createAdapters>;
 }

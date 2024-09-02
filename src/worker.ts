@@ -1,7 +1,7 @@
 import { Env, envValidator, PluginInputs } from "./types";
 import { isGithubPayload, isTelegramPayload } from "./types/typeguards";
-import { handleGithubWebhook } from "./handlers/github/webhook";
-import { handleTelegramWebhook } from "./handlers/telegram/webhook";
+import { handleGithubWebhook } from "./handlers/github-webhook";
+import { handleTelegramWebhook } from "./handlers/telegram-webhook";
 import manifest from "../manifest.json";
 import { handleUncaughtError } from "./utils/errors";
 import { TelegramBotSingleton } from "./utils/telegram-bot-single";

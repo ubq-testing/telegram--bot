@@ -1,5 +1,5 @@
 import { Value } from "@sinclair/typebox/value";
-import { envValidator, Env } from "../../types";
+import { envValidator, Env } from "../types";
 import { TelegramBotSingleton } from "#root/utils/telegram-bot-single.js";
 
 export async function handleTelegramWebhook(request: Request, env: Env): Promise<Response> {

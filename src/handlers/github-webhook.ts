@@ -1,6 +1,6 @@
 import { Value } from "@sinclair/typebox/value";
-import { plugin } from "../../plugin";
-import { pluginSettingsSchema, pluginSettingsValidator, PluginInputs, Env } from "../../types";
+import { plugin } from "../plugin";
+import { pluginSettingsSchema, pluginSettingsValidator, PluginInputs, Env } from "../types";
 
 export async function handleGithubWebhook(request: Request, env: Env): Promise<Response> {
     try {
