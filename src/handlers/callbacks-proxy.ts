@@ -1,5 +1,5 @@
 import { Context, SupportedEvents, SupportedEventsU } from "../types";
-import { closeChatroom, createChatroom } from "./github/workrooms";
+import { closeChatroom, createChatroom, reOpenChatroom } from "./github/workrooms";
 
 export type CallbackResult = { status: 200 | 201 | 204 | 404 | 500, reason: string; content?: string | Record<string, any> };
 
@@ -54,6 +54,9 @@ const callbacks: ProxyCallbacks = {
     "issues.closed": [
         closeChatroom
     ],
+    "issues.reopened": [
+        reOpenChatroom
+    ]
 };
 
 /**
