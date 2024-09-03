@@ -4,6 +4,11 @@ import { Api } from 'telegram/tl';
 import { MemorySession } from 'telegram/sessions';
 import { TelegramClientParams } from 'telegram/client/telegramBaseClient';
 
+/**
+ * This is a different client from the worker instance. This requires a Node
+ * environment to run and is used to interact with the Telegram API as
+ * opposed to just the Bot API that the worker instance uses.
+ */
 export class MtProtoSingleton {
     private static instance: MtProtoSingleton;
     private static client: TelegramClient;
