@@ -1,9 +1,10 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
-import { Octokit } from "@octokit/rest";
 import { Value } from "@sinclair/typebox/value";
-import { envSchema, pluginSettingsSchema, PluginInputs, pluginSettingsValidator } from "./types";
-import { plugin } from "./plugin";
+import { envValidator, pluginSettingsSchema, PluginInputs, pluginSettingsValidator } from "./types";
+import { PluginContext } from "./utils/plugin-context-single";
+import { proxyWorkflowCallbacks } from "./handlers/callbacks-proxy";
+import { bubbleUpErrorComment, sanitizeMetadata } from "./utils/errors";
 
 /**
  * How a GitHub action executes the plugin.
@@ -11,7 +12,7 @@ import { plugin } from "./plugin";
 export async function run() {
   const payload = github.context.payload.inputs;
 
-  const env = Value.Decode(envSchema, payload.env);
+  const env = Value.Decode(envValidator.schema, payload.env);
   const settings = Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, JSON.parse(payload.settings)));
 
   if (!pluginSettingsValidator.test(settings)) {
@@ -27,23 +28,30 @@ export async function run() {
     ref: payload.ref,
   };
 
-  await plugin(inputs, env);
+  PluginContext.initialize(inputs, env);
 
-  return returnDataToKernel(inputs.authToken, inputs.stateId, {});
+  const context = PluginContext.getInstance().getContext();
+
+  try {
+    return proxyWorkflowCallbacks(context)[inputs.eventName];
+  } catch (err) {
+    return bubbleUpErrorComment(context, err)
+  }
 }
 
-async function returnDataToKernel(repoToken: string, stateId: string, output: object) {
-  const octokit = new Octokit({ auth: repoToken });
-  await octokit.repos.createDispatchEvent({
-    owner: github.context.repo.owner,
-    repo: github.context.repo.repo,
-    event_type: "return_data_to_ubiquibot_kernel",
-    client_payload: {
-      state_id: stateId,
-      output: JSON.stringify(output),
-    },
-  });
-}
+// Might use this later to receive data back from it's own workflows
+// async function returnDataToKernel(repoToken: string, stateId: string, output: object) {
+//   const octokit = new Octokit({ auth: repoToken });
+//   await octokit.repos.createDispatchEvent({
+//     owner: github.context.repo.owner,
+//     repo: github.context.repo.repo,
+//     event_type: "return_data_to_ubiquibot_kernel",
+//     client_payload: {
+//       state_id: stateId,
+//       output: JSON.stringify(output),
+//     },
+//   });
+// }
 
 run()
   .then((result) => {

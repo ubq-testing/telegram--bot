@@ -34,6 +34,10 @@ export class PluginContext {
         return PluginContext.instance;
     }
 
+    getInputs(): PluginInputs {
+        return this.inputs;
+    }
+
     getContext(): Context {
         const octokit = new Octokit({ auth: this.inputs.authToken });
         const ctx: Context = {
