@@ -1,8 +1,7 @@
-import { ProxyCallbacks, WorkflowCallbacks } from "#root/types/proxy.js";
+import { ProxyCallbacks } from "#root/types/proxy.js";
 import { Context, SupportedEventsU } from "../types";
 import { createChat } from "../workflow-functions/create-chat";
 import { closeWorkroom, createWorkroom, reOpenWorkroom } from "./github/workrooms";
-import { WorkflowFunction } from "../workflow-functions";
 
 /**
  * Why do we need this wrapper function?
@@ -85,30 +84,24 @@ export function proxyCallbacks(context: Context): ProxyCallbacks {
  * 
  * I.e we're essentially running the first dual action/worker plugin which is
  * ideal for telegram-bot as it's a bot that needs to be able to be super flexible.
- * 
- * TODO: Might not need to do specify the workflow function and instead just pass the payload?
  */
 const workflowCallbacks = {
-    "issues.labeled": {
-        "create-telegram-chat": [
-            createChat
-        ]
-    }
-} as WorkflowCallbacks;
+    "issues.labeled": [
+        createChat
+    ]
+} as ProxyCallbacks;
 
-export function proxyWorkflowCallbacks(context: Context): WorkflowCallbacks {
+
+export function proxyWorkflowCallbacks(context: Context): ProxyCallbacks {
     return new Proxy(workflowCallbacks, {
-        get(target, prop: WorkflowFunction) {
+        get(target, prop: SupportedEventsU) {
+            if (!target[prop]) {
+                context.logger.info(`No callbacks found for event ${prop}`);
+                return { status: 204, reason: "skipped" };
+            }
             return (async () => {
                 try {
-                    return await Promise.all(Object.keys(target).map((event) => {
-                        const eventCallbacks = target[event as SupportedEventsU][prop];
-                        if (!eventCallbacks) {
-                            context.logger.info(`No callbacks found for event ${event}`);
-                            return { status: 204, reason: "skipped" };
-                        }
-                        return Promise.all(eventCallbacks.map((callback) => handleCallback(callback, context)));
-                    }));
+                    return await Promise.all(target[prop].map((callback) => handleCallback(callback, context)));
                 } catch (er) {
                     context.logger.error(`Failed to handle event ${prop}`, { er });
                     return { status: 500, reason: "failed" };

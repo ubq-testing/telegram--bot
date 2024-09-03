@@ -21,7 +21,7 @@ import { addCommentToIssue } from "./utils/add-comment-to-issues";
  */
 
 export async function createWorkroom(context: Context<"issues.labeled", SupportedEvents["issues.labeled"]>): Promise<CallbackResult> {
-    repositoryDispatch(context, "create-telegram-chat").catch(console.error);
+    await repositoryDispatch(context, "create-telegram-chat").catch(console.error);
     return { status: 200, reason: "workflow_dispatched" };
 }
 

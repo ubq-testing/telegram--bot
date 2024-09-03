@@ -3,6 +3,7 @@ import { CallbackResult } from "#root/types/proxy.js";
 import { MtProtoSingleton } from "./bot";
 
 export async function createChat(context: Context<"issues.labeled", SupportedEvents["issues.labeled"]>): Promise<CallbackResult> {
+    console.log("Creating chat");
     try {
         const { payload, env } = context;
         const chatName = payload.issue.title;

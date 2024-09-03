@@ -15,7 +15,6 @@ import { WorkflowFunction } from "../workflow-functions";
  * 
  */
 
-
 export async function repositoryDispatch(context: Context, workflow: WorkflowFunction) {
     const inputs = PluginContext.getInstance().getInputs();
     const { logger } = context;
@@ -37,7 +36,7 @@ export async function repositoryDispatch(context: Context, workflow: WorkflowFun
         ref: branch,
         inputs: {
             ...inputs,
-            workflowFunction: workflow
+            workflowFunction: workflow // here for the workflow logs, not used in the workflow
         }
     });
 }

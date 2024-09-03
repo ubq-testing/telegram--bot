@@ -36,11 +36,6 @@ export type ProxyCallbacks = ProxyTypeHelper;
  * 
  * Would be handy as we could avoid having to use typeguards in the workflow functions.
  */
-type WorkflowTypeHelper = {
-    [K in SupportedEventsU]: {
-        [P in WorkflowFunction]: Array<(context: Context<K, SupportedEvents[K]>) => Promise<CallbackResult>>;
-    }
-};
 
 /**
  * * The expected function signature for callbacks looks like this:
@@ -49,4 +44,3 @@ type WorkflowTypeHelper = {
  * fn(context: Context): Promise<Result>
  * ```
  */
-export type WorkflowCallbacks = WorkflowTypeHelper;
