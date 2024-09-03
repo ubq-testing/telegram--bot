@@ -23,8 +23,6 @@ export const env = T.Object({
     DEBUG: T.Transform(T.Union([T.String(), T.Boolean()])).Decode((str) => str === "true" || str === "false" ? str === "true" : str).Encode((bool) => bool.toString()),
     BOT_WEBHOOK: T.String(),
     BOT_WEBHOOK_SECRET: T.String(),
-    SERVER_HOST: T.String(),
-    SERVER_PORT: T.Transform(T.Unknown()).Decode((str) => Number(str)).Encode((num) => num.toString()),
     BOT_ADMINS: T.Transform(T.Unknown()).Decode((str) => Array.isArray(str) ? str.map(Number) : [Number(str)]).Encode((arr) => arr.toString()),
     ALLOWED_UPDATES: T.Optional(T.Array(T.KeyOf(allowedUpdates))),
     SUPABASE_URL: T.String(),
