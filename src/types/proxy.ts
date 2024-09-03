@@ -1,4 +1,3 @@
-import { WorkflowFunction } from "../workflow-functions";
 import { Context, SupportedEvents, SupportedEventsU } from "./context";
 
 export type CallbackResult = { status: 200 | 201 | 204 | 404 | 500, reason: string; content?: string | Record<string, any> };
@@ -24,23 +23,3 @@ type ProxyTypeHelper = {
     [K in SupportedEventsU]: Array<(context: Context<K, SupportedEvents[K]>) => Promise<CallbackResult>>;
 };
 export type ProxyCallbacks = ProxyTypeHelper;
-
-/**
- * Was unable to figure a way to make this work elegantly to avoid having to use
- * typeguards in the workflow functions like we have in `ProxyCallbacks`.
- * 
- * Something in the lines of:
- * Each callback would define a generic type `T` that would be just that event type as to
- * restrict inference in Context to only that webhook although it infers all payloads in
- * all of my attempts. 
- * 
- * Would be handy as we could avoid having to use typeguards in the workflow functions.
- */
-
-/**
- * * The expected function signature for callbacks looks like this:
- * 
- * ```typescript
- * fn(context: Context): Promise<Result>
- * ```
- */
