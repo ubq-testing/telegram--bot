@@ -31,6 +31,8 @@ export const env = T.Object({
     SUPABASE_KEY: T.String(),
     TELEGRAM_APP_ID: T.Transform(T.Unknown()).Decode((str) => Number(str)).Encode((num) => num.toString()),
     TELEGRAM_API_HASH: T.String(),
+    APP_ID: T.Transform(T.Unknown()).Decode((str) => Number(str)).Encode((num) => num.toString()),
+    APP_PRIVATE_KEY: T.String(),
 });
 
 /**
