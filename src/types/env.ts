@@ -29,6 +29,8 @@ export const env = T.Object({
     ALLOWED_UPDATES: T.Optional(T.Array(T.KeyOf(allowedUpdates))),
     SUPABASE_URL: T.String(),
     SUPABASE_KEY: T.String(),
+    TELEGRAM_APP_ID: T.Transform(T.Unknown()).Decode((str) => Number(str)).Encode((num) => num.toString()),
+    TELEGRAM_API_HASH: T.String(),
 });
 
 /**

@@ -24,9 +24,7 @@
     "worker": "wrangler dev --env dev --port 3000",
     "dev": "tsc-watch --onSuccess \"tsx ./src/main.ts\"",
     "start": "tsx ./src/main.ts",
-    "deploy": "wrangler deploy --minify src/main.ts",
-    "build": "npx tsx build/esbuild-build.ts",
-    "serve": "npx tsx build/esbuild-server.ts"
+    "deploy": "wrangler deploy --minify src/main.ts"
   },
   "keywords": [
     "typescript",
