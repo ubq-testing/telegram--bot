@@ -21,6 +21,7 @@ export class MtProtoSingleton {
             MtProtoSingleton.instance = new MtProtoSingleton();
             MtProtoSingleton.api = Api;
             MtProtoSingleton.client = await mtProtoInit(env, MtProtoSingleton.api);
+            await MtProtoSingleton.client.connect();
         }
         return MtProtoSingleton.instance;
     }
