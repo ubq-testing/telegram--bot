@@ -1,29 +1,7 @@
-import { Context, SupportedEvents, SupportedEventsU } from "../types";
+import { ProxyCallbacks } from "#root/types/proxy.js";
+import { Context, SupportedEventsU } from "../types";
+import { createChat } from "../workflow-functions/create-chat";
 import { closeWorkroom, createWorkroom, reOpenWorkroom } from "./github/workrooms";
-
-export type CallbackResult = { status: 200 | 201 | 204 | 404 | 500, reason: string; content?: string | Record<string, any> };
-
-/**
- * The `Context` type is a generic type defined as `Context<TEvent, TPayload>`,
- * where `TEvent` is a string representing the event name (e.g., "issues.labeled")
- * and `TPayload` is the webhook payload type for that event, derived from
- * the `SupportedEvents` type map.
- * 
- * The `ProxyCallbacks` type is defined using `Partial<ProxyTypeHelper>` to allow
- * optional callbacks for each event type. This is useful because not all events
- * may have associated callbacks.
- * 
- * The expected function signature for callbacks looks like this:
- * 
- * ```typescript
- * fn(context: Context<"issues.labeled", SupportedEvents["issues.labeled"]>): Promise<Result>
- * ```
- */
-
-type ProxyCallbacks = ProxyTypeHelper;
-type ProxyTypeHelper = {
-    [K in SupportedEventsU]: Array<(context: Context<K, SupportedEvents[K]>) => Promise<CallbackResult>>;
-};
 
 /**
  * Why do we need this wrapper function?
@@ -39,7 +17,6 @@ type ProxyTypeHelper = {
 function handleCallback(callback: Function, context: Context) {
     return callback(context);
 }
-
 /**
  * The `callbacks` object defines an array of callback functions for each supported event type.
  * 
@@ -77,6 +54,46 @@ const callbacks = {
  */
 export function proxyCallbacks(context: Context): ProxyCallbacks {
     return new Proxy(callbacks, {
+        get(target, prop: SupportedEventsU) {
+            if (!target[prop]) {
+                context.logger.info(`No callbacks found for event ${prop}`);
+                return { status: 204, reason: "skipped" };
+            }
+            return (async () => {
+                try {
+                    return await Promise.all(target[prop].map((callback) => handleCallback(callback, context)));
+                } catch (er) {
+                    context.logger.error(`Failed to handle event ${prop}`, { er });
+                    return { status: 500, reason: "failed" };
+                }
+            })();
+        },
+    });
+}
+
+/**
+ * These are function which get dispatched by this worker to fire off workflows
+ * in the repository. We enter through the main `compute.yml` just like a typical
+ * action plugin would, we forward the same payload that the worker received to
+ * the workflow the same way that the kernel does. 
+ * 
+ * - First event fires, `issues.labeled` and the worker catches it.
+ * - The worker then dispatches a workflow to `compute.yml` with the event name as the input.
+ * - The workflow receives a `issues.labeled` payload but eventName is now WorkflowFunction (`create-telegram-chat`).
+ * - The workflow then runs the `createChat` function which needs a node env to run.
+ * 
+ * I.e we're essentially running the first dual action/worker plugin which is
+ * ideal for telegram-bot as it's a bot that needs to be able to be super flexible.
+ */
+const workflowCallbacks = {
+    "issues.labeled": [
+        createChat
+    ]
+} as ProxyCallbacks;
+
+
+export function proxyWorkflowCallbacks(context: Context): ProxyCallbacks {
+    return new Proxy(workflowCallbacks, {
         get(target, prop: SupportedEventsU) {
             if (!target[prop]) {
                 context.logger.info(`No callbacks found for event ${prop}`);

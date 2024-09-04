@@ -1,4 +1,4 @@
-name: "the name of the plugin"
+name: "Workflow Functions"
 
 on:
   workflow_dispatch:
@@ -18,12 +18,24 @@ on:
 
 jobs:
   compute:
-    name: "plugin name"
+    name: "Telegram-Bot"
     runs-on: ubuntu-latest
     permissions: write-all
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      
+      BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+      BOT_MODE: ${{ secrets.BOT_MODE }}
+      BOT_ADMINS: ${{ secrets.BOT_ADMINS }}
+      BOT_WEBHOOK: ${{ secrets.BOT_WEBHOOK }}
+      BOT_WEBHOOK_SECRET: ${{ secrets.BOT_WEBHOOK_SECRET }}
+
+      TELEGRAM_APP_ID: ${{ secrets.TELEGRAM_APP_ID }}
+      TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+
+      LOG_LEVEL: ${{ secrets.LOG_LEVEL }}
+      DEBUG: ${{ secrets.DEBUG }}
 
     steps:
       - uses: actions/checkout@v4
@@ -37,8 +49,20 @@ jobs:
         run: yarn
 
       - name: execute directive
-        run: npx tsx ./src/main.ts
-        id: plugin-name
+        run: npx tsx ./src/workflow-entry.ts
+        id: telegram-bot
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          BOT_MODE: ${{ secrets.BOT_MODE }}
+          BOT_ADMINS: ${{ secrets.BOT_ADMINS }}
+          BOT_WEBHOOK: ${{ secrets.BOT_WEBHOOK }}
+          BOT_WEBHOOK_SECRET: ${{ secrets.BOT_WEBHOOK_SECRET }}
+
+          TELEGRAM_APP_ID: ${{ secrets.TELEGRAM_APP_ID }}
+          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
+
+          LOG_LEVEL: ${{ secrets.LOG_LEVEL }}
+          DEBUG: ${{ secrets.DEBUG }}

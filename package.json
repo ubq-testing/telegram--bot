@@ -24,9 +24,7 @@
     "worker": "wrangler dev --env dev --port 3000",
     "dev": "tsc-watch --onSuccess \"tsx ./src/main.ts\"",
     "start": "tsx ./src/main.ts",
-    "deploy": "wrangler deploy --minify src/main.ts",
-    "build": "npx tsx build/esbuild-build.ts",
-    "serve": "npx tsx build/esbuild-server.ts"
+    "deploy": "wrangler deploy --minify src/main.ts"
   },
   "keywords": [
     "typescript",
@@ -55,6 +53,7 @@
     "grammy-guard": "0.5.0",
     "hono": "^4.5.9",
     "iso-639-1": "3.1.2",
+    "octokit": "^4.0.2",
     "pino": "9.3.2",
     "pino-pretty": "11.2.2",
     "telegram": "^2.24.11",

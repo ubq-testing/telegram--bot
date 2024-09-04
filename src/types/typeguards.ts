@@ -21,3 +21,8 @@ export function isGithubPayload(inputs: any): inputs is PluginInputs {
     return false;
   }
 }
+
+
+export function isIssueLabeledEvent(context: Context): context is Context<"issues.labeled"> {
+  return context.eventName === "issues.labeled";
+}

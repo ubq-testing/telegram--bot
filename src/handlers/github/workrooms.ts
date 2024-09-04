@@ -1,7 +1,8 @@
 import { Chat } from "#root/adapters/supabase/helpers/chats.js";
+import { CallbackResult } from "#root/types/proxy.js";
 import { TelegramBotSingleton } from "#root/utils/telegram-bot-single.js";
 import { Context, SupportedEvents } from "../../types";
-import { CallbackResult } from "../callbacks-proxy";
+import { repositoryDispatch } from "../repository-dispatch";
 import { addCommentToIssue } from "./utils/add-comment-to-issues";
 
 /**
@@ -20,32 +21,8 @@ import { addCommentToIssue } from "./utils/add-comment-to-issues";
  */
 
 export async function createWorkroom(context: Context<"issues.labeled", SupportedEvents["issues.labeled"]>): Promise<CallbackResult> {
-    const { logger, config, adapters: { supabase: { chats } } } = context;
-    const bot = TelegramBotSingleton.getInstance().getBot();
-    const title = context.payload.issue.title
-    const { issue, repository } = context.payload;
-    const { full_name } = repository;
-    const [owner, repo] = full_name.split("/");
-
-    const workroom = await chats.getChatByTaskNodeId(issue.node_id);
-
-    if (workroom) {
-        logger.debug("Workroom already exists for issue", { title });
-        return { status: 404, reason: "workroom_already_exists" };
-    }
-
-    logger.info(`Creating workroom for issue ${title}`);
-
-    try {
-        const forum = await bot.api?.createForumTopic(config.supergroupChatId, title);
-        await addCommentToIssue(context, `Workroom created: https://t.me/${config.supergroupChatName}/${forum?.message_thread_id}`, owner, repo, issue.number);
-        await chats.saveChat(forum?.message_thread_id, title, issue.node_id);
-        return { status: 201, reason: "workroom_created" };
-    } catch (er) {
-        await addCommentToIssue(context, logger.error(`Failed to create workroom for issue ${title}`, { er }).logMessage.diff, owner, repo, issue.number);
-        return { status: 500, reason: "workroom_creation_failed" };
-    }
-
+    await repositoryDispatch(context, "create-telegram-chat").catch(console.error);
+    return { status: 200, reason: "workflow_dispatched" };
 }
 
 export async function closeWorkroom(context: Context<"issues.closed", SupportedEvents["issues.closed"]>): Promise<CallbackResult> {
