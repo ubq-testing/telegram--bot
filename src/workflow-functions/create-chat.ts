@@ -10,6 +10,7 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
 
         const mtProto = await MtProtoSingleton.getInstance(env);
         const client = mtProto.getClient();
+        await client.connect();
         const api = mtProto.getApi();
         console.log("Creating chat with name: ", chatName);
         const chat = await client.invoke(
