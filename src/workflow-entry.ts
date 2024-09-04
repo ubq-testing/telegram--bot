@@ -13,7 +13,7 @@ export async function run() {
   const payload = github.context.payload.inputs;
   let env, settings;
   try {
-    env = Value.Decode(envValidator.schema, payload.env);
+    env = Value.Decode(envValidator.schema, process.env);
   } catch (err) {
     console.log("Error decoding env: ", err);
   }
