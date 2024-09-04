@@ -11,9 +11,22 @@ import { bubbleUpErrorComment, sanitizeMetadata } from "./utils/errors";
  */
 export async function run() {
   const payload = github.context.payload.inputs;
+  let env, settings;
+  try {
+    env = Value.Decode(envValidator.schema, payload.env);
+  } catch (err) {
+    console.log("Error decoding env: ", err);
+  }
 
-  const env = Value.Decode(envValidator.schema, payload.env);
-  const settings = Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, JSON.parse(payload.settings)));
+  try {
+    settings = Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, JSON.parse(payload.settings)));
+  } catch (err) {
+    console.log("Error decoding settings: ", err);
+  }
+
+  if (!(settings && env)) {
+    throw new Error("Invalid settings or env provided");
+  }
 
   if (!pluginSettingsValidator.test(settings)) {
     throw new Error("Invalid settings provided");
