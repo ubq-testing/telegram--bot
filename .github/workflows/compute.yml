@@ -49,7 +49,7 @@ jobs:
         run: yarn
 
       - name: execute directive
-        run: npx tsx ./src/main.ts
+        run: npx tsx ./src/workflow-entry.ts
         id: plugin-name
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}

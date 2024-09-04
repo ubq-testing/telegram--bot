@@ -20,14 +20,23 @@ export async function repositoryDispatch(context: Context, workflow: string) {
     const repository = "telegram--bot";
     const owner = "ubq-testing";
     const branch = "workflows";
-    const octokit = await getAppOctokit(context);
+    const app = await getAppOctokit(context);
+    const installation = await app.octokit.rest.apps.getRepoInstallation({ owner, repo: repository });
+
+    // Set the installation id for the octokit instance
+
+    const octokit = await app.getInstallationOctokit(installation.data.id);
 
     logger.info(`Dispatching workflow function: ${workflow}`);
+
 
     /**
      * We'll hit the main workflow entry and pass in the same inputs so
      * that it essentially runs on the same context as the worker.
      */
+
+    Reflect.deleteProperty(inputs, "signature");
+
     return await octokit.rest.actions.createWorkflowDispatch({
         owner,
         repo: repository,
@@ -35,7 +44,8 @@ export async function repositoryDispatch(context: Context, workflow: string) {
         ref: branch,
         inputs: {
             ...inputs,
-            workflowFunction: workflow // here for the workflow logs, not used in the workflow
+            eventPayload: JSON.stringify(context.payload),
+            settings: JSON.stringify(context.config),
         }
     });
 }
