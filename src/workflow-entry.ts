@@ -5,6 +5,9 @@ import { envValidator, pluginSettingsSchema, PluginInputs, pluginSettingsValidat
 import { PluginContext } from "./utils/plugin-context-single";
 import { proxyWorkflowCallbacks } from "./handlers/callbacks-proxy";
 import { bubbleUpErrorComment, sanitizeMetadata } from "./utils/errors";
+import dotenv from "dotenv";
+dotenv.config();
+
 
 /**
  * How a GitHub action executes the plugin.
