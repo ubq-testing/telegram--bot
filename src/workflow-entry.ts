@@ -6,6 +6,7 @@ import { PluginContext } from "./utils/plugin-context-single";
 import { proxyWorkflowCallbacks } from "./handlers/callbacks-proxy";
 import { bubbleUpErrorComment, sanitizeMetadata } from "./utils/errors";
 import dotenv from "dotenv";
+import { LOG_LEVEL } from "@ubiquity-dao/ubiquibot-logger";
 dotenv.config();
 
 
@@ -14,9 +15,27 @@ dotenv.config();
  */
 export async function run() {
   const payload = github.context.payload.inputs;
+
   let env, settings;
+
+  const payloadEnv = {
+    BOT_TOKEN: process.env.BOT_TOKEN,
+    BOT_MODE: process.env.BOT_MODE,
+    LOG_LEVEL: process.env.LOG_LEVEL,
+    DEBUG: process.env.DEBUG,
+    BOT_WEBHOOK: process.env.BOT_WEBHOOK,
+    BOT_WEBHOOK_SECRET: process.env.BOT_WEBHOOK_SECRET,
+    BOT_ADMINS: process.env.BOT_ADMINS,
+    TELEGRAM_APP_ID: process.env.TELEGRAM_APP_ID,
+    TELEGRAM_API_HASH: process.env.TELEGRAM_API_HASH,
+    SUPABASE_URL: process.env.SUPABASE_URL,
+    SUPABASE_KEY: process.env.SUPABASE_KEY,
+    APP_PRIVATE_KEY: process.env.APP_PRIVATE_KEY,
+    APP_ID: process.env.APP_ID,
+  }
+
   try {
-    env = Value.Decode(envValidator.schema, process.env);
+    env = Value.Decode(envValidator.schema, payloadEnv);
   } catch (err) {
     console.log("Error decoding env: ", err);
   }
