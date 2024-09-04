@@ -1,7 +1,6 @@
 import { getAppOctokit } from "#root/helpers/authenticated-octokit.js";
 import { PluginContext } from "#root/utils/plugin-context-single.js";
 import { Context } from "../types";
-import { WorkflowFunction } from "../workflow-functions";
 
 /**
  * Used by the worker instance to kick off workflows within it's own repository.
@@ -15,7 +14,7 @@ import { WorkflowFunction } from "../workflow-functions";
  * 
  */
 
-export async function repositoryDispatch(context: Context, workflow: WorkflowFunction) {
+export async function repositoryDispatch(context: Context, workflow: string) {
     const inputs = PluginContext.getInstance().getInputs();
     const { logger } = context;
     const repository = "telegram--bot";
