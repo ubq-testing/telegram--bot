@@ -18,9 +18,6 @@ const allowedUpdates = T.Object({
 
 export const env = T.Object({
     BOT_TOKEN: T.String(),
-    BOT_MODE: T.String(),
-    LOG_LEVEL: T.String(),
-    DEBUG: T.Transform(T.Union([T.String(), T.Boolean()])).Decode((str) => str === "true" || str === "false" ? str === "true" : str).Encode((bool) => bool.toString()),
     BOT_WEBHOOK: T.String(),
     BOT_WEBHOOK_SECRET: T.String(),
     BOT_ADMINS: T.Transform(T.Unknown()).Decode((str) => Array.isArray(str) ? str.map(Number) : [Number(str)]).Encode((arr) => arr.toString()),
