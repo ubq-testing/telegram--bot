@@ -13,9 +13,9 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
         const api = mtProto.getApi();
         console.log("Creating chat with name: ", chatName);
         const chat = await client.invoke(
-            new api.channels.CreateChannel({
+            new api.messages.CreateChat({
                 title: chatName,
-                broadcast: false,
+                users: [],
             })
         );
 

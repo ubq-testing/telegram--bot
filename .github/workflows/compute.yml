@@ -1,4 +1,4 @@
-name: "the name of the plugin"
+name: "Workflow Functions"
 
 on:
   workflow_dispatch:
@@ -18,7 +18,7 @@ on:
 
 jobs:
   compute:
-    name: "plugin name"
+    name: "Telegram-Bot"
     runs-on: ubuntu-latest
     permissions: write-all
     env:
@@ -50,7 +50,7 @@ jobs:
 
       - name: execute directive
         run: npx tsx ./src/workflow-entry.ts
-        id: plugin-name
+        id: telegram-bot
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
