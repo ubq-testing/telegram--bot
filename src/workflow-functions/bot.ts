@@ -61,13 +61,14 @@ async function mtProtoInit(env: Context["env"], api: typeof Api) {
         TELEGRAM_API_HASH,
         clientParams
     );
+    await client.connect();
+
     client.invoke(new api.auth.ImportBotAuthorization({
         apiId: TELEGRAM_APP_ID,
         apiHash: TELEGRAM_API_HASH,
         botAuthToken: BOT_TOKEN,
     }));
 
-    await client.connect();
 
     return client;
 }
