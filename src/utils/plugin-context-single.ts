@@ -50,7 +50,7 @@ export class PluginContext {
             adapters: {} as ReturnType<typeof createAdapters>,
         };
 
-        ctx.adapters = createAdapters(createClient(ctx.env.SUPABASE_URL, ctx.env.SUPABASE_KEY), ctx);
+        ctx.adapters = createAdapters(createClient(ctx.env.SUPABASE_URL, ctx.env.SUPABASE_SERVICE_KEY), ctx);
 
         return ctx;
     }

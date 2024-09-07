@@ -23,7 +23,7 @@ jobs:
     permissions: write-all
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
       
       BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
       BOT_MODE: ${{ secrets.BOT_MODE }}
@@ -53,7 +53,7 @@ jobs:
         id: telegram-bot
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
 
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
           BOT_MODE: ${{ secrets.BOT_MODE }}
