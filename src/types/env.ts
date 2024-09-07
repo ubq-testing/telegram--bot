@@ -23,7 +23,7 @@ export const env = T.Object({
     BOT_ADMINS: T.Transform(T.Unknown()).Decode((str) => Array.isArray(str) ? str.map(Number) : [Number(str)]).Encode((arr) => arr.toString()),
     ALLOWED_UPDATES: T.Optional(T.Array(T.KeyOf(allowedUpdates))),
     SUPABASE_URL: T.String(),
-    SUPABASE_KEY: T.String(),
+    SUPABASE_SERVICE_KEY: T.String(),
     TELEGRAM_APP_ID: T.Transform(T.Unknown()).Decode((str) => Number(str)).Encode((num) => num.toString()),
     TELEGRAM_API_HASH: T.String(),
     APP_ID: T.Transform(T.Unknown()).Decode((str) => Number(str)).Encode((num) => num.toString()),

@@ -1,4 +1,4 @@
-import { AuthHandler } from "../auth-handler";
+import { AuthHandler } from "./auth-handler";
 import dotenv from "dotenv";
 dotenv.config();
 

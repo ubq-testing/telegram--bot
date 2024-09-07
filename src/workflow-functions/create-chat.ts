@@ -1,19 +1,19 @@
 import { Context, SupportedEvents } from "#root/types/context";
 import { CallbackResult } from "#root/types/proxy.js";
-import { MtProtoSingleton } from "./bot/mtproto-single";
+import { MtProto } from "./bot/mtproto";
 
 export async function createChat(context: Context<"issues.labeled", SupportedEvents["issues.labeled"]>): Promise<CallbackResult> {
     console.log("Creating chat");
     try {
-        const { payload, env } = context;
+        const { payload } = context;
         const chatName = payload.issue.title;
 
-        const mtProto = await MtProtoSingleton.getInstance(env);
-        const client = mtProto.getClient();
-        const api = mtProto.getApi();
+        const mtProto = new MtProto(context);
+        await mtProto.initialize();
+
         console.log("Creating chat with name: ", chatName);
-        const chat = await client.invoke(
-            new api.channels.CreateChannel({
+        const chat = await mtProto.client.invoke(
+            new mtProto.api.channels.CreateChannel({
                 title: chatName,
                 broadcast: true,
                 about: payload.issue.body || "No description provided",
