@@ -1,6 +1,6 @@
 import { Context, SupportedEvents } from "#root/types/context";
 import { CallbackResult } from "#root/types/proxy.js";
-import { MtProtoSingleton } from "./bot";
+import { MtProtoSingleton } from "./bot/mtproto-single";
 
 export async function createChat(context: Context<"issues.labeled", SupportedEvents["issues.labeled"]>): Promise<CallbackResult> {
     console.log("Creating chat");

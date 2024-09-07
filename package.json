@@ -24,7 +24,9 @@
     "worker": "wrangler dev --env dev --port 3000",
     "dev": "tsc-watch --onSuccess \"tsx ./src/main.ts\"",
     "start": "tsx ./src/main.ts",
-    "deploy": "wrangler deploy --minify src/main.ts"
+    "deploy": "wrangler deploy --minify src/main.ts",
+    "sms-auth": "npx tsx src/workflow-functions/bot/scripts/sms-auth.ts",
+    "user-auth": "npx tsx src/workflow-functions/bot/scripts/user-auth.ts"
   },
   "keywords": [
     "typescript",
@@ -80,6 +82,7 @@
     "eslint-plugin-prettier": "5.2.1",
     "eslint-plugin-sonarjs": "2.0.1",
     "husky": "9.1.5",
+    "input": "^1.0.1",
     "jest": "29.7.0",
     "jest-junit": "16.0.0",
     "jest-md-dashboard": "0.8.0",
