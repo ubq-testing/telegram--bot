@@ -3,6 +3,7 @@ import { CallbackResult } from "#root/types/proxy.js";
 import bigInt from "big-integer";
 import { MtProto } from "./bot/mtproto";
 import { Api } from "telegram";
+import { addCommentToIssue } from "#root/helpers/add-comment-to-issues.js";
 
 function isPriceLabelChange(label: string): boolean {
     return label.toLowerCase().includes("price");
@@ -51,6 +52,32 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
             throw new Error("Failed to promote bot to admin");
         }
 
+        const inviteLink = await mtProto.client.invoke(
+            new mtProto.api.messages.ExportChatInvite({
+                peer: chatId,
+                requestNeeded: true,
+                title: chatName,
+            })
+        );
+
+        if (!inviteLink) {
+            throw new Error("Failed to get invite link");
+        }
+
+        context.logger.info("Invite link: ", { inviteLink });
+
+        const [owner, repo] = payload.repository.full_name.split("/");
+
+        let link;
+
+        if (inviteLink.className === "ChatInviteExported") {
+            link = inviteLink.link;
+        } else {
+            throw new Error("Failed to get invite link");
+        }
+
+        await addCommentToIssue(context, `Workroom has been created for this task. [Join chat](${link})`, owner, repo, payload.issue.number);
+
     } catch (er) {
         console.log("Error in creating chat: ", er);
         return { status: 500, reason: "chat_create_failed", content: { error: er } };
@@ -88,7 +115,16 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
             throw new Error("Failed to fetch chat participants");
         }
 
+
         if (chatParticipants.className === "ChatParticipants") {
+
+            await mtProto.client.invoke(
+                new mtProto.api.messages.SendMessage({
+                    message: "This task has been closed and this chat has been archived.",
+                    peer: new mtProto.api.InputPeerChat({ chatId: chat.chatId }),
+                })
+            );
+
             const userIDs = chatParticipants.participants.map((participant) => {
                 return participant.userId;
             });
@@ -127,12 +163,6 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
         //     })
         // );
 
-        await mtProto.client.invoke(
-            new mtProto.api.messages.SendMessage({
-                message: "This task has been closed and this chat has been archived.",
-                peer: new mtProto.api.InputPeerChat({ chatId: chat.chatId }),
-            })
-        );
 
         await chats.updateChatStatus("closed", payload.issue.node_id);
 
