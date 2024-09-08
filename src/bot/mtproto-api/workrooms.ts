@@ -13,10 +13,12 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
 
         context.logger.info("Creating chat with name: ", { chatName });
 
+        const bot = new Api.InputUserSelf()
+
         const chat = await mtProto.client.invoke(
             new mtProto.api.messages.CreateChat({
                 title: chatName,
-                users: [...env.BOT_ADMINS, config.botId],
+                users: [bot]
             })
         );
 
