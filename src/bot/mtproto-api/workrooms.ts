@@ -24,21 +24,25 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
 
     context.logger.info("Creating chat with name: ", { chatName });
 
-    const bot = await mtProto.client.getPeerId(config.botUsername);
+    try {
+        const botIdString = await mtProto.client.getPeerId(config.botUsername, true);
 
+        const chat = await mtProto.client.invoke(
+            new mtProto.api.messages.CreateChat({
+                title: chatName,
+                users: [botIdString],
+            })
+        );
 
-    const chat = await mtProto.client.invoke(
-        new mtProto.api.messages.CreateChat({
-            title: chatName,
-            users: [bot],
-        })
-    );
-
-    if ("chats" in chat.updates) {
-        chatId = chat.updates.chats[0].id.toJSNumber();
-        chatIdBigInt = chat.updates.chats[0].id;
-    } else {
-        throw new Error("Failed to create chat");
+        if ("chats" in chat.updates) {
+            chatId = chat.updates.chats[0].id.toJSNumber();
+            chatIdBigInt = chat.updates.chats[0].id;
+        } else {
+            throw new Error("Failed to create chat");
+        }
+    } catch (er) {
+        console.log("Error in creating chat: ", er);
+        return { status: 500, reason: "chat_create_failed", content: { error: er } };
     }
 
     await context.adapters.supabase.chats.saveChat(chatId, payload.issue.title, payload.issue.node_id);
