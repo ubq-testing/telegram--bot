@@ -2,6 +2,7 @@ import { Context, SupportedEvents } from "#root/types/context";
 import { CallbackResult } from "#root/types/proxy.js";
 import bigInt from "big-integer";
 import { MtProto } from "./bot/mtproto";
+import { Api } from "telegram";
 
 function isPriceLabelChange(label: string): boolean {
     return label.toLowerCase().includes("price");
@@ -75,35 +76,31 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
             })
         );
 
-        let chatParticipants;
-
-        if ("participants" in fetchChat.fullChat) {
-            chatParticipants = fetchChat.fullChat.participants;
-        } else {
-            throw new Error("Failed to fetch chat participants");
+        if (!fetchChat) {
+            throw new Error("Failed to fetch chat");
         }
 
-        if (chatParticipants.className === "ChatParticipantsForbidden") {
-            console.log("ChatParticipantsForbidden");
-        }
+        const chatFull = fetchChat.fullChat as Api.ChatFull
+        const participants = chatFull.participants as Api.ChatParticipants;
 
-        if (chatParticipants.className === "ChatParticipants") {
-            const userIDs = chatParticipants.participants.map((participant) => {
-                return participant.userId;
-            });
-
-            for (let i = 0; i < userIDs.length; i++) {
-                if (userIDs[i].toJSNumber() === context.config.botId) {
-                    continue;
-                }
+        for (const participant of participants.participants) {
+            if (participant instanceof mtProto.api.ChatParticipant) {
                 await mtProto.client.invoke(
                     new mtProto.api.messages.DeleteChatUser({
                         chatId: chat.chatId,
-                        userId: userIDs[i],
+                        userId: participant.userId,
                     })
                 );
             }
         }
+
+        // delete all users from chat
+        await mtProto.client.invoke(
+            new mtProto.api.messages.DeleteChatUser({
+                chatId: chat.chatId,
+                userId: bigInt(0),
+            })
+        );
 
         await mtProto.client.invoke(
             new mtProto.api.messages.SendMessage({
