@@ -21,9 +21,7 @@ export class PluginContext {
     }
 
     static initialize(inputs: PluginInputs, env: Env): Context {
-        if (!PluginContext.instance) {
-            PluginContext.instance = new PluginContext(inputs, env);
-        }
+        PluginContext.instance = new PluginContext(inputs, env);
         return PluginContext.instance.getContext();
     }
 
