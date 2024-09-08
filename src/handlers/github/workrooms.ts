@@ -3,28 +3,23 @@ import { CallbackResult } from "#root/types/proxy.js";
 import { TelegramBotSingleton } from "#root/utils/telegram-bot-single.js";
 import { Context, SupportedEvents } from "../../types";
 import { repositoryDispatch } from "../repository-dispatch";
-import { addCommentToIssue } from "./utils/add-comment-to-issues";
+import { addCommentToIssue } from "../../helpers/add-comment-to-issues";
 
 /**
- * V1 specifications for the `workrooms` feature.
- * 
- * - A workroom is created when an issue is labeled.
- * - The workroom is created in a Telegram supergroup as a forum topic, not a new group.
- * - The workroom is associated with the issue by storing the issue's node_id.
- * - The workroom is closed when the issue is closed.
- * - The workroom status is updated to "closed" in the database.
- * - A comment is added to the issue when the workroom is created or closed.
- * 
- * V2 specifications:
- * 
- * - Replace the `Bot` api with the `MTProto` api in order to create new group chats.
+ * Dispatches a workflow in order to use the MTProto API to create a new chat
+ * for the task. 
  */
-
 export async function createWorkroom(context: Context<"issues.labeled", SupportedEvents["issues.labeled"]>): Promise<CallbackResult> {
     await repositoryDispatch(context, "create-telegram-chat").catch(console.error);
     return { status: 200, reason: "workflow_dispatched" };
 }
 
+/**
+ * "Closes" the workroom by kicking all users from the chat and archiving it.
+ * 
+ * - Does not delete the chat as it is required for later use.
+ * - Does not require MTProto API as we'll use the Bot API to kick users.
+ */
 export async function closeWorkroom(context: Context<"issues.closed", SupportedEvents["issues.closed"]>): Promise<CallbackResult> {
     const { logger, config, adapters: { supabase: { chats } } } = context;
     const bot = TelegramBotSingleton.getInstance().getBot();

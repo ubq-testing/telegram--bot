@@ -1,5 +1,5 @@
-import { getAppOctokit } from "#root/helpers/authenticated-octokit.js";
 import { PluginContext } from "#root/utils/plugin-context-single.js";
+import { App } from "octokit";
 import { Context } from "../types";
 
 /**
@@ -20,7 +20,8 @@ export async function repositoryDispatch(context: Context, workflow: string) {
     const repository = "telegram--bot";
     const owner = "ubq-testing";
     const branch = "workflows";
-    const app = await getAppOctokit(context);
+    const { env: { APP_ID, APP_PRIVATE_KEY } } = context;
+    const app = new App({ appId: APP_ID, privateKey: APP_PRIVATE_KEY });
     const installation = await app.octokit.rest.apps.getRepoInstallation({ owner, repo: repository });
 
     // Set the installation id for the octokit instance
@@ -28,7 +29,6 @@ export async function repositoryDispatch(context: Context, workflow: string) {
     const octokit = await app.getInstallationOctokit(installation.data.id);
 
     logger.info(`Dispatching workflow function: ${workflow}`);
-
 
     /**
      * We'll hit the main workflow entry and pass in the same inputs so

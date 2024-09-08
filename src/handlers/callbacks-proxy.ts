@@ -1,22 +1,8 @@
+import { createChat } from "#root/bot/workflow-functions/create-chat.js";
 import { ProxyCallbacks } from "#root/types/proxy.js";
 import { Context, SupportedEventsU } from "../types";
-import { createChat } from "../workflow-functions/create-chat";
 import { closeWorkroom, createWorkroom, reOpenWorkroom } from "./github/workrooms";
 
-/**
- * Why do we need this wrapper function?
- * 
- * By using a generic `Function` type for the callback parameter, we bypass strict type 
- * checking temporarily. This allows us to pass a standard `Context` object, which we know
- * contains the correct event and payload types, to the callback safely. 
- * 
- * We can trust that the `ProxyCallbacks` type has already ensured that each callback function 
- * matches the expected event and payload types, so this function provides a safe and 
- * flexible way to handle callbacks without introducing type or logic errors.
- */
-function handleCallback(callback: Function, context: Context) {
-    return callback(context);
-}
 /**
  * The `callbacks` object defines an array of callback functions for each supported event type.
  * 
@@ -35,6 +21,28 @@ const callbacks = {
         reOpenWorkroom
     ]
 } as ProxyCallbacks;
+
+
+/**
+ * These are function which get dispatched by this worker to fire off workflows
+ * in the repository. We enter through the main `compute.yml` just like a typical
+ * action plugin would, we forward the same payload that the worker received to
+ * the workflow the same way that the kernel does. 
+ * 
+ * - First event fires, `issues.labeled` and the worker catches it.
+ * - The worker then dispatches a workflow to `compute.yml` with the event name as the input.
+ * - The workflow receives a `issues.labeled` payload but eventName is now WorkflowFunction (`create-telegram-chat`).
+ * - The workflow then runs the `createChat` function which needs a node env to run.
+ * 
+ * I.e we're essentially running the first dual action/worker plugin which is
+ * ideal for telegram-bot as it's a bot that needs to be able to be super flexible.
+ */
+const workflowCallbacks = {
+    "issues.labeled": [
+        createChat
+    ]
+} as ProxyCallbacks;
+
 
 /**
  * The `proxyCallbacks` function returns a Proxy object that intercepts access to the 
@@ -71,26 +79,6 @@ export function proxyCallbacks(context: Context): ProxyCallbacks {
     });
 }
 
-/**
- * These are function which get dispatched by this worker to fire off workflows
- * in the repository. We enter through the main `compute.yml` just like a typical
- * action plugin would, we forward the same payload that the worker received to
- * the workflow the same way that the kernel does. 
- * 
- * - First event fires, `issues.labeled` and the worker catches it.
- * - The worker then dispatches a workflow to `compute.yml` with the event name as the input.
- * - The workflow receives a `issues.labeled` payload but eventName is now WorkflowFunction (`create-telegram-chat`).
- * - The workflow then runs the `createChat` function which needs a node env to run.
- * 
- * I.e we're essentially running the first dual action/worker plugin which is
- * ideal for telegram-bot as it's a bot that needs to be able to be super flexible.
- */
-const workflowCallbacks = {
-    "issues.labeled": [
-        createChat
-    ]
-} as ProxyCallbacks;
-
 
 export function proxyWorkflowCallbacks(context: Context): ProxyCallbacks {
     return new Proxy(workflowCallbacks, {
@@ -109,4 +97,19 @@ export function proxyWorkflowCallbacks(context: Context): ProxyCallbacks {
             })();
         },
     });
+}
+
+/**
+ * Why do we need this wrapper function?
+ * 
+ * By using a generic `Function` type for the callback parameter, we bypass strict type 
+ * checking temporarily. This allows us to pass a standard `Context` object, which we know
+ * contains the correct event and payload types, to the callback safely. 
+ * 
+ * We can trust that the `ProxyCallbacks` type has already ensured that each callback function 
+ * matches the expected event and payload types, so this function provides a safe and 
+ * flexible way to handle callbacks without introducing type or logic errors.
+ */
+function handleCallback(callback: Function, context: Context) {
+    return callback(context);
 }

@@ -25,6 +25,7 @@ export const pluginSettingsSchema = T.Object({
    */
   supergroupChatId: T.Integer(),
   supergroupChatName: T.String(),
+  botId: T.Transform(T.Unknown()).Decode((value) => Number(value)).Encode((value) => value.toString()),
 });
 
 export const pluginSettingsValidator = new StandardValidator(pluginSettingsSchema);
