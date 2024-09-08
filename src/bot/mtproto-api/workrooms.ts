@@ -46,20 +46,6 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
     }
 
     await context.adapters.supabase.chats.saveChat(chatId, payload.issue.title, payload.issue.node_id);
-
-    try {
-        await mtProto.client.invoke(
-            new mtProto.api.messages.AddChatUser({
-                chatId: chatIdBigInt,
-                userId: new mtProto.api.PeerUser({ userId: bigInt(context.config.botId) }),
-                fwdLimit: 1,
-            })
-        );
-    } catch (er) {
-        console.log(`Failed to add bot to chat: `, er);
-        throw new Error("Failed to add bot to chat");
-    }
-
     return { status: 200, reason: "chat_created" };
 }
 
