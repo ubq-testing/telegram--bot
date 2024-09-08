@@ -44,48 +44,17 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
         return { status: 500, reason: "chat_create_failed", content: { error: er } };
     }
 
-    let botId: bigInt.BigInteger | undefined;
-
-    try {
-        botId = new mtProto.api.PeerUser({ userId: bigInt(context.config.botId) }).userId;
-        console.log("using peer user", botId);
-    } catch (er) {
-        console.log(er);
-    }
-
-    if (!botId) {
-        try {
-            botId = new mtProto.api.BotInfo({ userId: bigInt(context.config.botId) }).userId
-            console.log("using bot info", botId);
-        } catch (er) {
-            console.log(er);
-        }
-    }
-
-    if (!botId) {
-        try {
-            botId = new mtProto.api.User({ id: bigInt(context.config.botId), bot: true }).id
-            console.log("using user", botId);
-        } catch (er) {
-            console.log(er);
-        }
-    }
-
-    if (!botId) {
-        throw new Error("Failed to get bot id");
-    }
-
-
     try {
         await mtProto.client.invoke(
             new mtProto.api.messages.AddChatUser({
                 chatId: chatIdBigInt,
-                userId: botId,
-                fwdLimit: 50,
+                userId: new mtProto.api.PeerUser({ userId: bigInt(context.config.botId) }),
+                fwdLimit: 1,
             })
         );
     } catch (er) {
-        console.log(`Failed to add bot to chat: ${JSON.stringify(er)}`);
+        console.log(`Failed to add bot to chat: `, er);
+        throw new Error("Failed to add bot to chat");
     }
 
     return { status: 200, reason: "chat_created" };
