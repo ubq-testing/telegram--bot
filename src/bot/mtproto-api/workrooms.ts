@@ -50,10 +50,11 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
         await mtProto.client.invoke(
             new mtProto.api.messages.AddChatUser({
                 chatId: chatIdBigInt,
-                userId: botEntity.id,
+                userId: botEntity,
                 fwdLimit: 50,
             })
         );
+
     } catch (er) {
         console.log(er);
         throw new Error(`Failed to add bot to chat: ${JSON.stringify(er)}`);
