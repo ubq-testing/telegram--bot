@@ -1,5 +1,5 @@
 import { Composer } from 'grammy'
-import type { Context } from '#root/bot/context.js'
+import type { Context } from '#root/bot/grammy-context.js'
 import { logHandle } from '#root/bot/helpers/logging.js'
 import { STRINGS } from '../strings'
 

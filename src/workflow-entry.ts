@@ -4,11 +4,9 @@ import { Value } from "@sinclair/typebox/value";
 import { envValidator, pluginSettingsSchema, PluginInputs, pluginSettingsValidator } from "./types";
 import { PluginContext } from "./utils/plugin-context-single";
 import { proxyWorkflowCallbacks } from "./handlers/callbacks-proxy";
-import { bubbleUpErrorComment, sanitizeMetadata } from "./utils/errors";
+import { bubbleUpErrorComment } from "./utils/errors";
 import dotenv from "dotenv";
-import { LOG_LEVEL } from "@ubiquity-dao/ubiquibot-logger";
 dotenv.config();
-
 
 /**
  * How a GitHub action executes the plugin.
@@ -29,7 +27,7 @@ export async function run() {
     TELEGRAM_APP_ID: process.env.TELEGRAM_APP_ID,
     TELEGRAM_API_HASH: process.env.TELEGRAM_API_HASH,
     SUPABASE_URL: process.env.SUPABASE_URL,
-    SUPABASE_KEY: process.env.SUPABASE_KEY,
+    SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY,
     APP_PRIVATE_KEY: process.env.APP_PRIVATE_KEY,
     APP_ID: process.env.APP_ID,
   }

@@ -1,6 +1,6 @@
 import { chatAction } from '@grammyjs/auto-chat-action'
 import { Composer } from 'grammy'
-import type { Context } from '#root/bot/context.js'
+import type { Context } from '#root/bot/grammy-context.js'
 import { logHandle } from '#root/bot/helpers/logging.js'
 
 const composer = new Composer<Context>()

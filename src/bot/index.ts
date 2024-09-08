@@ -1,8 +1,8 @@
 
 import type { BotConfig, StorageAdapter } from 'grammy'
 import { Bot as TelegramBot, Api } from 'grammy'
-import type { Context, SessionData } from '#root/bot/context.js'
-import { createContextConstructor } from '#root/bot/context.js'
+import type { Context, SessionData } from '#root/bot/grammy-context.js'
+import { createContextConstructor } from '#root/bot/grammy-context.js'
 import type { Logger } from '#root/logger.js'
 import { Context as UbiquityOsContext } from '../types'
 import { welcomeFeature } from '#root/bot/features/welcome.js'
@@ -12,11 +12,10 @@ import { session } from '#root/bot/middlewares/session.js'
 import { autoChatAction } from '@grammyjs/auto-chat-action'
 import { hydrate } from '@grammyjs/hydrate'
 import { hydrateReply, parseMode } from '@grammyjs/parse-mode'
-import { i18n } from './i18n'
 import { adminFeature } from './features/admin/admin'
-import { userIdFeature } from './features/helpers/user-id'
-import { createForumsFeature } from './features/on/forum-created'
-import { chatIdFeature } from './features/helpers/chatid'
+import { userIdFeature } from './features/commands/user-id'
+import { chatIdFeature } from './features/commands/chat-id'
+import { botIdFeature } from './features/commands/bot-id'
 
 interface Dependencies {
   config: UbiquityOsContext["env"]
@@ -47,7 +46,6 @@ export function createBot(token: string, dependencies: Dependencies, options: Op
   })
   const protectedBot = bot.errorBoundary(errorHandler)
 
-  // // createForumsFeature
   bot.api.config.use(parseMode('HTML'))
 
   protectedBot.use(autoChatAction(bot.api))
@@ -55,16 +53,14 @@ export function createBot(token: string, dependencies: Dependencies, options: Op
   protectedBot.use(hydrate())
   protectedBot.use(session({ getSessionKey, storage: options.botSessionStorage }))
 
-  // // Handlers
+  // Handlers
   protectedBot.use(welcomeFeature)
   protectedBot.use(adminFeature)
   protectedBot.use(userIdFeature)
   protectedBot.use(chatIdFeature)
-  // protectedBot.use(createForumsFeature)
-  // if (isMultipleLocales)
-  // protectedBot.use(languageFeature)
+  protectedBot.use(botIdFeature)
 
-  // // must be the last handler
+  // must be the last handler
   protectedBot.use(unhandledFeature)
 
   return bot

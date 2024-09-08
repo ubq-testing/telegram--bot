@@ -7,7 +7,7 @@ import { getDeepValue } from "#root/utils/get-deep-value.js";
  */
 export async function addCommentToIssue(context: Context, msg: string, owner?: string, repo?: string, issueNumber?: number) {
     const { logger, octokit } = context;
-    logger.info(`Adding comment to issue ${issueNumber}`);
+    logger.info(`Adding comment to ${owner}/${repo}#${issueNumber}`);
 
     if (!owner || !repo || !issueNumber) {
         owner = getDeepValue(context, "payload.repository.owner.login");
