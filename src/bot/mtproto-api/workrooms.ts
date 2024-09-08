@@ -23,41 +23,14 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
     let chatIdBigInt: bigInt.BigInteger;
 
     context.logger.info("Creating chat with name: ", { chatName });
-    let user;
-    let userId;
-    let userAccessHash;
-    try {
-        const contacts = await mtProto.client.invoke(new mtProto.api.contacts.GetContacts({}))
-        if ("users" in contacts) {
-            user = contacts.users.find((user) => user.id.toJSNumber() === config.botId);
 
-            if (!user) {
-                throw new Error("Bot user not found");
-            }
+    const bot = await mtProto.client.getPeerId(config.botUsername);
 
-            if ("id" in user) {
-                userId = user.id;
-            }
-
-            if ("accessHash" in user) {
-                userAccessHash = user.accessHash;
-            }
-
-            context.logger.info("Bot user found", { user });
-        }
-    } catch (er) {
-        console.log("Failed to get contacts", er);
-        throw new Error("Failed to get contacts");
-    }
-
-    if (!userId || !userAccessHash) {
-        throw new Error("Failed to get bot user");
-    }
 
     const chat = await mtProto.client.invoke(
         new mtProto.api.messages.CreateChat({
             title: chatName,
-            users: [new mtProto.api.InputUser({ userId: userId, accessHash: userAccessHash })],
+            users: [bot],
         })
     );
 
