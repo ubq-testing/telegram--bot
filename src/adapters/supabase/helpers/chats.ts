@@ -36,10 +36,10 @@ export class Chats extends Super {
             return;
         }
 
-        const { data, error } = (await this.supabase.from("chats").upsert({ ...chat, status })) as { data: unknown; error: unknown };
+        const { error } = (await this.supabase.from("chats").upsert({ ...chat, status }))
 
-        if (error || !data) {
-            this.context.logger.error("Failed to update chat status", { chatId, taskNodeId });
+        if (error) {
+            this.context.logger.error("Failed to update chat status", { chatId, taskNodeId, er: error });
         } else {
             this.context.logger.info("Successfully updated chat status", { chatId, taskNodeId });
         }
@@ -47,18 +47,16 @@ export class Chats extends Super {
 
 
     async saveChat(chatId: number, chatName: string, taskNodeId: string) {
-        const { data, error } = (await this.supabase.from("chats").insert([{ chatId, chatName, taskNodeId, status: "open" }]) as { data: unknown; error: unknown });
+        const { error } = await this.supabase.from("chats").insert([{ chatId, chatName, taskNodeId, status: "open" }])
         if (error) {
             this.context.logger.error("Failed to save chat", { chatId, chatName, taskNodeId, er: error });
         } else {
             this.context.logger.info("Successfully saved chat", { chatId, chatName });
         }
-
-        return data;
     }
 
     async getChatByChatId(chatId: number) {
-        const { data, error } = (await this.supabase.from("chats").select("*").eq("chatId", chatId).single()) as { data: unknown; error: unknown };
+        const { data, error } = (await this.supabase.from("chats").select("*").eq("chatId", chatId).single())
         if (error || !data) {
             this.context.logger.error("No chat found", { chatId });
         } else {
@@ -69,7 +67,7 @@ export class Chats extends Super {
     }
 
     async getChatByChatName(chatName: string) {
-        const { data, error } = (await this.supabase.from("chats").select("*").eq("chatName", chatName).single()) as { data: unknown; error: unknown };
+        const { data, error } = (await this.supabase.from("chats").select("*").eq("chatName", chatName).single())
         if (error || !data) {
             this.context.logger.error("No chat found", { chatName });
         } else {
@@ -88,7 +86,7 @@ export class Chats extends Super {
                 this.context.logger.info("Successfully fetched chat", { taskNodeId });
             }
 
-            return data;
+            return data
         } catch (e) {
             console.error(e)
             throw new Error("Failed to fetch chat by task node id")

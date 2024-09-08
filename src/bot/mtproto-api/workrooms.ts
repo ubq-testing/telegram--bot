@@ -32,11 +32,31 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
                 users: [botIdString],
             })
         );
+        let inviteLink;
 
         if ("chats" in chat.updates) {
             chatId = chat.updates.chats[0].id.toJSNumber();
         } else {
             throw new Error("Failed to create chat");
+        }
+
+        if (chat.updates.chats[0].className === "Chat") {
+            inviteLink = await mtProto.client.invoke(
+                new mtProto.api.messages.ExportChatInvite({
+                    peer: new mtProto.api.InputPeerChat({ chatId: chat.updates.chats[0].id }),
+                })
+            );
+        }
+
+        if (inviteLink) {
+            const [owner, repo] = payload.repository.full_name.split("/");
+            let link;
+
+            if ("link" in inviteLink) {
+                link = inviteLink.link;
+            }
+
+            await addCommentToIssue(context, `Workroom has been created for this task. [Join chat](${link})`, owner, repo, payload.issue.number);
         }
 
         const promoteBotToAdmin = await mtProto.client.invoke(
@@ -56,29 +76,6 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
     }
 
     await context.adapters.supabase.chats.saveChat(chatId, payload.issue.title, payload.issue.node_id);
-
-    try {
-
-        const chatInviteLink = await mtProto.client.invoke(
-            new mtProto.api.messages.ExportChatInvite({
-                peer: await mtProto.client.getEntity(payload.issue.title)
-            })
-        );
-
-        const [owner, repo] = payload.repository.full_name.split("/");
-
-        let link;
-
-        if ("link" in chatInviteLink) {
-            link = chatInviteLink.link;
-        }
-
-        await addCommentToIssue(context, `Workroom has been created for this task. [Join chat](${link})`, owner, repo, payload.issue.number);
-    } catch (err) {
-        console.log("Error in creating chat invite link: ", err);
-        return { status: 500, reason: "chat_create_failed", content: { error: err } };
-    }
-
     return { status: 200, reason: "chat_created" };
 }
 
@@ -136,28 +133,6 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
                 );
             }
         }
-
-        // const chatFull = fetchChat.fullChat as Api.ChatFull
-        // const participants = chatFull.participants as Api.ChatParticipants;
-
-        // for (const participant of participants.participants) {
-        //     if (participant instanceof mtProto.api.ChatParticipant) {
-        //         await mtProto.client.invoke(
-        //             new mtProto.api.messages.DeleteChatUser({
-        //                 chatId: chat.chatId,
-        //                 userId: participant.userId,
-        //             })
-        //         );
-        //     }
-        // }
-
-        // await mtProto.client.invoke(
-        //     new mtProto.api.messages.DeleteChatUser({
-        //         chatId: chat.chatId,
-        //         userId: bigInt(0),
-        //     })
-        // );
-
 
         await chats.updateChatStatus("closed", payload.issue.node_id);
 
