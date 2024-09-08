@@ -45,10 +45,13 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
     }
 
     try {
+
+        const botEntity = await mtProto.client.getEntity(config.botId);
+
         await mtProto.client.invoke(
             new mtProto.api.messages.AddChatUser({
                 chatId: chatIdBigInt,
-                userId: config.botId,
+                userId: botEntity.id,
                 fwdLimit: 50,
             })
         );
