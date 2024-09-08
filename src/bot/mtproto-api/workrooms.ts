@@ -80,6 +80,32 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
             throw new Error("Failed to fetch chat");
         }
 
+        let chatParticipants;
+
+        if ("participants" in fetchChat.fullChat) {
+            chatParticipants = fetchChat.fullChat.participants;
+        } else {
+            throw new Error("Failed to fetch chat participants");
+        }
+
+        if (chatParticipants.className === "ChatParticipants") {
+            const userIDs = chatParticipants.participants.map((participant) => {
+                return participant.userId;
+            });
+
+            for (let i = 0; i < userIDs.length; i++) {
+                if (userIDs[i].toJSNumber() === context.config.botId) {
+                    continue;
+                }
+                await mtProto.client.invoke(
+                    new mtProto.api.messages.DeleteChatUser({
+                        chatId: chat.chatId,
+                        userId: userIDs[i],
+                    })
+                );
+            }
+        }
+
         // const chatFull = fetchChat.fullChat as Api.ChatFull
         // const participants = chatFull.participants as Api.ChatParticipants;
 
@@ -94,12 +120,12 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
         //     }
         // }
 
-        await mtProto.client.invoke(
-            new mtProto.api.messages.DeleteChatUser({
-                chatId: chat.chatId,
-                userId: bigInt(0),
-            })
-        );
+        // await mtProto.client.invoke(
+        //     new mtProto.api.messages.DeleteChatUser({
+        //         chatId: chat.chatId,
+        //         userId: bigInt(0),
+        //     })
+        // );
 
         await mtProto.client.invoke(
             new mtProto.api.messages.SendMessage({
