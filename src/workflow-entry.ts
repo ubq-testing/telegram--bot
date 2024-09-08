@@ -4,11 +4,9 @@ import { Value } from "@sinclair/typebox/value";
 import { envValidator, pluginSettingsSchema, PluginInputs, pluginSettingsValidator } from "./types";
 import { PluginContext } from "./utils/plugin-context-single";
 import { proxyWorkflowCallbacks } from "./handlers/callbacks-proxy";
-import { bubbleUpErrorComment, sanitizeMetadata } from "./utils/errors";
+import { bubbleUpErrorComment } from "./utils/errors";
 import dotenv from "dotenv";
-import { LOG_LEVEL } from "@ubiquity-dao/ubiquibot-logger";
 dotenv.config();
-
 
 /**
  * How a GitHub action executes the plugin.

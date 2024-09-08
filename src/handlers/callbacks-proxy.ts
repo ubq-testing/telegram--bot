@@ -95,11 +95,15 @@ export function proxyWorkflowCallbacks(context: Context): ProxyCallbacks {
             }
             return (async () => {
                 try {
-                    return await Promise.all(target[prop].map((callback) => handleCallback(callback, context)));
+                    await Promise.all(target[prop].map((callback) => handleCallback(callback, context)));
+                    console.log("Finished workflow callback");
                 } catch (er) {
                     context.logger.error(`Failed to handle event ${prop}`, { er });
-                    return { status: 500, reason: "failed" };
+                    await exit(1);
                 }
+
+                console.log("Exiting workflow callback");
+                await exit(0);
             })();
         },
     });
@@ -118,4 +122,15 @@ export function proxyWorkflowCallbacks(context: Context): ProxyCallbacks {
  */
 function handleCallback(callback: Function, context: Context) {
     return callback(context);
+}
+
+/**
+ * Will be used to exit the process with a status code.
+ * 
+ * 0 - Success
+ * 1 - Failure
+ */
+async function exit(status: number = 0) {
+    console.log("Exiting with status: ", status);
+    process.exit(status);
 }
