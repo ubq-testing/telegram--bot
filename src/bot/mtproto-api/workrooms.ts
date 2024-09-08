@@ -45,29 +45,30 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
     }
 
     try {
-
         const bot = await mtProto.client.invoke(
-            new mtProto.api.auth.ImportBotAuthorization({
-                apiId: env.TELEGRAM_APP_ID,
-                apiHash: env.TELEGRAM_API_HASH,
-                botAuthToken: env.BOT_TOKEN,
-            })
+            new mtProto.api.contacts.GetContacts({})
         );
 
-        let botId;
+        if ("contacts" in bot) {
+            const botId = bot.contacts.find((user) => {
+                return user.userId === bigInt(context.config.botId);
+            })?.userId;
 
-        if (bot.className === "auth.Authorization") {
-            console.log("auth.Authorization");
-            botId = bot.user.id;
+            if (!botId) {
+                throw new Error("Failed to fetch bot id");
+            }
+
+            await mtProto.client.invoke(
+                new mtProto.api.messages.AddChatUser({
+                    chatId: chatIdBigInt,
+                    userId: botId,
+                    fwdLimit: 50,
+                })
+            );
+        } else {
+            throw new Error("Failed to fetch bot contacts");
         }
 
-        await mtProto.client.invoke(
-            new mtProto.api.messages.AddChatUser({
-                chatId: chatIdBigInt,
-                userId: botId,
-                fwdLimit: 50,
-            })
-        );
 
     } catch (er) {
         console.log(er);
