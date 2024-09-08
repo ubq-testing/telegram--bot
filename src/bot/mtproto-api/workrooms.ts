@@ -44,19 +44,20 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
         return { status: 500, reason: "chat_create_failed", content: { error: er } };
     }
 
-    const dialogs = await mtProto.client.invoke(new mtProto.api.messages.GetDialogs({ limit: 100 }));
-
-    let bot;
-    if ("users" in dialogs) {
-        const users = dialogs.users;
-        bot = users.find((user) => user.id.toJSNumber() === config.botId);
-
-        if (!bot) {
-            throw new Error("Bot not found in users list");
-        }
-    }
-
     try {
+
+        const dialogs = await mtProto.client.invoke(new mtProto.api.messages.GetDialogs({ limit: 100 }));
+
+        let bot;
+        if ("users" in dialogs) {
+            const users = dialogs.users;
+            bot = users.find((user) => user.id === config.botId);
+
+            if (!bot) {
+                throw new Error("Bot not found in users list");
+            }
+        }
+
         await mtProto.client.invoke(
             new mtProto.api.messages.AddChatUser({
                 chatId: chatIdBigInt,
@@ -106,7 +107,7 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
             });
 
             for (let i = 0; i < userIDs.length; i++) {
-                if (userIDs[i].toJSNumber() === context.config.botId) {
+                if (userIDs[i] === context.config.botId) {
                     continue;
                 }
                 await mtProto.client.invoke(
