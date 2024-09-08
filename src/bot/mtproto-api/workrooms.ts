@@ -3,9 +3,19 @@ import { CallbackResult } from "#root/types/proxy.js";
 import bigInt from "big-integer";
 import { MtProto } from "./bot/mtproto";
 
+function isPriceLabelChange(label: string): boolean {
+    return label.toLowerCase().includes("price");
+}
+
 export async function createChat(context: Context<"issues.labeled", SupportedEvents["issues.labeled"]>): Promise<CallbackResult> {
-    const { payload, env, config } = context;
+    const { payload, config } = context;
     const chatName = payload.issue.title;
+
+    const labelName = payload.label?.name;
+
+    if (!labelName || !isPriceLabelChange(labelName)) {
+        return { status: 200, reason: "skipped" };
+    }
 
     const mtProto = new MtProto(context);
     await mtProto.initialize();
@@ -20,8 +30,6 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
                 users: [],
             })
         );
-
-
 
         if ("chats" in chat.updates) {
             chatId = chat.updates.chats[0].id.toJSNumber();
@@ -41,7 +49,7 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
         await mtProto.client.invoke(
             new mtProto.api.messages.AddChatUser({
                 chatId: chatIdBigInt,
-                userId: bigInt(botId),
+                userId: botId,
                 fwdLimit: 50,
             })
         );
