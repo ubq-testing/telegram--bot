@@ -1,6 +1,5 @@
 import { SupportedEvents, SupportedEventsU } from "./context";
 import { StaticDecode, Type as T } from "@sinclair/typebox";
-import bigInt from "big-integer";
 import { StandardValidator } from "typebox-validators";
 
 export interface PluginInputs<T extends SupportedEventsU = SupportedEventsU, TU extends SupportedEvents[T] = SupportedEvents[T]> {
@@ -26,7 +25,7 @@ export const pluginSettingsSchema = T.Object({
    */
   supergroupChatId: T.Integer(),
   supergroupChatName: T.String(),
-  botId: T.Transform(T.Unknown()).Decode((value) => bigInt(Number(value))).Encode((value) => value.toString()),
+  botId: T.Transform(T.Unknown()).Decode((value) => Number(value)).Encode((value) => value.toString()),
 });
 
 export const pluginSettingsValidator = new StandardValidator(pluginSettingsSchema);

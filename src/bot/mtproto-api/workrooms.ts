@@ -45,7 +45,6 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
     }
 
     try {
-
         const botEntity = await mtProto.client.getEntity(config.botId);
 
         await mtProto.client.invoke(
@@ -97,7 +96,7 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
             });
 
             for (let i = 0; i < userIDs.length; i++) {
-                if (userIDs[i] === context.config.botId) {
+                if (userIDs[i].toJSNumber() === context.config.botId) {
                     continue;
                 }
                 await mtProto.client.invoke(
