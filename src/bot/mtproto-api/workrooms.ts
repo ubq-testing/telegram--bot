@@ -164,6 +164,8 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
         const chatFull = fetchChat.fullChat as Api.ChatFull
         const participants = chatFull.participants as Api.ChatParticipants;
 
+        console.log("Participants: ", participants);
+
         for (const participant of participants.participants) {
             if (participant instanceof mtProto.api.ChatParticipant) {
                 await mtProto.client.invoke(
@@ -178,6 +180,7 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
 
         return { status: 200, reason: "chat_reopened" };
     } catch (er) {
+        console.log(er);
         logger.error("Failed to reopen chat", { er });
         return { status: 500, reason: "chat_reopen_failed", content: { error: er } };
     }
