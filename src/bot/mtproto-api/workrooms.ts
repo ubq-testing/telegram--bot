@@ -23,105 +23,52 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
     let chatIdBigInt: bigInt.BigInteger;
 
     context.logger.info("Creating chat with name: ", { chatName });
+    let user;
+    let userId;
+    let userAccessHash;
     try {
-        const chat = await mtProto.client.invoke(
-            new mtProto.api.messages.CreateChat({
-                title: chatName,
-                users: [],
-            })
-        );
-
-        const channel = await mtProto.client.invoke(
-            new mtProto.api.channels.CreateChannel({
-                title: chatName,
-                broadcast: false,
-                about: payload.issue.body || `- ${labelName} - ${payload.issue.html_url}`,
-            })
-        );
-
-        if ("id" in channel) {
-            chatId = channel.id
-        } else {
-            throw new Error("Failed to create channel");
-        }
-
-        await context.adapters.supabase.chats.saveChat(chatId, "channel - " + payload.issue.title, payload.issue.node_id);
-
-        const contacts = await mtProto.client.invoke(
-            new mtProto.api.contacts.GetContacts({ hash: undefined }),
-        );
-
-        let user;
-
+        const contacts = await mtProto.client.invoke(new mtProto.api.contacts.GetContacts({}))
         if ("users" in contacts) {
             user = contacts.users.find((user) => user.id.toJSNumber() === config.botId);
+
             if (!user) {
-                throw new Error("Bot not found in contacts");
-            }
-        } else {
-            throw new Error("Failed to fetch contacts");
-        }
-
-        let accessHash;
-
-        if ("accessHash" in user) {
-            accessHash = user.accessHash;
-        }
-
-        if (!accessHash) {
-            throw new Error("Failed to fetch access hash");
-        }
-
-        let channelAccessHash;
-        let channelIdBigInt;
-
-        const chats = await mtProto.client.invoke(
-            new mtProto.api.messages.GetChats({ id: undefined }),
-        );
-
-        if ("chats" in chats) {
-            const foundChannel = chats.chats.find((chat) => chat.id.toJSNumber() === channel.id)
-            if (!foundChannel) {
-                throw new Error("Channel not found");
+                throw new Error("Bot user not found");
             }
 
-            if ("accessHash" in foundChannel) {
-                channelAccessHash = foundChannel.accessHash;
+            if ("id" in user) {
+                userId = user.id;
             }
 
-            if ("id" in foundChannel) {
-                channelIdBigInt = foundChannel.id;
+            if ("accessHash" in user) {
+                userAccessHash = user.accessHash;
             }
+
+            context.logger.info("Bot user found", { user });
         }
-
-        if (!channelAccessHash) {
-            throw new Error("Failed to fetch channel access hash");
-        }
-
-        if (!channelIdBigInt) {
-            throw new Error("Failed to fetch channel id");
-        }
-
-        await mtProto.client.invoke(
-            new mtProto.api.channels.InviteToChannel({
-                channel: new mtProto.api.InputChannel({ channelId: channelIdBigInt, accessHash: channelAccessHash }),
-                users: [new mtProto.api.InputUser({ userId: user.id, accessHash })],
-            })
-        );
-
-
-        if ("chats" in chat.updates) {
-            chatId = chat.updates.chats[0].id.toJSNumber();
-            chatIdBigInt = chat.updates.chats[0].id;
-        } else {
-            throw new Error("Failed to create chat");
-        }
-
-        await context.adapters.supabase.chats.saveChat(chatId, payload.issue.title, payload.issue.node_id);
     } catch (er) {
-        context.logger.error("Failed to create chat", { er });
-        return { status: 500, reason: "chat_create_failed", content: { error: er } };
+        console.log("Failed to get contacts", er);
+        throw new Error("Failed to get contacts");
     }
+
+    if (!userId || !userAccessHash) {
+        throw new Error("Failed to get bot user");
+    }
+
+    const chat = await mtProto.client.invoke(
+        new mtProto.api.messages.CreateChat({
+            title: chatName,
+            users: [new mtProto.api.InputUser({ userId: userId, accessHash: userAccessHash })],
+        })
+    );
+
+    if ("chats" in chat.updates) {
+        chatId = chat.updates.chats[0].id.toJSNumber();
+        chatIdBigInt = chat.updates.chats[0].id;
+    } else {
+        throw new Error("Failed to create chat");
+    }
+
+    await context.adapters.supabase.chats.saveChat(chatId, payload.issue.title, payload.issue.node_id);
 
     try {
         await mtProto.client.invoke(
