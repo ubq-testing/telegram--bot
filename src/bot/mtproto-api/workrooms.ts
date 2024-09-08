@@ -9,7 +9,7 @@ function isPriceLabelChange(label: string): boolean {
 }
 
 export async function createChat(context: Context<"issues.labeled", SupportedEvents["issues.labeled"]>): Promise<CallbackResult> {
-    const { payload, config, env } = context;
+    const { payload, config, logger } = context;
     const chatName = payload.issue.title;
 
     const labelName = payload.label?.name;
@@ -21,7 +21,7 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
     const mtProto = new MtProto(context);
     await mtProto.initialize();
     let chatId: number;
-    context.logger.info("Creating chat with name: ", { chatName });
+    logger.info("Creating chat with name: ", { chatName });
 
     try {
         const botIdString = await mtProto.client.getPeerId(config.botUsername, true);
@@ -56,7 +56,7 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
                 link = inviteLink.link;
             }
 
-            await addCommentToIssue(context, `Workroom has been created for this task. [Join chat](${link})`, owner, repo, payload.issue.number);
+            await addCommentToIssue(context, `A new workroom has been created for this task. [Join chat](${link})`, owner, repo, payload.issue.number);
         }
 
         const promoteBotToAdmin = await mtProto.client.invoke(
@@ -71,7 +71,7 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
             throw new Error("Failed to promote bot to admin");
         }
     } catch (er) {
-        console.log("Error in creating chat: ", er);
+        logger.error("Error in creating chat: ", { er });
         return { status: 500, reason: "chat_create_failed", content: { error: er } };
     }
 
@@ -80,13 +80,12 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
 }
 
 export async function closeChat(context: Context<"issues.closed", SupportedEvents["issues.closed"]>): Promise<CallbackResult> {
+    const { payload, adapters: { supabase: { chats } }, logger } = context;
     try {
-        const { payload, adapters: { supabase: { chats } } } = context;
-
         const mtProto = new MtProto(context);
         await mtProto.initialize();
 
-        context.logger.info("Closing chat with name: ", { chatName: payload.issue.title });
+        logger.info("Closing chat with name: ", { chatName: payload.issue.title });
         const chat = await chats.getChatByTaskNodeId(payload.issue.node_id);
 
         const fetchChat = await mtProto.client.invoke(
@@ -138,19 +137,18 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
 
         return { status: 200, reason: "chat_closed" };
     } catch (er) {
-        context.logger.error("Failed to close chat", { er });
+        logger.error("Failed to close chat", { er });
         return { status: 500, reason: "chat_close_failed", content: { error: er } };
     }
 }
 
 export async function reopenChat(context: Context<"issues.reopened", SupportedEvents["issues.reopened"]>): Promise<CallbackResult> {
+    const { payload, adapters: { supabase: { chats } }, logger } = context;
     try {
-        const { payload, env, adapters: { supabase: { chats } } } = context;
-
         const mtProto = new MtProto(context);
         await mtProto.initialize();
 
-        context.logger.info("Reopening chat with name: ", { chatName: payload.issue.title });
+        logger.info("Reopening chat with name: ", { chatName: payload.issue.title });
         const chat = await chats.getChatByTaskNodeId(payload.issue.node_id);
 
         const fetchChat = await mtProto.client.invoke(
@@ -178,10 +176,9 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
             }
         }
 
-
         return { status: 200, reason: "chat_reopened" };
     } catch (er) {
-        context.logger.error("Failed to reopen chat", { er });
+        logger.error("Failed to reopen chat", { er });
         return { status: 500, reason: "chat_reopen_failed", content: { error: er } };
     }
 }
