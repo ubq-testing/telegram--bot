@@ -20,8 +20,6 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
     const mtProto = new MtProto(context);
     await mtProto.initialize();
     let chatId: number;
-    let chatIdBigInt: bigInt.BigInteger;
-
     context.logger.info("Creating chat with name: ", { chatName });
 
     try {
@@ -36,10 +34,22 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
 
         if ("chats" in chat.updates) {
             chatId = chat.updates.chats[0].id.toJSNumber();
-            chatIdBigInt = chat.updates.chats[0].id;
         } else {
             throw new Error("Failed to create chat");
         }
+
+        const promoteBotToAdmin = await mtProto.client.invoke(
+            new mtProto.api.messages.EditChatAdmin({
+                chatId: chat.updates.chats[0].id,
+                isAdmin: true,
+                userId: botIdString,
+            })
+        );
+
+        if (!promoteBotToAdmin) {
+            throw new Error("Failed to promote bot to admin");
+        }
+
     } catch (er) {
         console.log("Error in creating chat: ", er);
         return { status: 500, reason: "chat_create_failed", content: { error: er } };
