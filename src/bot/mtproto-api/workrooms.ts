@@ -80,19 +80,26 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
             throw new Error("Failed to fetch chat");
         }
 
-        const chatFull = fetchChat.fullChat as Api.ChatFull
-        const participants = chatFull.participants as Api.ChatParticipants;
+        // const chatFull = fetchChat.fullChat as Api.ChatFull
+        // const participants = chatFull.participants as Api.ChatParticipants;
 
-        for (const participant of participants.participants) {
-            if (participant instanceof mtProto.api.ChatParticipant) {
-                await mtProto.client.invoke(
-                    new mtProto.api.messages.DeleteChatUser({
-                        chatId: chat.chatId,
-                        userId: participant.userId,
-                    })
-                );
-            }
-        }
+        // for (const participant of participants.participants) {
+        //     if (participant instanceof mtProto.api.ChatParticipant) {
+        //         await mtProto.client.invoke(
+        //             new mtProto.api.messages.DeleteChatUser({
+        //                 chatId: chat.chatId,
+        //                 userId: participant.userId,
+        //             })
+        //         );
+        //     }
+        // }
+
+        await mtProto.client.invoke(
+            new mtProto.api.messages.DeleteChatUser({
+                chatId: chat.chatId,
+                userId: bigInt(0),
+            })
+        );
 
         await mtProto.client.invoke(
             new mtProto.api.messages.SendMessage({
@@ -100,6 +107,8 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
                 peer: new mtProto.api.InputPeerChat({ chatId: chat.chatId }),
             })
         );
+
+        await chats.updateChatStatus("closed", payload.issue.node_id);
 
         return { status: 200, reason: "chat_closed" };
     } catch (er) {
@@ -115,10 +124,34 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
         const mtProto = new MtProto(context);
         await mtProto.initialize();
 
+        context.logger.info("Reopening chat with name: ", { chatName: payload.issue.title });
+        const chat = await chats.getChatByTaskNodeId(payload.issue.node_id);
 
-        /**
-         * TODO: Are we re-opening the old chat or creating a new one?
-         */
+        const fetchChat = await mtProto.client.invoke(
+            new mtProto.api.messages.GetFullChat({
+                chatId: chat.chatId,
+            })
+        );
+
+        if (!fetchChat) {
+            throw new Error("Failed to fetch chat");
+        }
+
+        const chatFull = fetchChat.fullChat as Api.ChatFull
+        const participants = chatFull.participants as Api.ChatParticipants;
+
+        for (const participant of participants.participants) {
+            if (participant instanceof mtProto.api.ChatParticipant) {
+                await mtProto.client.invoke(
+                    new mtProto.api.messages.AddChatUser({
+                        chatId: chat.chatId,
+                        userId: participant.userId,
+                        fwdLimit: 50,
+                    })
+                );
+            }
+        }
+
 
         return { status: 200, reason: "chat_reopened" };
     } catch (er) {
