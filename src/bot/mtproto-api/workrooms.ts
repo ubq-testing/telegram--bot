@@ -30,12 +30,11 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
 export async function closeChat(context: Context<"issues.closed", SupportedEvents["issues.closed"]>): Promise<CallbackResult> {
     try {
         const { payload, adapters: { supabase: { chats } } } = context;
-        const chatName = payload.issue.title;
 
         const mtProto = new MtProto(context);
         await mtProto.initialize();
 
-        context.logger.info("Closing chat with name: ", { chatName });
+        context.logger.info("Closing chat with name: ", { chatName: payload.issue.title });
         const chat = await chats.getChatByTaskNodeId(payload.issue.node_id);
 
         const fetchChat = await mtProto.client.invoke(
@@ -74,7 +73,12 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
             }
         }
 
-
+        await mtProto.client.invoke(
+            new mtProto.api.messages.SendMessage({
+                message: "This task has been closed and this chat has been archived.",
+                peer: new mtProto.api.InputPeerChat({ chatId: chat.chatId }),
+            })
+        );
 
         return { status: 200, reason: "chat_closed" };
     } catch (er) {
@@ -85,11 +89,15 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
 
 export async function reopenChat(context: Context<"issues.reopened", SupportedEvents["issues.reopened"]>): Promise<CallbackResult> {
     try {
-        const { payload, env, config } = context;
-        const chatName = payload.issue.title;
+        const { payload, env, adapters: { supabase: { chats } } } = context;
 
         const mtProto = new MtProto(context);
         await mtProto.initialize();
+
+
+        /**
+         * TODO: Are we re-opening the old chat or creating a new one?
+         */
 
         return { status: 200, reason: "chat_reopened" };
     } catch (er) {
