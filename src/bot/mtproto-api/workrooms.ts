@@ -1,6 +1,5 @@
 import { Context, SupportedEvents } from "#root/types/context";
 import { CallbackResult } from "#root/types/proxy.js";
-import bigInt from "big-integer";
 import { MtProto } from "./bot/mtproto";
 import { Api } from "telegram";
 import { addCommentToIssue } from "#root/helpers/add-comment-to-issues.js";
@@ -51,39 +50,35 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
         if (!promoteBotToAdmin) {
             throw new Error("Failed to promote bot to admin");
         }
-
-        const inviteLink = await mtProto.client.invoke(
-            new mtProto.api.messages.ExportChatInvite({
-                peer: chatId,
-                requestNeeded: true,
-                title: chatName,
-            })
-        );
-
-        if (!inviteLink) {
-            throw new Error("Failed to get invite link");
-        }
-
-        context.logger.info("Invite link: ", { inviteLink });
-
-        const [owner, repo] = payload.repository.full_name.split("/");
-
-        let link;
-
-        if (inviteLink.className === "ChatInviteExported") {
-            link = inviteLink.link;
-        } else {
-            throw new Error("Failed to get invite link");
-        }
-
-        await addCommentToIssue(context, `Workroom has been created for this task. [Join chat](${link})`, owner, repo, payload.issue.number);
-
     } catch (er) {
         console.log("Error in creating chat: ", er);
         return { status: 500, reason: "chat_create_failed", content: { error: er } };
     }
 
     await context.adapters.supabase.chats.saveChat(chatId, payload.issue.title, payload.issue.node_id);
+
+    try {
+
+        const chatInviteLink = await mtProto.client.invoke(
+            new mtProto.api.messages.ExportChatInvite({
+                peer: await mtProto.client.getEntity(payload.issue.title)
+            })
+        );
+
+        const [owner, repo] = payload.repository.full_name.split("/");
+
+        let link;
+
+        if ("link" in chatInviteLink) {
+            link = chatInviteLink.link;
+        }
+
+        await addCommentToIssue(context, `Workroom has been created for this task. [Join chat](${link})`, owner, repo, payload.issue.number);
+    } catch (err) {
+        console.log("Error in creating chat invite link: ", err);
+        return { status: 500, reason: "chat_create_failed", content: { error: err } };
+    }
+
     return { status: 200, reason: "chat_created" };
 }
 
