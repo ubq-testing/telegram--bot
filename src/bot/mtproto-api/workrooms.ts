@@ -19,7 +19,20 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
             })
         );
 
-        console.log("Chat created: ", chat);
+        console.log("Chat created: ", chat.updates);
+        /**
+         * updates: {
+    CONSTRUCTOR_ID: 1957577280,
+    SUBCLASS_OF_ID: 2331323052,
+    className: 'Updates',
+    classType: 'constructor',
+    updates: [ [Object], [Object], [Object], [Object] ],
+    users: [ [Object] ],
+    chats: [ [Object] ],
+    date: 1725806466,
+    seq: 0
+  },
+         */
 
         // await context.adapters.supabase.chats.saveChat(chatId, payload.issue.title, payload.issue.node_id);
 
