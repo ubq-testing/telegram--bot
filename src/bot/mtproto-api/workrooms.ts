@@ -1,5 +1,6 @@
 import { Context, SupportedEvents } from "#root/types/context";
 import { CallbackResult } from "#root/types/proxy.js";
+import bigInt from "big-integer";
 import { MtProto } from "./bot/mtproto";
 
 export async function createChat(context: Context<"issues.labeled", SupportedEvents["issues.labeled"]>): Promise<CallbackResult> {
@@ -37,8 +38,7 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
         await mtProto.client.invoke(
             new mtProto.api.messages.AddChatUser({
                 chatId: chatIdBigInt,
-                userId: botId,
-                fwdLimit: 50,
+                userId: bigInt(botId)
             })
         );
 
