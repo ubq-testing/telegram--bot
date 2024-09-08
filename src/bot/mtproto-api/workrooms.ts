@@ -9,10 +9,16 @@ function isPriceLabelChange(label: string): boolean {
 }
 
 export async function createChat(context: Context<"issues.labeled", SupportedEvents["issues.labeled"]>): Promise<CallbackResult> {
-    const { payload, config, env } = context;
+    const { payload, config, adapters: { supabase: { chats } } } = context;
     const chatName = payload.issue.title;
-
     const labelName = payload.label?.name;
+    const { issue: { title, node_id } } = payload;
+
+    const chat = await chats.getChatByTaskNodeId(node_id);
+
+    if (chat) {
+        return { status: 200, reason: "chat_exists" };
+    }
 
     if (!labelName || !isPriceLabelChange(labelName)) {
         return { status: 200, reason: "skipped" };
@@ -56,7 +62,7 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
         return { status: 500, reason: "chat_create_failed", content: { error: er } };
     }
 
-    await context.adapters.supabase.chats.saveChat(chatId, payload.issue.title, payload.issue.node_id);
+    await chats.saveChat(chatId, title, node_id);
     return { status: 200, reason: "chat_created" };
 }
 
