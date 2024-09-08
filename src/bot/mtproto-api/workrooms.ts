@@ -45,23 +45,10 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
     }
 
     try {
-
-        const dialogs = await mtProto.client.invoke(new mtProto.api.messages.GetDialogs({ limit: 100 }));
-
-        let bot;
-        if ("users" in dialogs) {
-            const users = dialogs.users;
-            bot = users.find((user) => user.id === config.botId);
-
-            if (!bot) {
-                throw new Error("Bot not found in users list");
-            }
-        }
-
         await mtProto.client.invoke(
             new mtProto.api.messages.AddChatUser({
                 chatId: chatIdBigInt,
-                userId: bot?.id,
+                userId: config.botId,
                 fwdLimit: 50,
             })
         );
