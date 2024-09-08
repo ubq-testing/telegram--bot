@@ -20,6 +20,22 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
             })
         );
 
+        const chatInfo = chat.toJSON().updates.toJSON()
+
+        if (!chatInfo) {
+            throw new Error("Failed to create chat");
+        }
+
+        let chatId;
+
+        if ("id" in chatInfo) {
+            chatId = chatInfo.id;
+        } else {
+            throw new Error("Failed to create chat");
+        }
+
+        await context.adapters.supabase.chats.saveChat(chatId, payload.issue.title, payload.issue.node_id);
+
         return { status: 200, reason: "chat_created" };
     } catch (er) {
         context.logger.error("Failed to create chat", { er });
