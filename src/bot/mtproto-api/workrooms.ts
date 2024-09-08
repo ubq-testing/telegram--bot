@@ -19,7 +19,10 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
             })
         );
 
-        console.log("Chat created: ", chat.updates);
+        console.log("Chat created: ", chat.updates.chats);
+
+        console.log("Chat ID created: ", chat.updates.chats[0].id);
+
         /**
          * updates: {
     CONSTRUCTOR_ID: 1957577280,
