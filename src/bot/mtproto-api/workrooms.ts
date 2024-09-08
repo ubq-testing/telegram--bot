@@ -19,6 +19,8 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
             })
         );
 
+        console.log("Chat created: ", chat);
+
         // await context.adapters.supabase.chats.saveChat(chatId, payload.issue.title, payload.issue.node_id);
 
         return { status: 200, reason: "chat_created" };
