@@ -26,7 +26,6 @@ jobs:
       SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
       
       BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-      BOT_MODE: ${{ secrets.BOT_MODE }}
       BOT_ADMINS: ${{ secrets.BOT_ADMINS }}
       BOT_WEBHOOK: ${{ secrets.BOT_WEBHOOK }}
       BOT_WEBHOOK_SECRET: ${{ secrets.BOT_WEBHOOK_SECRET }}
@@ -34,8 +33,8 @@ jobs:
       TELEGRAM_APP_ID: ${{ secrets.TELEGRAM_APP_ID }}
       TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
 
-      LOG_LEVEL: ${{ secrets.LOG_LEVEL }}
-      DEBUG: ${{ secrets.DEBUG }}
+      APP_ID: ${{ secrets.APP_ID }}
+      APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
 
     steps:
       - uses: actions/checkout@v4
@@ -56,7 +55,6 @@ jobs:
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
 
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-          BOT_MODE: ${{ secrets.BOT_MODE }}
           BOT_ADMINS: ${{ secrets.BOT_ADMINS }}
           BOT_WEBHOOK: ${{ secrets.BOT_WEBHOOK }}
           BOT_WEBHOOK_SECRET: ${{ secrets.BOT_WEBHOOK_SECRET }}
@@ -64,5 +62,5 @@ jobs:
           TELEGRAM_APP_ID: ${{ secrets.TELEGRAM_APP_ID }}
           TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
 
-          LOG_LEVEL: ${{ secrets.LOG_LEVEL }}
-          DEBUG: ${{ secrets.DEBUG }}
+          APP_ID: ${{ secrets.APP_ID }}
+          APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
