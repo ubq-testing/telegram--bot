@@ -25,8 +25,7 @@
     "dev": "tsc-watch --onSuccess \"tsx ./src/main.ts\"",
     "start": "tsx ./src/main.ts",
     "deploy": "wrangler deploy --minify src/main.ts",
-    "sms-auth": "npx tsx src/workflow-functions/bot/scripts/sms-auth.ts",
-    "user-auth": "npx tsx src/workflow-functions/bot/scripts/user-auth.ts"
+    "sms-auth": "npx tsx src/bot/mtproto-api/bot/scripts/sms-auth/sms-auth.ts"
   },
   "keywords": [
     "typescript",
