@@ -1,4 +1,4 @@
-import { createChat } from "#root/bot/workflow-functions/create-chat.js";
+import { createChat } from "#root/bot/mtproto-api/workrooms.js";
 import { ProxyCallbacks } from "#root/types/proxy.js";
 import { Context, SupportedEventsU } from "../types";
 import { closeWorkroom, createWorkroom, reOpenWorkroom } from "./github/workrooms";
@@ -40,6 +40,12 @@ const callbacks = {
 const workflowCallbacks = {
     "issues.labeled": [
         createChat
+    ],
+    "issues.closed": [
+        closeChat
+    ],
+    "issues.reopened": [
+        reopenChat
     ]
 } as ProxyCallbacks;
 
