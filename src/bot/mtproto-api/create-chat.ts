@@ -4,7 +4,7 @@ import { MtProto } from "./bot/mtproto";
 
 export async function createChat(context: Context<"issues.labeled", SupportedEvents["issues.labeled"]>): Promise<CallbackResult> {
     try {
-        const { payload, env } = context;
+        const { payload, env, config } = context;
         const chatName = payload.issue.title;
 
         const mtProto = new MtProto(context);
@@ -14,7 +14,7 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
         await mtProto.client.invoke(
             new mtProto.api.messages.CreateChat({
                 title: chatName,
-                users: [...env.BOT_ADMINS,],
+                users: [...env.BOT_ADMINS, config.botId],
             })
         );
 
