@@ -1,4 +1,4 @@
-import { createChat } from "#root/bot/mtproto-api/workrooms.js";
+import { closeChat, createChat, reopenChat } from "#root/bot/mtproto-api/workrooms.js";
 import { ProxyCallbacks } from "#root/types/proxy.js";
 import { Context, SupportedEventsU } from "../types";
 import { closeWorkroom, createWorkroom, reOpenWorkroom } from "./github/workrooms";

@@ -7,11 +7,6 @@ import { Context } from "../types";
  * 
  * These workflows are extensions of the worker allowing for more complex operations
  * to be performed outside of Cloudflare Workers' limitations.
- * 
- * @param env The environment variables for the worker instance. These
- *        will be taken from the repository's secrets.
- * @param args The arguments passed to the workflow.
- * 
  */
 
 export async function repositoryDispatch(context: Context, workflow: string) {

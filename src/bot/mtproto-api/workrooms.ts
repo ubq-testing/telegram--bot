@@ -1,5 +1,6 @@
 import { Context, SupportedEvents } from "#root/types/context";
 import { CallbackResult } from "#root/types/proxy.js";
+import { Api } from "telegram";
 import { MtProto } from "./bot/mtproto";
 
 export async function createChat(context: Context<"issues.labeled", SupportedEvents["issues.labeled"]>): Promise<CallbackResult> {
@@ -28,20 +29,50 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
 
 export async function closeChat(context: Context<"issues.closed", SupportedEvents["issues.closed"]>): Promise<CallbackResult> {
     try {
-        const { payload, env, config } = context;
+        const { payload, adapters: { supabase: { chats } } } = context;
         const chatName = payload.issue.title;
 
         const mtProto = new MtProto(context);
         await mtProto.initialize();
 
         context.logger.info("Closing chat with name: ", { chatName });
+        const chat = await chats.getChatByTaskNodeId(payload.issue.node_id);
 
-        const chatMembers = await mtProto.client.invoke(
+        const fetchChat = await mtProto.client.invoke(
             new mtProto.api.messages.GetFullChat({
-                chatId: payload.issue.number,
+                chatId: chat.chatId,
             })
         );
 
+        let chatParticipants;
+
+        if ("participants" in fetchChat.fullChat) {
+            chatParticipants = fetchChat.fullChat.participants;
+        } else {
+            throw new Error("Failed to fetch chat participants");
+        }
+
+        if (chatParticipants.className === "ChatParticipantsForbidden") {
+            console.log("ChatParticipantsForbidden");
+        }
+
+        if (chatParticipants.className === "ChatParticipants") {
+            const userIDs = chatParticipants.participants.map((participant) => {
+                return participant.userId;
+            });
+
+            for (let i = 0; i < userIDs.length; i++) {
+                if (userIDs[i].toJSNumber() === context.config.botId) {
+                    continue;
+                }
+                await mtProto.client.invoke(
+                    new mtProto.api.messages.DeleteChatUser({
+                        chatId: chat.chatId,
+                        userId: userIDs[i],
+                    })
+                );
+            }
+        }
 
 
 
@@ -59,13 +90,6 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
 
         const mtProto = new MtProto(context);
         await mtProto.initialize();
-
-        context.logger.info("Reopening chat with name: ", { chatName });
-        await mtProto.client.invoke(
-            new mtProto.api.messages.RestoreChat({
-                chatId: payload.issue.number,
-            })
-        );
 
         return { status: 200, reason: "chat_reopened" };
     } catch (er) {
