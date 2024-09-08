@@ -8,7 +8,7 @@ function isPriceLabelChange(label: string): boolean {
 }
 
 export async function createChat(context: Context<"issues.labeled", SupportedEvents["issues.labeled"]>): Promise<CallbackResult> {
-    const { payload, config } = context;
+    const { payload, config, env } = context;
     const chatName = payload.issue.title;
 
     const labelName = payload.label?.name;
@@ -45,12 +45,26 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
     }
 
     try {
-        const botEntity = await mtProto.client.getEntity(config.botUsername);
+
+        const bot = await mtProto.client.invoke(
+            new mtProto.api.auth.ImportBotAuthorization({
+                apiId: env.TELEGRAM_APP_ID,
+                apiHash: env.TELEGRAM_API_HASH,
+                botAuthToken: env.BOT_TOKEN,
+            })
+        );
+
+        let botId;
+
+        if (bot.className === "auth.Authorization") {
+            console.log("auth.Authorization");
+            botId = bot.user.id;
+        }
 
         await mtProto.client.invoke(
             new mtProto.api.messages.AddChatUser({
                 chatId: chatIdBigInt,
-                userId: botEntity,
+                userId: botId,
                 fwdLimit: 50,
             })
         );
