@@ -4,15 +4,16 @@ import bigInt from "big-integer";
 import { MtProto } from "./bot/mtproto";
 
 export async function createChat(context: Context<"issues.labeled", SupportedEvents["issues.labeled"]>): Promise<CallbackResult> {
+    const { payload, env, config } = context;
+    const chatName = payload.issue.title;
+
+    const mtProto = new MtProto(context);
+    await mtProto.initialize();
+    let chatId: number;
+    let chatIdBigInt: bigInt.BigInteger;
+
+    context.logger.info("Creating chat with name: ", { chatName });
     try {
-        const { payload, env, config } = context;
-        const chatName = payload.issue.title;
-
-        const mtProto = new MtProto(context);
-        await mtProto.initialize();
-
-        context.logger.info("Creating chat with name: ", { chatName });
-
         const chat = await mtProto.client.invoke(
             new mtProto.api.messages.CreateChat({
                 title: chatName,
@@ -20,8 +21,7 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
             })
         );
 
-        let chatId: number;
-        let chatIdBigInt: bigInt.BigInteger;
+
 
         if ("chats" in chat.updates) {
             chatId = chat.updates.chats[0].id.toJSNumber();
@@ -31,22 +31,25 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
         }
 
         await context.adapters.supabase.chats.saveChat(chatId, payload.issue.title, payload.issue.node_id);
+    } catch (er) {
+        context.logger.error("Failed to create chat", { er });
+        return { status: 500, reason: "chat_create_failed", content: { error: er } };
+    }
 
-
+    try {
         const botId = config.botId;
-
         await mtProto.client.invoke(
             new mtProto.api.messages.AddChatUser({
                 chatId: chatIdBigInt,
-                userId: bigInt(botId)
+                userId: bigInt(botId),
+                fwdLimit: 50,
             })
         );
-
-        return { status: 200, reason: "chat_created" };
     } catch (er) {
-        context.logger.error("Failed to create chat", { er });
-        return { status: 500, reason: "chat_creation_failed", content: { error: er } };
+        console.log(er);
+        throw new Error(`Failed to add bot to chat: ${JSON.stringify(er)}`);
     }
+
 }
 
 export async function closeChat(context: Context<"issues.closed", SupportedEvents["issues.closed"]>): Promise<CallbackResult> {
