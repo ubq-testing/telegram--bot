@@ -230,14 +230,12 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
 
         const { userIds } = users;
 
-        console.log("userIds", userIds);
-
         for (let i = 0; i < userIds.length; i++) {
             if (userIds[i] === context.config.botId) {
                 continue;
             }
 
-            const user = await mtProto.client.getEntity(userIds[i].userId);
+            const user = await mtProto.client.getEntity(userIds[i]);
             await mtProto.client.invoke(
                 new mtProto.api.messages.AddChatUser({
                     chatId: chat.chatId,
