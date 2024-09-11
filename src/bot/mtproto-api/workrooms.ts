@@ -175,33 +175,46 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
         throw new Error("Failed to get chatId-peer");
     }
 
-    try {
-        const editDefaultBanRights = await mtProto.client.invoke(
-            new mtProto.api.messages.EditChatDefaultBannedRights({
-                bannedRights: new mtProto.api.ChatBannedRights({
-                    viewMessages: false,
-                    sendMessages: false,
-                    sendMedia: false,
-                    sendStickers: false,
-                    sendGifs: false,
-                    sendGames: true,
-                    sendInline: false,
-                    embedLinks: false,
-                    sendPolls: false,
-                    changeInfo: true,
-                    inviteUsers: false,
-                    pinMessages: true,
-                    untilDate: 0, // forever
-                }),
-                peer
-            })
-        );
-    } catch (er) {
-        console.error("editDefaultBanRights error", er);
-        throw new Error("Failed to editDefaultBanRights");
-    }
+    /**
+     *     editDefaultBanRights = await mtProto.client.invoke(
+        new mtProto.api.messages.EditChatDefaultBannedRights({
+            bannedRights: new mtProto.api.ChatBannedRights({
+                viewMessages: false,
+                sendMessages: false,
+                sendMedia: false,
+                sendStickers: false,
+                sendGifs: false,
+                sendGames: true,
+                sendInline: false,
+                embedLinks: false,
+                sendPolls: false,
+                changeInfo: true,
+                inviteUsers: false,
+                pinMessages: true,
+                untilDate: 0, // forever
+            }),
+            peer: await mtProto.client.getEntity(participants.selfParticipant?.userId),
+        })
+    );
+
+     */
 
     try {
+
+        const chatCreator = participants.selfParticipant?.userId;
+
+        if (!chatCreator) {
+            throw new Error("Failed to get chat creator");
+        }
+
+        await mtProto.client.invoke(
+            new mtProto.api.messages.EditChatAdmin({
+                chatId,
+                isAdmin: true,
+                userId: chatCreator,
+            })
+        );
+
         await mtProto.client.invoke(
             new mtProto.api.messages.AddChatUser({
                 chatId: chat.chatId,
