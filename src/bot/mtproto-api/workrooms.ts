@@ -209,7 +209,7 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
 
         await mtProto.client.invoke(
             new mtProto.api.messages.EditChatAdmin({
-                chatId,
+                chatId: chat.chatId,
                 isAdmin: true,
                 userId: chatCreator,
             })
