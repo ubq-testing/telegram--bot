@@ -1,7 +1,7 @@
 {
-  "name": "telegram-bot",
+  "name": "@ubiquity-os/telegram-bot",
   "version": "0.1.0",
-  "description": "Ubiquibot plugin template repository with TypeScript support.",
+  "description": "Part kernel plugin, part Telegram kernel. This bot is designed to be a bridge between UbiquityOS and Telegram.",
   "author": "Ubiquity DAO",
   "license": "MIT",
   "main": "src/worker.ts",

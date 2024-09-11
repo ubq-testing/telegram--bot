@@ -11,21 +11,16 @@ export interface PluginInputs<T extends SupportedEventsU = SupportedEventsU, TU 
   ref: string;
 }
 
-/**
- * This should contain the properties of the bot config
- * that are required for the plugin to function.
- *
- * The kernel will extract those and pass them to the plugin,
- * which are built into the context object from setup().
- */
 export const pluginSettingsSchema = T.Object({
   /**
-   * ID of the supergroup where new workrooms will be created.
-   * The bot must be an admin and have rights to manage topics.
+   * The bot ID, NOT the ID of the personal account.
    */
-  supergroupChatId: T.Integer(),
-  supergroupChatName: T.String(),
-  botId: T.Transform(T.Unknown()).Decode((value) => Number(value)).Encode((value) => value.toString()),
+  botId: T.Transform(T.Unknown())
+    .Decode((value) => Number(value))
+    .Encode((value) => value.toString()),
+  /**
+   * The bot username, NOT the username of the personal account.
+   */
   botUsername: T.String(),
 });
 

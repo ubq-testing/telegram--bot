@@ -5,11 +5,7 @@ import { PluginSettings } from "./plugin-inputs";
 import { Logs } from "@ubiquity-dao/ubiquibot-logger";
 import { createAdapters } from "../adapters";
 
-/**
- * If we let this run on all events it'll be easier to handle multiple
- * "plugins" in the future.
- */
-export type SupportedEventsU = WebhookEventName
+export type SupportedEventsU = WebhookEventName;
 
 export type SupportedEvents = {
   [K in SupportedEventsU]: K extends WebhookEventName ? WebhookEvent<K> : never;

@@ -5,6 +5,12 @@ import { Logs } from "@ubiquity-dao/ubiquibot-logger";
 import { createAdapters } from "../adapters";
 import { createClient } from "@supabase/supabase-js";
 
+/**
+ * Singleton for the plugin context making accessing it throughout
+ * the "two branches" of the codebase easier.
+ *
+ * This is used with both the worker and the workflows.
+ */
 export class PluginContext {
   private static _instance: PluginContext;
 

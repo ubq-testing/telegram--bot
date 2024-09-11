@@ -1,7 +1,6 @@
-import { closeChat, createChat, reopenChat } from "#root/bot/mtproto-api/workrooms.js";
 import { ProxyCallbacks } from "#root/types/proxy.js";
 import { Context, SupportedEventsU } from "../types";
-import { closeWorkroom, createWorkroom, reOpenWorkroom } from "./github/workrooms";
+import { closeWorkroom, createWorkroom, reOpenWorkroom } from "./workflow-functions";
 
 /**
  * The `callbacks` object defines an array of callback functions for each supported event type.
@@ -14,26 +13,6 @@ const callbacks = {
   "issues.labeled": [createWorkroom],
   "issues.closed": [closeWorkroom],
   "issues.reopened": [reOpenWorkroom],
-} as ProxyCallbacks;
-
-/**
- * These are function which get dispatched by this worker to fire off workflows
- * in the repository. We enter through the main `compute.yml` just like a typical
- * action plugin would, we forward the same payload that the worker received to
- * the workflow the same way that the kernel does.
- *
- * - First event fires, `issues.labeled` and the worker catches it.
- * - The worker then dispatches a workflow to `compute.yml` with the event name as the input.
- * - The workflow receives a `issues.labeled` payload but eventName is now WorkflowFunction (`create-telegram-chat`).
- * - The workflow then runs the `createChat` function which needs a node env to run.
- *
- * I.e we're essentially running the first dual action/worker plugin which is
- * ideal for telegram-bot as it's a bot that needs to be able to be super flexible.
- */
-const workflowCallbacks = {
-  "issues.labeled": [createChat],
-  "issues.closed": [closeChat],
-  "issues.reopened": [reopenChat],
 } as ProxyCallbacks;
 
 /**
@@ -71,26 +50,6 @@ export function proxyCallbacks(context: Context): ProxyCallbacks {
   });
 }
 
-export function proxyWorkflowCallbacks(context: Context): ProxyCallbacks {
-  return new Proxy(workflowCallbacks, {
-    get(target, prop: SupportedEventsU) {
-      if (!target[prop]) {
-        context.logger.info(`No callbacks found for event ${prop}`);
-        return { status: 204, reason: "skipped" };
-      }
-      return (async () => {
-        try {
-          await Promise.all(target[prop].map((callback) => handleCallback(callback, context)));
-        } catch (er) {
-          context.logger.error(`Failed to handle event ${prop}`, { er });
-          await exit(1);
-        }
-        await exit(0);
-      })();
-    },
-  });
-}
-
 /**
  * Why do we need this wrapper function?
  *
@@ -103,16 +62,6 @@ export function proxyWorkflowCallbacks(context: Context): ProxyCallbacks {
  * flexible way to handle callbacks without introducing type or logic errors.
  */
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-function handleCallback(callback: Function, context: Context) {
+export function handleCallback(callback: Function, context: Context) {
   return callback(context);
-}
-
-/**
- * Will be used to exit the process with a status code.
- *
- * 0 - Success
- * 1 - Failure
- */
-async function exit(status: number = 0) {
-  process.exit(status);
 }

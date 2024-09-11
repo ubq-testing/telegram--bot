@@ -2,14 +2,14 @@ import * as core from "@actions/core";
 import * as github from "@actions/github";
 import { Value } from "@sinclair/typebox/value";
 import { envValidator, pluginSettingsSchema, PluginInputs, pluginSettingsValidator } from "./types";
-import { PluginContext } from "./utils/plugin-context-single";
-import { proxyWorkflowCallbacks } from "./handlers/callbacks-proxy";
+import { PluginContext } from "./types/plugin-context-single";
 import { bubbleUpErrorComment } from "./utils/errors";
 import dotenv from "dotenv";
+import { proxyWorkflowCallbacks } from "./handlers/workflow-proxy";
 dotenv.config();
 
 /**
- * How a GitHub action executes the plugin.
+ * Main entry point for the workflow functions
  */
 export async function run() {
   const payload = github.context.payload.inputs;
@@ -30,7 +30,7 @@ export async function run() {
     SUPABASE_SERVICE_KEY: process.env.SUPABASE_SERVICE_KEY,
     APP_PRIVATE_KEY: process.env.APP_PRIVATE_KEY,
     APP_ID: process.env.APP_ID,
-  }
+  };
 
   try {
     env = Value.Decode(envValidator.schema, payloadEnv);
@@ -68,7 +68,7 @@ export async function run() {
   try {
     return proxyWorkflowCallbacks(context)[inputs.eventName];
   } catch (err) {
-    return bubbleUpErrorComment(context, err)
+    return bubbleUpErrorComment(context, err);
   }
 }
 

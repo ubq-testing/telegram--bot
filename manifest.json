@@ -1,10 +1,5 @@
 {
-  "name": "ts-template",
-  "description": "ts-template for Ubiquibot plugins.",
-  "ubiquity:listeners": [
-    "issues.opened",
-    "issues.labeled",
-    "issues.closed",
-    "issues.reopened"
-  ]
+  "name": "ubiquity-os/telegram-bot",
+  "description": "Part kernel plugin, part Telegram kernel. This bot is designed to be a bridge between UbiquityOS and Telegram.",
+  "ubiquity:listeners": ["issues.opened", "issues.labeled", "issues.closed", "issues.reopened"]
 }

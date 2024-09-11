@@ -6,22 +6,23 @@ export function isIssueOpenedEvent(context: Context): context is Context<"issues
   return context.eventName === "issues.opened";
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isTelegramPayload(payload: any): payload is Update {
   try {
     return payload.update_id !== undefined;
-  } catch (e) {
+  } catch {
     return false;
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isGithubPayload(inputs: any): inputs is PluginInputs {
   try {
-    return inputs.eventName !== undefined
-  } catch (e) {
+    return inputs.eventName !== undefined;
+  } catch {
     return false;
   }
 }
-
 
 export function isIssueLabeledEvent(context: Context): context is Context<"issues.labeled"> {
   return context.eventName === "issues.labeled";

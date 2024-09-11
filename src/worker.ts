@@ -1,11 +1,11 @@
-import { Env, envValidator, PluginInputs } from "./types";
+import { Env, envValidator } from "./types";
 import { isGithubPayload, isTelegramPayload } from "./types/typeguards";
 import { handleGithubWebhook } from "./handlers/github-webhook";
 import { handleTelegramWebhook } from "./handlers/telegram-webhook";
 import manifest from "../manifest.json";
 import { handleUncaughtError } from "./utils/errors";
-import { TelegramBotSingleton } from "./utils/telegram-bot-single";
-import { PluginContext } from "./utils/plugin-context-single";
+import { TelegramBotSingleton } from "./types/telegram-bot-single";
+import { PluginContext } from "./types/plugin-context-single";
 import { Value } from "@sinclair/typebox/value";
 
 export default {
@@ -37,7 +37,7 @@ export default {
     try {
       payload = await request.clone().json();
     } catch (err) {
-      return new Response(JSON.stringify({ error: "Invalid JSON payload" }), {
+      return new Response(JSON.stringify({ error: "Invalid JSON payload", err }), {
         status: 400,
         headers: { "content-type": "application/json" },
       });
@@ -57,10 +57,12 @@ export default {
       });
     }
 
-    TelegramBotSingleton.initialize(env);
+    // inits the worker with the telegram bot
+    await TelegramBotSingleton.initialize(env);
 
     try {
       if (isGithubPayload(payload)) {
+        // inits the worker with the plugin context for this call
         PluginContext.initialize(payload, env);
         await handleGithubWebhook(request, env);
       } else if (isTelegramPayload(payload)) {
@@ -81,4 +83,3 @@ export default {
     }
   },
 };
-
