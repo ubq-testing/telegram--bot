@@ -146,7 +146,7 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
     const { payload, adapters: { supabase: { chats } }, logger } = context;
 
     let chatFull: Api.ChatFull;
-    let participants: Api.ChatParticipants;
+    let participants: Api.ChatParticipantsForbidden;
     const mtProto = new MtProto(context);
     await mtProto.initialize();
 
@@ -164,7 +164,7 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
     }
 
     chatFull = fetchChat.fullChat as Api.ChatFull
-    participants = chatFull.participants as Api.ChatParticipants;
+    participants = chatFull.participants as Api.ChatParticipantsForbidden;
 
     console.log("Chat: ", chatFull);
     console.log("Participants: ", participants);
@@ -178,16 +178,16 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
                     sendMedia: true,
                     sendStickers: true,
                     sendGifs: true,
-                    sendGames: true,
+                    sendGames: false,
                     sendInline: true,
                     embedLinks: true,
                     sendPolls: true,
-                    changeInfo: true,
+                    changeInfo: false,
                     inviteUsers: true,
-                    pinMessages: true,
+                    pinMessages: false,
                     untilDate: 0,
                 }),
-                peer: new mtProto.api.InputPeerChat({ chatId: chat.chatId }),
+                peer: fetchChat,
             })
         );
 
@@ -197,27 +197,21 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
 
     } catch (er) {
         console.error(`Error in reopening chat: ${er}`);
-
+        throw new Error("Failed to edit default ban rights");
     }
 
     try {
-        for (const participant of participants.participants) {
-            if (participant instanceof mtProto.api.ChatParticipant) {
-                await mtProto.client.invoke(
-                    new mtProto.api.messages.AddChatUser({
-                        chatId: chat.chatId,
-                        userId: participant.userId,
-                        fwdLimit: 50,
-                    })
-                );
-            }
-        }
-
-        return { status: 200, reason: "chat_reopened" };
+        await mtProto.client.invoke(
+            new mtProto.api.messages.AddChatUser({
+                chatId: chat.chatId,
+                userId: participants.selfParticipant?.userId,
+                fwdLimit: 50,
+            })
+        );
     } catch (er) {
-        console.log(er);
-        logger.error("Failed to reopen chat", { er });
-        return { status: 500, reason: "chat_reopen_failed", content: { error: er } };
+        console.error(`Error in reopening chat: ${er}`);
+        throw new Error("Failed to add user to chat");
     }
 
+    return { status: 200, reason: "chat_reopened" };
 }
