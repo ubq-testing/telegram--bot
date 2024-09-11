@@ -153,7 +153,6 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
                 if (userIDs[i].toJSNumber() === context.config.botId) {
                     continue;
                 }
-
                 await mtProto.client.invoke(
                     new mtProto.api.messages.DeleteChatUser({
                         revokeHistory: false,
@@ -171,7 +170,6 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
         return { status: 500, reason: "chat_close_failed", content: { error: er } };
     }
 }
-
 
 export async function reopenChat(context: Context<"issues.reopened", SupportedEvents["issues.reopened"]>): Promise<CallbackResult> {
     const { payload, adapters: { supabase: { chats } }, logger } = context;
@@ -194,20 +192,14 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
         throw new Error("Failed to fetch chat");
     }
 
-    // unarchive
-    try {
-        await mtProto.client.invoke(
-            new mtProto.api.folders.EditPeerFolders({
-                folderPeers: [new mtProto.api.InputFolderPeer({
-                    peer: new mtProto.api.InputPeerChat({ chatId: chat.chatId }),
-                    folderId: 0,
-                })],
-            })
-        );
-    } catch (er) {
-        logger.error("Failed to unarchive chat", { er });
-        return { status: 500, reason: "chat_unarchive_failed", content: { error: er, function: reopenChat } };
-    }
+    await mtProto.client.invoke(
+        new mtProto.api.folders.EditPeerFolders({
+            folderPeers: [new mtProto.api.InputFolderPeer({
+                peer: new mtProto.api.InputPeerChat({ chatId: chat.chatId }),
+                folderId: 0,
+            })],
+        })
+    );
 
     chatFull = fetchChat.fullChat as Api.ChatFull
     participants = chatFull.participants as Api.ChatParticipantsForbidden;
@@ -225,8 +217,6 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
         })
     );
 
-
-
     await chats.updateChatStatus("reopened", payload.issue.node_id);
     const users = await chats.getChatUsers(chat.chatId);
     if (!users) {
@@ -237,6 +227,7 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
     const chatInput = await mtProto.client.getInputEntity(chat.chatId);
 
     for (let i = 0; i < userIds.length; i++) {
+        await mtProto.client.getDialogs();
         try {
             if (userIds[i] === context.config.botId || userIds[i] === chatCreator.toJSNumber()) {
                 continue;
@@ -249,6 +240,7 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
                     fwdLimit: 50,
                 })
             );
+
         } catch (er) {
             logger.error("Failed to add chat users", { er });
         }
