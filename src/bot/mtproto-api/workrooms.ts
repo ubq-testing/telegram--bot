@@ -11,7 +11,7 @@ function isPriceLabelChange(label: string): boolean {
 
 export async function createChat(context: Context<"issues.labeled", SupportedEvents["issues.labeled"]>): Promise<CallbackResult> {
     const { payload, config, logger } = context;
-    const chatName = payload.repository.full_name + "#" + payload.issue.number;
+    const chatName = "@" + payload.repository.full_name + "#" + payload.issue.number;
 
     const labelName = payload.label?.name;
 

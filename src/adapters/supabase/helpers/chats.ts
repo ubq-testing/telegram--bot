@@ -18,7 +18,8 @@ export class Chats extends Super {
     }
 
     async userSnapshot(chatId: number, userIds: number[]) {
-        const { error } = await this.supabase.from("chats").upsert({ chatId, userIds })
+        const chat = await this.getChatByChatId(chatId);
+        const { error } = await this.supabase.from("chats").upsert({ ...chat, userIds })
         if (error) {
             this.context.logger.error("Failed to save chat users", { chatId, userIds, er: error });
         } else {
