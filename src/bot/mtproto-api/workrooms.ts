@@ -187,7 +187,7 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
                     pinMessages: false,
                     untilDate: 0,
                 }),
-                peer: fetchChat,
+                peer: await mtProto.client.getPeerId(fetchChat.fullChat.id, true),
             })
         );
 
