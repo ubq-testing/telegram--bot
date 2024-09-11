@@ -3,6 +3,7 @@ import { CallbackResult } from "#root/types/proxy.js";
 import { MtProto } from "./bot/mtproto";
 import { Api } from "telegram";
 import { addCommentToIssue } from "#root/helpers/add-comment-to-issues.js";
+import bigInt from "big-integer";
 
 function isPriceLabelChange(label: string): boolean {
     return label.toLowerCase().includes("price");
@@ -21,6 +22,7 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
     const mtProto = new MtProto(context);
     await mtProto.initialize();
     let chatId: number;
+    let chatIdBigInt: bigInt.BigInteger = bigInt(0);
     logger.info("Creating chat with name: ", { chatName });
 
     try {
@@ -32,10 +34,12 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
                 users: [botIdString],
             })
         );
+
         let inviteLink;
 
         if ("chats" in chat.updates) {
             chatId = chat.updates.chats[0].id.toJSNumber();
+            chatIdBigInt = chat.updates.chats[0].id;
         } else {
             throw new Error("Failed to create chat");
         }
@@ -43,7 +47,7 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
         if (chat.updates.chats[0].className === "Chat") {
             inviteLink = await mtProto.client.invoke(
                 new mtProto.api.messages.ExportChatInvite({
-                    peer: new mtProto.api.InputPeerChat({ chatId: chat.updates.chats[0].id }),
+                    peer: new mtProto.api.InputPeerChat({ chatId: chatIdBigInt }),
                 })
             );
         }
@@ -61,7 +65,7 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
 
         const promoteBotToAdmin = await mtProto.client.invoke(
             new mtProto.api.messages.EditChatAdmin({
-                chatId: chat.updates.chats[0].id,
+                chatId: chatIdBigInt,
                 isAdmin: true,
                 userId: botIdString,
             })
@@ -70,6 +74,29 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
         if (!promoteBotToAdmin) {
             throw new Error("Failed to promote bot to admin");
         }
+
+        // edit ban rights
+        await mtProto.client.invoke(
+            new mtProto.api.messages.EditChatDefaultBannedRights({
+                bannedRights: new mtProto.api.ChatBannedRights({
+                    // if set it does not allow
+                    viewMessages: false,
+                    sendMessages: false,
+                    sendMedia: false,
+                    sendStickers: false,
+                    sendGifs: false,
+                    sendGames: true,
+                    sendInline: false,
+                    embedLinks: false,
+                    sendPolls: false,
+                    changeInfo: true,
+                    inviteUsers: true,
+                    pinMessages: true,
+                    untilDate: 0, // forever
+                }),
+                peer: new mtProto.api.InputPeerChat({ chatId: chatIdBigInt })
+            })
+        );
     } catch (er) {
         logger.error("Error in creating chat: ", { er });
         return { status: 500, reason: "chat_create_failed", content: { error: er } };
@@ -106,9 +133,19 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
             throw new Error("Failed to fetch chat participants");
         }
 
+        // archive it
+        await mtProto.client.invoke(
+            new mtProto.api.folders.EditPeerFolders({
+                folderPeers: [new mtProto.api.InputFolderPeer({
+                    peer: new mtProto.api.InputPeerChat({ chatId: chat.chatId }),
+                    folderId: 1, // 0 is active, 1 is archived
+                })],
+            })
+        );
+
+        const { id: selfId } = await mtProto.client.getMe()
 
         if (chatParticipants.className === "ChatParticipants") {
-
             await mtProto.client.invoke(
                 new mtProto.api.messages.SendMessage({
                     message: "This task has been closed and this chat has been archived.",
@@ -121,7 +158,8 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
             });
 
             for (let i = 0; i < userIDs.length; i++) {
-                if (userIDs[i].toJSNumber() === context.config.botId) {
+                console.log("userIDs[i]: ", userIDs[i]);
+                if (userIDs[i].toJSNumber() === context.config.botId || userIDs[i] === selfId) {
                     continue;
                 }
                 await mtProto.client.invoke(
@@ -134,7 +172,6 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
         }
 
         await chats.updateChatStatus("closed", payload.issue.node_id);
-
         return { status: 200, reason: "chat_closed" };
     } catch (er) {
         logger.error("Failed to close chat", { er });
@@ -163,68 +200,60 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
         throw new Error("Failed to fetch chat");
     }
 
+    // unarchive
+    try {
+        await mtProto.client.invoke(
+            new mtProto.api.folders.EditPeerFolders({
+                folderPeers: [new mtProto.api.InputFolderPeer({
+                    peer: new mtProto.api.InputPeerChat({ chatId: chat.chatId }),
+                    folderId: 0,
+                })],
+            })
+        );
+    } catch (er) {
+        logger.error("Failed to unarchive chat", { er });
+        return { status: 500, reason: "chat_unarchive_failed", content: { error: er } };
+    }
+
+
     chatFull = fetchChat.fullChat as Api.ChatFull
     participants = chatFull.participants as Api.ChatParticipantsForbidden;
 
-    let chatId, peer, editDefaultBanRights;
-    try {
-        chatId = fetchChat.fullChat.id;
-        peer = new mtProto.api.InputPeerChat({ chatId });
-    } catch (er) {
-        console.error("chatId-peer error", er);
-        throw new Error("Failed to get chatId-peer");
-    }
 
-    /**
-     *     editDefaultBanRights = await mtProto.client.invoke(
-        new mtProto.api.messages.EditChatDefaultBannedRights({
-            bannedRights: new mtProto.api.ChatBannedRights({
-                viewMessages: false,
-                sendMessages: false,
-                sendMedia: false,
-                sendStickers: false,
-                sendGifs: false,
-                sendGames: true,
-                sendInline: false,
-                embedLinks: false,
-                sendPolls: false,
-                changeInfo: true,
-                inviteUsers: false,
-                pinMessages: true,
-                untilDate: 0, // forever
-            }),
-            peer: await mtProto.client.getEntity(participants.selfParticipant?.userId),
-        })
-    );
+    const chatId = fetchChat.fullChat.id;
+    const inputChatPeer = new mtProto.api.InputPeerChat({ chatId });
 
-     */
+    console.log("inputChatPeer: ", inputChatPeer)
+    console.log("fetched chat: ", fetchChat)
 
     try {
-
         const chatCreator = participants.selfParticipant?.userId;
-
         if (!chatCreator) {
             throw new Error("Failed to get chat creator");
         }
 
-        await mtProto.client.invoke(
-            new mtProto.api.messages.EditChatAdmin({
-                chatId: chat.chatId,
-                isAdmin: true,
-                userId: chatCreator,
-            })
-        );
+        if (participants.className === "ChatParticipantsForbidden") {
+            await mtProto.client.invoke(
+                new mtProto.api.messages.SendMessage({
+                    message: "This task has been reopened and this chat has been unarchived.",
+                    peer: inputChatPeer,
+                })
+            );
 
-        await mtProto.client.invoke(
-            new mtProto.api.messages.AddChatUser({
-                chatId: chat.chatId,
-                userId: participants.selfParticipant?.userId,
-                fwdLimit: 50,
-            })
-        );
+            const userID = participants.selfParticipant?.userId;
+            await mtProto.client.invoke(
+                new mtProto.api.messages.AddChatUser({
+                    chatId,
+                    userId: userID,
+                    fwdLimit: 50,
+                })
+            );
+        }
+
+        await chats.updateChatStatus("reopened", payload.issue.node_id);
+
         return { status: 200, reason: "chat_reopened" };
     } catch (er) {
-        console.log(er);
         logger.error("Failed to reopen chat", { er });
         return { status: 500, reason: "chat_reopen_failed", content: { error: er } };
     }
