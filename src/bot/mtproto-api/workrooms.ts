@@ -217,39 +217,28 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
         throw new Error("Failed to get chat creator");
     }
 
-    if (participants.className === "ChatParticipantsForbidden") {
-        const userID = participants.selfParticipant?.userId;
-        await mtProto.client.invoke(
-            new mtProto.api.messages.AddChatUser({
-                chatId: chat.chatId,
-                userId: userID,
-                fwdLimit: 50,
-            })
-        );
-    } else {
-        logger.error("Failed to get chat participants");
-        return { status: 500, reason: "chat_reopen_failed" };
-    }
-
     await mtProto.client.invoke(
-        new mtProto.api.messages.SendMessage({
-            message: "This task has been reopened and this chat has been unarchived.",
-            peer: new mtProto.api.InputPeerChat({ chatId: chat.chatId }),
+        new mtProto.api.messages.AddChatUser({
+            chatId: chat.chatId,
+            userId: chatCreator,
+            fwdLimit: 50,
         })
     );
 
+
+
     await chats.updateChatStatus("reopened", payload.issue.node_id);
+    const users = await chats.getChatUsers(chat.chatId);
+    if (!users) {
+        throw new Error("Failed to get chat users");
+    }
 
-    try {
-        const users = await chats.getChatUsers(chat.chatId);
-        if (!users) {
-            throw new Error("Failed to get chat users");
-        }
+    const { userIds } = users;
+    const chatInput = await mtProto.client.getInputEntity(chat.chatId);
 
-        const { userIds } = users;
-        const chatInput = await mtProto.client.getInputEntity(chat.chatId);
-        for (let i = 0; i < userIds.length; i++) {
-            if (userIds[i] === context.config.botId) {
+    for (let i = 0; i < userIds.length; i++) {
+        try {
+            if (userIds[i] === context.config.botId || userIds[i] === chatCreator.toJSNumber()) {
                 continue;
             }
 
@@ -260,11 +249,16 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
                     fwdLimit: 50,
                 })
             );
+        } catch (er) {
+            logger.error("Failed to add chat users", { er });
         }
-
-    } catch (er) {
-        logger.error("Failed to add chat users", { er });
-        throw new Error("Failed to add chat users");
     }
+
+    await mtProto.client.invoke(
+        new mtProto.api.messages.SendMessage({
+            message: "This task has been reopened and this chat has been unarchived.",
+            peer: new mtProto.api.InputPeerChat({ chatId: chat.chatId }),
+        })
+    );
     return { status: 200, reason: "chat_reopened" };
 }
