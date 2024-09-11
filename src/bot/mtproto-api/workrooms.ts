@@ -166,28 +166,27 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
     chatFull = fetchChat.fullChat as Api.ChatFull
     participants = chatFull.participants as Api.ChatParticipantsForbidden;
 
-    console.log("Chat: ", chatFull);
-    console.log("Participants: ", participants);
-
+    const chatPeer = new mtProto.api.InputPeerChat({ chatId: chat.chatId });
+    console.log("chatPeer", chatPeer);
     try {
         const editDefaultBanRights = await mtProto.client.invoke(
             new mtProto.api.messages.EditChatDefaultBannedRights({
                 bannedRights: new mtProto.api.ChatBannedRights({
-                    viewMessages: true,
-                    sendMessages: true,
-                    sendMedia: true,
-                    sendStickers: true,
-                    sendGifs: true,
-                    sendGames: false,
-                    sendInline: true,
-                    embedLinks: true,
-                    sendPolls: true,
-                    changeInfo: false,
-                    inviteUsers: true,
-                    pinMessages: false,
-                    untilDate: 0,
+                    viewMessages: false,
+                    sendMessages: false,
+                    sendMedia: false,
+                    sendStickers: false,
+                    sendGifs: false,
+                    sendGames: true,
+                    sendInline: false,
+                    embedLinks: false,
+                    sendPolls: false,
+                    changeInfo: true,
+                    inviteUsers: false,
+                    pinMessages: true,
+                    untilDate: 0, // forever
                 }),
-                peer: await mtProto.client.getPeerId(fetchChat.fullChat.id, true),
+                peer: chatPeer,
             })
         );
 
