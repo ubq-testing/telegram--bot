@@ -97,7 +97,8 @@ export function proxyWorkflowCallbacks(context: Context): ProxyCallbacks {
             try {
                 return (async () => {
                     try {
-                        return await Promise.all(target[prop].map((callback) => handleCallback(callback, context)));
+                        await Promise.all(target[prop].map((callback) => handleCallback(callback, context)));
+                        await exit(0);
                     } catch (er) {
                         let error: { code: number, seconds: number, errorMessage: string } | undefined;
 
@@ -111,7 +112,6 @@ export function proxyWorkflowCallbacks(context: Context): ProxyCallbacks {
                             await new Promise((resolve) => setTimeout(resolve, error.seconds * 1000));
                             return await Promise.all(target[prop].map((callback) => handleCallback(callback, context)));
                         }
-                        await exit(0);
                     }
                 })();
             } catch (er) {
