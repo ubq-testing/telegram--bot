@@ -118,8 +118,9 @@ export function proxyWorkflowCallbacks(context: Context): ProxyCallbacks {
                             await new Promise((resolve) => setTimeout(resolve, error.seconds * 1000));
                             return trier();
                         }
+                        await exit(0);
                     })();
-                    return { status: 200, reason: "success" };
+
                 } catch (er) {
                     context.logger.error(`Failed to handle event ${prop}`, { er });
                     return { status: 500, reason: "failed" };
