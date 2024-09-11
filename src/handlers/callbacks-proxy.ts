@@ -94,44 +94,48 @@ export function proxyWorkflowCallbacks(context: Context): ProxyCallbacks {
                 return { status: 204, reason: "skipped" };
             }
 
-            // somehow proxies affect error handling
-            async function run() {
+            async function runWithRetry(attempt: number = 1): Promise<any> {
                 try {
+                    // Execute all callbacks in parallel
                     return await Promise.all(target[prop].map((callback) => handleCallback(callback, context)));
-                } catch (er) {
-                    return er;
+                } catch (error) {
+                    context.logger.error(`Error occurred on attempt ${attempt} for event ${prop}`, { error });
+
+                    let retryError: { code: number; seconds: number; errorMessage: string } | undefined;
+
+                    console.log("ERRROR", error);
+                    // Check if the error has specific retry info
+                    if ("er" in error) {
+                        retryError = error.er as { code: number; seconds: number; errorMessage: string };
+                    }
+
+                    // If the error is a retryable error (e.g., FLOOD or code 420)
+                    if (retryError && (retryError.code === 420 || retryError.errorMessage === "FLOOD")) {
+                        const waitTime = retryError.seconds * 1000;
+                        context.logger.error(`Retrying event ${prop} in ${retryError.seconds} seconds due to FLOOD or code 420`);
+
+                        // Wait for the specified seconds
+                        await new Promise((resolve) => setTimeout(resolve, waitTime));
+
+                        // Retry the execution after the delay
+                        return runWithRetry(attempt + 1);
+                    } else {
+                        // If not a retryable error, propagate the error
+                        throw error;
+                    }
                 }
             }
 
-            function trier() {
-                try {
-                    // we are invoking the function here so, wrap this anon fn in a try block
-                    (async () => {
-                        const obj = await run() as Record<string, unknown>;
-                        let error: { code: number, seconds: number, errorMessage: string } | undefined;
-
-                        if ("er" in obj) {
-                            error = obj.er as { code: number, seconds: number, errorMessage: string };
-                        }
-
-                        if (error && error.code === 420 || error?.errorMessage === "FLOOD") {
-                            await new Promise((resolve) => setTimeout(resolve, error.seconds * 1000));
-                            return trier();
-                        }
-                        await exit(0);
-                    })();
-
-                } catch (er) {
-                    context.logger.error(`Failed to handle event ${prop}`, { er });
-                    return { status: 500, reason: "failed" };
-                }
-            }
-
-            // we need to return the trier function here
-            return trier();
+            // Call the retry function
+            return runWithRetry().catch((err) => {
+                // Handle the final failure case
+                context.logger.error(`Failed to handle event ${prop} after retries`, { err });
+                return { status: 500, reason: "failed" };
+            });
         }
     });
 }
+
 
 /**
  * Why do we need this wrapper function?
