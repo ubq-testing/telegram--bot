@@ -214,13 +214,6 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
             );
         }
 
-        await mtProto.client.invoke(
-            new mtProto.api.messages.SendMessage({
-                message: "This task has been reopened and this chat has been unarchived.",
-                peer: new mtProto.api.InputPeerChat({ chatId: chat.chatId }),
-            })
-        );
-
         // edit ban rights
         await mtProto.client.invoke(
             new mtProto.api.messages.EditChatDefaultBannedRights({
@@ -243,6 +236,15 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
                 peer: new mtProto.api.InputPeerChat({ chatId: chat.chatId })
             })
         );
+
+        await mtProto.client.invoke(
+            new mtProto.api.messages.SendMessage({
+                message: "This task has been reopened and this chat has been unarchived.",
+                peer: new mtProto.api.InputPeerChat({ chatId: chat.chatId }),
+            })
+        );
+
+
 
         await chats.updateChatStatus("reopened", payload.issue.node_id);
         return { status: 200, reason: "chat_reopened" };
