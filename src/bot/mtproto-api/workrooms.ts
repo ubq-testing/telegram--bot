@@ -111,6 +111,9 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
             throw new Error("Failed to fetch chat participants");
         }
 
+        console.log("chatParticipants", chatParticipants);
+        console.log("fetchChat users:", fetchChat.users);
+
         // archive it
         await mtProto.client.invoke(
             new mtProto.api.folders.EditPeerFolders({
@@ -196,35 +199,36 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
 
     console.log("participants", participants);
 
-    try {
-        const chatCreator = participants.selfParticipant?.userId;
-        if (!chatCreator) {
-            throw new Error("Failed to get chat creator");
-        }
+    const chatCreator = participants.selfParticipant?.userId;
+    if (!chatCreator) {
+        throw new Error("Failed to get chat creator");
+    }
 
-        if (participants.className === "ChatParticipantsForbidden") {
-            const userID = participants.selfParticipant?.userId;
-            await mtProto.client.invoke(
-                new mtProto.api.messages.AddChatUser({
-                    chatId: chat.chatId,
-                    userId: userID,
-                    fwdLimit: 50,
-                })
-            );
-        }
-
+    if (participants.className === "ChatParticipantsForbidden") {
+        const userID = participants.selfParticipant?.userId;
         await mtProto.client.invoke(
-            new mtProto.api.messages.SendMessage({
-                message: "This task has been reopened and this chat has been unarchived.",
-                peer: new mtProto.api.InputPeerChat({ chatId: chat.chatId }),
+            new mtProto.api.messages.AddChatUser({
+                chatId: chat.chatId,
+                userId: userID,
+                fwdLimit: 50,
             })
         );
-
-        await chats.updateChatStatus("reopened", payload.issue.node_id);
-        return { status: 200, reason: "chat_reopened" };
-    } catch (er) {
-        logger.error("Failed to reopen chat", { er });
-        return { status: 500, reason: "chat_reopen_failed", content: { error: er } };
     }
+
+    await mtProto.client.invoke(
+        new mtProto.api.messages.SendMessage({
+            message: "This task has been reopened and this chat has been unarchived.",
+            peer: new mtProto.api.InputPeerChat({ chatId: chat.chatId }),
+        })
+    );
+
+    await chats.updateChatStatus("reopened", payload.issue.node_id);
+
+    // Now we must re-invite all previously banned users
+    // can we get a list of banned users from the chat object?
+
+
+
+    return { status: 200, reason: "chat_reopened" };
 
 }

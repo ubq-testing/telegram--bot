@@ -5,7 +5,7 @@ import { logHandle } from '#root/bot/helpers/logging.js'
 
 const composer = new Composer<Context>()
 
-const feature = composer.chatType('supergroup')
+const feature = composer.chatType('group')
 
 feature.command(
     'chatid',
