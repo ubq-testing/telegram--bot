@@ -94,43 +94,30 @@ export function proxyWorkflowCallbacks(context: Context): ProxyCallbacks {
                 return { status: 204, reason: "skipped" };
             }
 
-            // somehow proxies affect error handling
-            async function run() {
-                try {
-                    return await Promise.all(target[prop].map((callback) => handleCallback(callback, context)));
-                } catch (er) {
-                    return er;
-                }
-            }
-
-            function trier() {
-                try {
-                    // we are invoking the function here so, wrap this anon fn in a try block
-                    (async () => {
-                        const obj = await run() as Record<string, unknown>;
+            try {
+                return (async () => {
+                    try {
+                        return await Promise.all(target[prop].map((callback) => handleCallback(callback, context)));
+                    } catch (er) {
                         let error: { code: number, seconds: number, errorMessage: string } | undefined;
 
-                        if ("er" in obj) {
-                            error = obj.er as { code: number, seconds: number, errorMessage: string };
+                        if ("er" in er) {
+                            error = er.er as { code: number, seconds: number, errorMessage: string };
                         }
 
                         console.log("Error-Error: ", error);
 
                         if (error && error.code === 420 || error?.errorMessage === "FLOOD") {
                             await new Promise((resolve) => setTimeout(resolve, error.seconds * 1000));
-                            return trier();
+                            return await Promise.all(target[prop].map((callback) => handleCallback(callback, context)));
                         }
                         await exit(0);
-                    })();
-
-                } catch (er) {
-                    context.logger.error(`Failed to handle event ${prop}`, { er });
-                    return { status: 500, reason: "failed" };
-                }
+                    }
+                })();
+            } catch (er) {
+                context.logger.error(`Failed to handle event ${prop}`, { er });
+                return { status: 500, reason: "failed" };
             }
-
-            // we need to return the trier function here
-            return trier();
         }
     });
 }
