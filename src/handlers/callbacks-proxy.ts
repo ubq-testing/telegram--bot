@@ -93,16 +93,42 @@ export function proxyWorkflowCallbacks(context: Context): ProxyCallbacks {
                 context.logger.info(`No callbacks found for event ${prop}`);
                 return { status: 204, reason: "skipped" };
             }
-            return (async () => {
+
+            // somehow proxies affect error handling
+            async function run() {
                 try {
-                    await Promise.all(target[prop].map((callback) => handleCallback(callback, context)));
+                    return await Promise.all(target[prop].map((callback) => handleCallback(callback, context)));
+                } catch (er) {
+                    return er;
+                }
+            }
+
+            function trier() {
+                try {
+                    // we are invoking the function here so, wrap this anon fn in a try block
+                    (async () => {
+                        const obj = await run() as Record<string, unknown>;
+                        let error: { code: number, seconds: number, errorMessage: string } | undefined;
+
+                        if ("er" in obj) {
+                            error = obj.er as { code: number, seconds: number, errorMessage: string };
+                        }
+
+                        if (error && error.code === 420 || error?.errorMessage === "FLOOD") {
+                            await new Promise((resolve) => setTimeout(resolve, error.seconds * 1000));
+                            return trier();
+                        }
+                    })();
+                    return { status: 200, reason: "success" };
                 } catch (er) {
                     context.logger.error(`Failed to handle event ${prop}`, { er });
-                    await exit(1);
+                    return { status: 500, reason: "failed" };
                 }
-                await exit(0);
-            })();
-        },
+            }
+
+            // we need to return the trier function here
+            return trier();
+        }
     });
 }
 
