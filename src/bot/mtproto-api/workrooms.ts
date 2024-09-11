@@ -166,8 +166,15 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
     chatFull = fetchChat.fullChat as Api.ChatFull
     participants = chatFull.participants as Api.ChatParticipantsForbidden;
 
-    const chatPeer = new mtProto.api.InputPeerChat({ chatId: chat.chatId });
-    console.log("chatPeer", chatPeer);
+    let chatId, peer, editDefaultBanRights;
+    try {
+        chatId = fetchChat.fullChat.id;
+        peer = new mtProto.api.InputPeerChat({ chatId });
+    } catch (er) {
+        console.error("chatId-peer error", er);
+        throw new Error("Failed to get chatId-peer");
+    }
+
     try {
         const editDefaultBanRights = await mtProto.client.invoke(
             new mtProto.api.messages.EditChatDefaultBannedRights({
@@ -186,17 +193,12 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
                     pinMessages: true,
                     untilDate: 0, // forever
                 }),
-                peer: new mtProto.api.InputPeerChat({ chatId: chatPeer.chatId }),
+                peer
             })
         );
-
-        if (!editDefaultBanRights) {
-            throw new Error("Failed to edit default ban rights");
-        }
-
     } catch (er) {
-        console.error(`Error in reopening chat: ${er}`);
-        throw new Error("Failed to edit default ban rights");
+        console.error("editDefaultBanRights error", er);
+        throw new Error("Failed to editDefaultBanRights");
     }
 
     try {
@@ -207,10 +209,11 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
                 fwdLimit: 50,
             })
         );
+        return { status: 200, reason: "chat_reopened" };
     } catch (er) {
-        console.error(`Error in reopening chat: ${er}`);
-        throw new Error("Failed to add user to chat");
+        console.log(er);
+        logger.error("Failed to reopen chat", { er });
+        return { status: 500, reason: "chat_reopen_failed", content: { error: er } };
     }
 
-    return { status: 200, reason: "chat_reopened" };
 }
