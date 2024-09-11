@@ -75,7 +75,6 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
             throw new Error("Failed to promote bot to admin");
         }
 
-
     } catch (er) {
         logger.error("Error in creating chat: ", { er });
         return { status: 500, reason: "chat_create_failed", content: { error: er } };
@@ -214,37 +213,12 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
             );
         }
 
-        // edit ban rights
-        await mtProto.client.invoke(
-            new mtProto.api.messages.EditChatDefaultBannedRights({
-                bannedRights: new mtProto.api.ChatBannedRights({
-                    // if set it does not allow
-                    viewMessages: false,
-                    sendMessages: false,
-                    sendMedia: false,
-                    sendStickers: false,
-                    sendGifs: false,
-                    sendGames: true,
-                    sendInline: false,
-                    embedLinks: false,
-                    sendPolls: false,
-                    changeInfo: true,
-                    inviteUsers: true,
-                    pinMessages: true,
-                    untilDate: 0, // forever
-                }),
-                peer: new mtProto.api.InputPeerChat({ chatId: chat.chatId })
-            })
-        );
-
         await mtProto.client.invoke(
             new mtProto.api.messages.SendMessage({
                 message: "This task has been reopened and this chat has been unarchived.",
                 peer: new mtProto.api.InputPeerChat({ chatId: chat.chatId }),
             })
         );
-
-
 
         await chats.updateChatStatus("reopened", payload.issue.node_id);
         return { status: 200, reason: "chat_reopened" };
