@@ -111,9 +111,6 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
             throw new Error("Failed to fetch chat participants");
         }
 
-        console.log("chatParticipants", chatParticipants);
-        console.log("fetchChat users:", fetchChat.users);
-
         // archive it
         await mtProto.client.invoke(
             new mtProto.api.folders.EditPeerFolders({
@@ -135,6 +132,8 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
             const userIDs = chatParticipants.participants.map((participant) => {
                 return participant.userId;
             });
+
+            await chats.userSnapshot(chat.chatId, userIDs.map((id) => id.toJSNumber()));
 
             for (let i = 0; i < userIDs.length; i++) {
                 if (userIDs[i].toJSNumber() === context.config.botId) {
@@ -197,8 +196,6 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
     chatFull = fetchChat.fullChat as Api.ChatFull
     participants = chatFull.participants as Api.ChatParticipantsForbidden;
 
-    console.log("participants", participants);
-
     const chatCreator = participants.selfParticipant?.userId;
     if (!chatCreator) {
         throw new Error("Failed to get chat creator");
@@ -224,11 +221,26 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
 
     await chats.updateChatStatus("reopened", payload.issue.node_id);
 
-    // Now we must re-invite all previously banned users
-    // can we get a list of banned users from the chat object?
+    const users = await chats.getChatUsers(chat.chatId);
 
+    if (!users) {
+        throw new Error("Failed to get chat users");
+    }
 
+    const { userIds } = users;
+
+    for (let i = 0; i < userIds.length; i++) {
+        if (userIds[i] === context.config.botId) {
+            continue;
+        }
+        await mtProto.client.invoke(
+            new mtProto.api.messages.AddChatUser({
+                chatId: chat.chatId,
+                userId: userIds[i].userId,
+                fwdLimit: 50,
+            })
+        );
+    }
 
     return { status: 200, reason: "chat_reopened" };
-
 }

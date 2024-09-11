@@ -17,6 +17,26 @@ export class Chats extends Super {
         super(supabase, context);
     }
 
+    async userSnapshot(chatId: number, userIds: number[]) {
+        const { error } = await this.supabase.from("chats").upsert({ chatId, userIds })
+        if (error) {
+            this.context.logger.error("Failed to save chat users", { chatId, userIds, er: error });
+        } else {
+            this.context.logger.info("Successfully saved chat users", { chatId, userIds });
+        }
+    }
+
+    async getChatUsers(chatId: number) {
+        const { data, error } = (await this.supabase.from("chats").select("userIds").eq("chatId", chatId).single())
+        if (error || !data) {
+            this.context.logger.error("No chat users found", { chatId });
+        } else {
+            this.context.logger.info("Successfully fetched chat users", { chatId });
+        }
+
+        return data;
+    }
+
     async updateChatStatus(status: string, taskNodeId?: string, chatId?: number) {
         if (!taskNodeId && !chatId) {
             this.context.logger.error("No taskNodeId or chatId provided to update chat status");
