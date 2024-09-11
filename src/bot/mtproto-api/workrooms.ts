@@ -133,7 +133,7 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
                 return participant.userId;
             });
 
-            await chats.userSnapshot(chat.chatId, userIDs.map((id) => id.toJSNumber()));
+            // await chats.userSnapshot(chat.chatId, userIDs.map((id) => id.toJSNumber()));
 
             for (let i = 0; i < userIDs.length; i++) {
                 if (userIDs[i].toJSNumber() === context.config.botId) {
@@ -221,26 +221,33 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
 
     await chats.updateChatStatus("reopened", payload.issue.node_id);
 
-    const users = await chats.getChatUsers(chat.chatId);
+    try {
+        const users = await chats.getChatUsers(chat.chatId);
 
-    if (!users) {
-        throw new Error("Failed to get chat users");
-    }
-
-    const { userIds } = users;
-
-    for (let i = 0; i < userIds.length; i++) {
-        if (userIds[i] === context.config.botId) {
-            continue;
+        if (!users) {
+            throw new Error("Failed to get chat users");
         }
-        await mtProto.client.invoke(
-            new mtProto.api.messages.AddChatUser({
-                chatId: chat.chatId,
-                userId: userIds[i].userId,
-                fwdLimit: 50,
-            })
-        );
-    }
 
+        const { userIds } = users;
+
+        console.log("userIds", userIds);
+
+        for (let i = 0; i < userIds.length; i++) {
+            if (userIds[i] === context.config.botId) {
+                continue;
+            }
+            await mtProto.client.invoke(
+                new mtProto.api.messages.AddChatUser({
+                    chatId: chat.chatId,
+                    userId: userIds[i].userId,
+                    fwdLimit: 50,
+                })
+            );
+        }
+
+    } catch (er) {
+        logger.error("Failed to add chat users", { er });
+        throw new Error("Failed to add chat users");
+    }
     return { status: 200, reason: "chat_reopened" };
 }
