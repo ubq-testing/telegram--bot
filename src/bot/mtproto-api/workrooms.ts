@@ -143,8 +143,6 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
             })
         );
 
-        const { id: selfId } = await mtProto.client.getMe()
-
         if (chatParticipants.className === "ChatParticipants") {
             await mtProto.client.invoke(
                 new mtProto.api.messages.SendMessage({
@@ -159,7 +157,7 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
 
             for (let i = 0; i < userIDs.length; i++) {
                 console.log("userIDs[i]: ", userIDs[i]);
-                if (userIDs[i].toJSNumber() === context.config.botId || userIDs[i] === selfId) {
+                if (userIDs[i].toJSNumber() === context.config.botId) {
                     continue;
                 }
                 await mtProto.client.invoke(
@@ -220,12 +218,6 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
     participants = chatFull.participants as Api.ChatParticipantsForbidden;
 
 
-    const chatId = fetchChat.fullChat.id;
-    const inputChatPeer = new mtProto.api.InputPeerChat({ chatId });
-
-    console.log("inputChatPeer: ", inputChatPeer)
-    console.log("fetched chat: ", fetchChat)
-
     try {
         const chatCreator = participants.selfParticipant?.userId;
         if (!chatCreator) {
@@ -233,17 +225,10 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
         }
 
         if (participants.className === "ChatParticipantsForbidden") {
-            await mtProto.client.invoke(
-                new mtProto.api.messages.SendMessage({
-                    message: "This task has been reopened and this chat has been unarchived.",
-                    peer: inputChatPeer,
-                })
-            );
-
             const userID = participants.selfParticipant?.userId;
             await mtProto.client.invoke(
                 new mtProto.api.messages.AddChatUser({
-                    chatId,
+                    chatId: chat.chatId,
                     userId: userID,
                     fwdLimit: 50,
                 })
@@ -251,7 +236,6 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
         }
 
         await chats.updateChatStatus("reopened", payload.issue.node_id);
-
         return { status: 200, reason: "chat_reopened" };
     } catch (er) {
         logger.error("Failed to reopen chat", { er });
