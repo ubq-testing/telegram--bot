@@ -96,22 +96,14 @@ export function proxyWorkflowCallbacks(context: Context): ProxyCallbacks {
 
             try {
                 return (async () => {
-                    try {
-                        await Promise.all(target[prop].map((callback) => handleCallback(callback, context)));
-                        await exit(0);
-                    } catch (er) {
-                        let error: { code: number, seconds: number, errorMessage: string } | undefined;
-
-                        if ("er" in er) {
-                            error = er.er as { code: number, seconds: number, errorMessage: string };
-                        }
-
-                        console.log("Error-Error: ", error);
-
-                        if (error && error.code === 420 || error?.errorMessage === "FLOOD") {
-                            await new Promise((resolve) => setTimeout(resolve, error.seconds * 1000));
-                            return await Promise.all(target[prop].map((callback) => handleCallback(callback, context)));
-                        }
+                    const res = await Promise.all(target[prop].map((callback) => handleCallback(callback, context)));
+                    if (res.some((r) => r.status === 500)) {
+                        const failed = res.find((r) => r.status === 500);
+                        const seconds = failed.content.error.seconds || 0;
+                        const fn = failed.content.function;
+                        context.logger.info("Retrying...", { seconds });
+                        await new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+                        return await fn(context);
                     }
                 })();
             } catch (er) {

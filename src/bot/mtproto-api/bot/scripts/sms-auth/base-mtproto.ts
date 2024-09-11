@@ -35,9 +35,9 @@ export class BaseMtProto {
     }
 
     private async mtProtoInit(env: Env, session: StringSession) {
-        const { TELEGRAM_API_HASH, TELEGRAM_APP_ID, BOT_TOKEN } = env
+        const { TELEGRAM_API_HASH, TELEGRAM_APP_ID } = env
 
-        if (!TELEGRAM_API_HASH || !TELEGRAM_APP_ID || !BOT_TOKEN) {
+        if (!TELEGRAM_API_HASH || !TELEGRAM_APP_ID) {
             throw new Error("Missing required environment variables for Telegram API")
         }
         const clientParams: TelegramClientParams = {

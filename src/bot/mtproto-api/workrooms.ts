@@ -86,41 +86,41 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
 
 export async function closeChat(context: Context<"issues.closed", SupportedEvents["issues.closed"]>): Promise<CallbackResult> {
     const { payload, adapters: { supabase: { chats } }, logger } = context;
+    const mtProto = new MtProto(context);
+    await mtProto.initialize();
+
+    logger.info("Closing chat with name: ", { chatName: payload.issue.title });
+    const chat = await chats.getChatByTaskNodeId(payload.issue.node_id);
+
+    const fetchChat = await mtProto.client.invoke(
+        new mtProto.api.messages.GetFullChat({
+            chatId: chat.chatId,
+        })
+    );
+
+    if (!fetchChat) {
+        throw new Error("Failed to fetch chat");
+    }
+
+    let chatParticipants;
+
+    if ("participants" in fetchChat.fullChat) {
+        chatParticipants = fetchChat.fullChat.participants;
+    } else {
+        throw new Error("Failed to fetch chat participants");
+    }
+
+    // archive it
+    await mtProto.client.invoke(
+        new mtProto.api.folders.EditPeerFolders({
+            folderPeers: [new mtProto.api.InputFolderPeer({
+                peer: new mtProto.api.InputPeerChat({ chatId: chat.chatId }),
+                folderId: 1, // 0 is active, 1 is archived
+            })],
+        })
+    );
+
     try {
-        const mtProto = new MtProto(context);
-        await mtProto.initialize();
-
-        logger.info("Closing chat with name: ", { chatName: payload.issue.title });
-        const chat = await chats.getChatByTaskNodeId(payload.issue.node_id);
-
-        const fetchChat = await mtProto.client.invoke(
-            new mtProto.api.messages.GetFullChat({
-                chatId: chat.chatId,
-            })
-        );
-
-        if (!fetchChat) {
-            throw new Error("Failed to fetch chat");
-        }
-
-        let chatParticipants;
-
-        if ("participants" in fetchChat.fullChat) {
-            chatParticipants = fetchChat.fullChat.participants;
-        } else {
-            throw new Error("Failed to fetch chat participants");
-        }
-
-        // archive it
-        await mtProto.client.invoke(
-            new mtProto.api.folders.EditPeerFolders({
-                folderPeers: [new mtProto.api.InputFolderPeer({
-                    peer: new mtProto.api.InputPeerChat({ chatId: chat.chatId }),
-                    folderId: 1, // 0 is active, 1 is archived
-                })],
-            })
-        );
-
         if (chatParticipants.className === "ChatParticipants") {
             await mtProto.client.invoke(
                 new mtProto.api.messages.SendMessage({
@@ -129,9 +129,23 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
                 })
             );
 
-            const userIDs = chatParticipants.participants.map((participant) => {
+            const participants = chatParticipants.participants;
+            let creatorId;
+
+            const userIDs = participants.map((participant) => {
+                if (participant.className === "ChatParticipantCreator") {
+                    creatorId = participant.userId;
+                    return undefined;
+                }
                 return participant.userId;
-            });
+            }).filter((id) => id !== undefined);
+
+            if (!creatorId) {
+                throw new Error("Failed to get chat creator");
+            }
+
+            userIDs.push(creatorId);
+            const chatInput = await mtProto.client.getInputEntity(chat.chatId);
 
             // await chats.userSnapshot(chat.chatId, userIDs.map((id) => id.toJSNumber()));
 
@@ -139,9 +153,11 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
                 if (userIDs[i].toJSNumber() === context.config.botId) {
                     continue;
                 }
+
                 await mtProto.client.invoke(
                     new mtProto.api.messages.DeleteChatUser({
-                        chatId: chat.chatId,
+                        revokeHistory: false,
+                        chatId: chatInput.className === "InputPeerChat" ? chatInput.chatId : undefined,
                         userId: userIDs[i],
                     })
                 );
@@ -155,6 +171,7 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
         return { status: 500, reason: "chat_close_failed", content: { error: er } };
     }
 }
+
 
 export async function reopenChat(context: Context<"issues.reopened", SupportedEvents["issues.reopened"]>): Promise<CallbackResult> {
     const { payload, adapters: { supabase: { chats } }, logger } = context;
@@ -189,9 +206,8 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
         );
     } catch (er) {
         logger.error("Failed to unarchive chat", { er });
-        return { status: 500, reason: "chat_unarchive_failed", content: { error: er } };
+        return { status: 500, reason: "chat_unarchive_failed", content: { error: er, function: reopenChat } };
     }
-
 
     chatFull = fetchChat.fullChat as Api.ChatFull
     participants = chatFull.participants as Api.ChatParticipantsForbidden;
@@ -210,6 +226,9 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
                 fwdLimit: 50,
             })
         );
+    } else {
+        logger.error("Failed to get chat participants");
+        return { status: 500, reason: "chat_reopen_failed" };
     }
 
     await mtProto.client.invoke(
@@ -223,23 +242,21 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
 
     try {
         const users = await chats.getChatUsers(chat.chatId);
-
         if (!users) {
             throw new Error("Failed to get chat users");
         }
 
         const { userIds } = users;
-
+        const chatInput = await mtProto.client.getInputEntity(chat.chatId);
         for (let i = 0; i < userIds.length; i++) {
             if (userIds[i] === context.config.botId) {
                 continue;
             }
 
-            const user = await mtProto.client.getEntity(userIds[i]);
             await mtProto.client.invoke(
                 new mtProto.api.messages.AddChatUser({
-                    chatId: chat.chatId,
-                    userId: user.id,
+                    chatId: chatInput.className === "InputPeerChat" ? chatInput.chatId : undefined,
+                    userId: userIds[i],
                     fwdLimit: 50,
                 })
             );
