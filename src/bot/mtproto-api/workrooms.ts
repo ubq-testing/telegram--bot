@@ -144,28 +144,63 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
 
 export async function reopenChat(context: Context<"issues.reopened", SupportedEvents["issues.reopened"]>): Promise<CallbackResult> {
     const { payload, adapters: { supabase: { chats } }, logger } = context;
+
+    let chatFull: Api.ChatFull;
+    let participants: Api.ChatParticipants;
+    const mtProto = new MtProto(context);
+    await mtProto.initialize();
+
+    logger.info("Reopening chat with name: ", { chatName: payload.issue.title });
+    const chat = await chats.getChatByTaskNodeId(payload.issue.node_id);
+
+    const fetchChat = await mtProto.client.invoke(
+        new mtProto.api.messages.GetFullChat({
+            chatId: chat.chatId,
+        })
+    );
+
+    if (!fetchChat) {
+        throw new Error("Failed to fetch chat");
+    }
+
+    chatFull = fetchChat.fullChat as Api.ChatFull
+    participants = chatFull.participants as Api.ChatParticipants;
+
+    console.log("Chat: ", chatFull);
+    console.log("Participants: ", participants);
+
     try {
-        const mtProto = new MtProto(context);
-        await mtProto.initialize();
-
-        logger.info("Reopening chat with name: ", { chatName: payload.issue.title });
-        const chat = await chats.getChatByTaskNodeId(payload.issue.node_id);
-
-        const fetchChat = await mtProto.client.invoke(
-            new mtProto.api.messages.GetFullChat({
-                chatId: chat.chatId,
+        const editDefaultBanRights = await mtProto.client.invoke(
+            new mtProto.api.messages.EditChatDefaultBannedRights({
+                bannedRights: new mtProto.api.ChatBannedRights({
+                    viewMessages: true,
+                    sendMessages: true,
+                    sendMedia: true,
+                    sendStickers: true,
+                    sendGifs: true,
+                    sendGames: true,
+                    sendInline: true,
+                    embedLinks: true,
+                    sendPolls: true,
+                    changeInfo: true,
+                    inviteUsers: true,
+                    pinMessages: true,
+                    untilDate: 0,
+                }),
+                peer: new mtProto.api.InputPeerChat({ chatId: chat.chatId }),
             })
         );
 
-        if (!fetchChat) {
-            throw new Error("Failed to fetch chat");
+        if (!editDefaultBanRights) {
+            throw new Error("Failed to edit default ban rights");
         }
 
-        const chatFull = fetchChat.fullChat as Api.ChatFull
-        const participants = chatFull.participants as Api.ChatParticipants;
+    } catch (er) {
+        console.error(`Error in reopening chat: ${er}`);
 
-        console.log("Participants: ", participants);
+    }
 
+    try {
         for (const participant of participants.participants) {
             if (participant instanceof mtProto.api.ChatParticipant) {
                 await mtProto.client.invoke(
@@ -184,4 +219,5 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
         logger.error("Failed to reopen chat", { er });
         return { status: 500, reason: "chat_reopen_failed", content: { error: er } };
     }
+
 }

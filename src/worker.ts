@@ -57,10 +57,12 @@ export default {
       });
     }
 
+    // inits the worker with the telegram bot
     TelegramBotSingleton.initialize(env);
 
     try {
       if (isGithubPayload(payload)) {
+        // inits the worker with the plugin context for this call
         PluginContext.initialize(payload, env);
         await handleGithubWebhook(request, env);
       } else if (isTelegramPayload(payload)) {
