@@ -24,6 +24,7 @@ jobs:
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+
       BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
       BOT_ADMINS: ${{ secrets.BOT_ADMINS }}
       BOT_WEBHOOK: ${{ secrets.BOT_WEBHOOK }}
