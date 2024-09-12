@@ -8,7 +8,7 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
   const { payload, config, logger } = context;
   const chatName = "@" + payload.repository.full_name + "#" + payload.issue.number;
 
-  const labelName = payload.label?.name;
+  const labelName = payload.label?.name.toLowerCase();
 
   if (!labelName?.toLowerCase().includes("price")) {
     return { status: 200, reason: "skipped" };
@@ -53,12 +53,13 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
 
       if ("link" in inviteLink) {
         link = inviteLink.link;
+        await addCommentToIssue(context, `A new workroom has been created for this task. [Join chat](${link})`, owner, repo, payload.issue.number);
+      } else {
+        throw new Error(logger.error(`Failed to create chat invite link for the workroom: ${chatName}`).logMessage.raw);
       }
-
-      await addCommentToIssue(context, `A new workroom has been created for this task. [Join chat](${link})`, owner, repo, payload.issue.number);
     }
 
-    const isPromoted = await mtProto.client.invoke(
+    const isBotPromotedToAdmin = await mtProto.client.invoke(
       new mtProto.api.messages.EditChatAdmin({
         chatId: chatIdBigInt,
         isAdmin: true,
@@ -66,7 +67,7 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
       })
     );
 
-    if (!isPromoted) {
+    if (!isBotPromotedToAdmin) {
       throw new Error("Failed to promote bot to admin");
     }
   } catch (er) {

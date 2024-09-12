@@ -18,20 +18,20 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
   logger.info("Closing chat with name: ", { chatName: payload.issue.title });
   const chat = await chats.getChatByTaskNodeId(payload.issue.node_id);
 
-  const fetchChat = await mtProto.client.invoke(
+  const fetchedChat = await mtProto.client.invoke(
     new mtProto.api.messages.GetFullChat({
       chatId: chat.chatId,
     })
   );
 
-  if (!fetchChat) {
+  if (!fetchedChat) {
     throw new Error("Failed to fetch chat");
   }
 
   let chatParticipants;
 
-  if ("participants" in fetchChat.fullChat) {
-    chatParticipants = fetchChat.fullChat.participants;
+  if ("participants" in fetchedChat.fullChat) {
+    chatParticipants = fetchedChat.fullChat.participants;
   } else {
     throw new Error("Failed to fetch chat participants");
   }
@@ -108,6 +108,7 @@ async function* deleteChatUsers(
   chatInput: Api.TypeInputPeer
 ): AsyncGenerator<{ success: boolean; index: number; error?: { errorMessage: string; seconds: number } }> {
   for (let i = 0; i < userIds.length; i++) {
+    // don't kick our friendly bot
     if (userIds[i].toJSNumber() === context.config.botId) {
       continue;
     }
@@ -127,6 +128,7 @@ async function* deleteChatUsers(
   }
 }
 
+// Gives feedback while we wait for the FLOOD error to expire
 async function intervalLogger(seconds: number, interval: number, logger: Context["logger"], promise: Promise<void>) {
   let timeLeft = seconds;
   const intervalId = setInterval(() => {
@@ -134,6 +136,8 @@ async function intervalLogger(seconds: number, interval: number, logger: Context
     logger.info(`Retrying in ${timeLeft} seconds...`);
   }, interval * 1000);
 
+  // by this point the initial promise has resolved, this is a formality
+  // as without it this function will not be async
   await promise;
   clearInterval(intervalId);
 }

@@ -25,20 +25,14 @@ import { repositoryDispatch } from "./repository-dispatch";
  */
 
 /**
- * NOTICE:
- *          Please follow the comment pattern below to make it easier to track
- *          the logic of the workflow functions across the codebase.
- */
-
-/**
- * The logic this function can be found in [../bot/mtproto-api/workrooms/create-chat.ts](../bot/mtproto-api/workrooms/create-chat.ts)
+ * The logic for this function can be found in [../bot/mtproto-api/workrooms/create-chat.ts](../bot/mtproto-api/workrooms/create-chat.ts)
  */
 export async function createWorkroom(context: Context<"issues.labeled", SupportedEvents["issues.labeled"]>): Promise<CallbackResult> {
   await repositoryDispatch(context, "create-telegram-chat").catch(console.error);
   return { status: 200, reason: "workflow_dispatched" };
 }
 /**
- * The logic this function can be found in [../bot/mtproto-api/workrooms/close-chat.ts](../bot/mtproto-api/workrooms/close-chat.ts)
+ * The logic for this function can be found in [../bot/mtproto-api/workrooms/close-chat.ts](../bot/mtproto-api/workrooms/close-chat.ts)
  */
 export async function closeWorkroom(context: Context<"issues.closed", SupportedEvents["issues.closed"]>): Promise<CallbackResult> {
   await repositoryDispatch(context, "close-telegram-chat").catch(console.error);
@@ -46,7 +40,7 @@ export async function closeWorkroom(context: Context<"issues.closed", SupportedE
 }
 
 /**
- * The logic this function can be found in [../bot/mtproto-api/workrooms/reopen-chat.ts](../bot/mtproto-api/workrooms/reopen-chat.ts)
+ * The logic for this function can be found in [../bot/mtproto-api/workrooms/reopen-chat.ts](../bot/mtproto-api/workrooms/reopen-chat.ts)
  */
 export async function reOpenWorkroom(context: Context<"issues.reopened", SupportedEvents["issues.reopened"]>): Promise<CallbackResult> {
   await repositoryDispatch(context, "reopen-telegram-chat").catch(console.error);

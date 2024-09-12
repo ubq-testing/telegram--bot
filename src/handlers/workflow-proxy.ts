@@ -13,8 +13,7 @@ import { handleCallback } from "./worker-proxy";
  *
  * - First event fires, `issues.labeled` and the worker catches it.
  * - The worker then dispatches a workflow to `compute.yml` with the event name as the input.
- * - The workflow receives a `issues.labeled` payload but eventName is now WorkflowFunction (`create-telegram-chat`).
- * - The workflow then runs the `createChat` function which needs a node env to run.
+ * - The workflow receives a `issues.labeled` payload and runs the `createChat` function.
  *
  * I.e we're essentially running the first dual action/worker plugin which is
  * ideal for telegram-bot as it's a bot that needs to be able to be super flexible.

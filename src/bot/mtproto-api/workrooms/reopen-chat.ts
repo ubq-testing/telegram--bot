@@ -18,16 +18,17 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
   logger.info("Reopening chat with name: ", { chatName: payload.issue.title });
   const chat = await chats.getChatByTaskNodeId(payload.issue.node_id);
 
-  const fetchChat = await mtProto.client.invoke(
+  const fetchedChat = await mtProto.client.invoke(
     new mtProto.api.messages.GetFullChat({
       chatId: chat.chatId,
     })
   );
 
-  if (!fetchChat) {
+  if (!fetchedChat) {
     throw new Error("Failed to fetch chat");
   }
 
+  // unarchive
   await mtProto.client.invoke(
     new mtProto.api.folders.EditPeerFolders({
       folderPeers: [
@@ -39,7 +40,7 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
     })
   );
 
-  const chatFull = fetchChat.fullChat as Api.ChatFull;
+  const chatFull = fetchedChat.fullChat as Api.ChatFull;
   const participants = chatFull.participants as Api.ChatParticipantsForbidden;
 
   const chatCreator = participants.selfParticipant?.userId;
@@ -47,6 +48,7 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
     throw new Error("Failed to get chat creator");
   }
 
+  // add the creator back to obtain control of the chat
   await mtProto.client.invoke(
     new mtProto.api.messages.AddChatUser({
       chatId: chat.chatId,
@@ -65,8 +67,16 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
   const chatInput = await mtProto.client.getInputEntity(chat.chatId);
 
   for (const userId of userIds) {
+    /**
+     * Dialogs are all of the chats, channels, and users that the account has interacted with.
+     * By obtaining the dialogs, we guarantee our client (that's what we are considered to be by the MTProto API)
+     * has up to date context otherwise these operations seem to fail. 
+     * 
+     * There is likely a better way to handle this, but this works for now.
+     */
     await mtProto.client.getDialogs();
     try {
+      // don't add the bot or the chat creator, as they are already in the chat
       if (userId === context.config.botId || userId === chatCreator) {
         continue;
       }

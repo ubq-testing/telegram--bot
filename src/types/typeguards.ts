@@ -7,13 +7,13 @@ export function isIssueOpenedEvent(context: Context): context is Context<"issues
 }
 
 export function isTelegramPayload(payload: unknown): payload is GrammyTelegramUpdate {
-  if(typeof payload !== "object" || !payload) return false;
-  return "update_id" in payload;
+  if (typeof payload !== "object" || !payload) return false;
+  return "update_id" in payload && payload.update_id !== undefined;
 }
 
 export function isGithubPayload(inputs: unknown): inputs is PluginInputs {
-  if(typeof inputs !== "object" || !inputs) return false;
-  return "eventName" in inputs;
+  if (typeof inputs !== "object" || !inputs) return false;
+  return "eventName" in inputs && inputs.eventName !== undefined;
 }
 
 export function isIssueLabeledEvent(context: Context): context is Context<"issues.labeled"> {

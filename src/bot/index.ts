@@ -49,14 +49,19 @@ export function createBot(token: string, dependencies: Dependencies, options: Op
   protectedBot.use(hydrate());
   protectedBot.use(session({ getSessionKey, storage: options.botSessionStorage }));
 
-  // Handlers
+  // the `/start` command for a traditional TG bot, doubt we need this as-is
+  // but a variation of can be built for various scenarios.
   protectedBot.use(welcomeFeature);
+
+  // admin commands
   protectedBot.use(adminFeature);
+
+  // development commands
   protectedBot.use(userIdFeature);
   protectedBot.use(chatIdFeature);
   protectedBot.use(botIdFeature);
 
-  // must be the last handler
+  // unhandled command handler
   protectedBot.use(unhandledFeature);
 
   return bot;
