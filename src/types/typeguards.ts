@@ -1,4 +1,4 @@
-import { Update } from "@grammyjs/types";
+import { GrammyTelegramUpdate } from "#root/bot/helpers/grammy-context.js";
 import { Context } from "./context";
 import { PluginInputs } from "./plugin-inputs";
 
@@ -6,22 +6,12 @@ export function isIssueOpenedEvent(context: Context): context is Context<"issues
   return context.eventName === "issues.opened";
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isTelegramPayload(payload: any): payload is Update {
-  try {
-    return payload.update_id !== undefined;
-  } catch {
-    return false;
-  }
+export function isTelegramPayload(payload: object): payload is GrammyTelegramUpdate {
+  return "update_id" in payload;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function isGithubPayload(inputs: any): inputs is PluginInputs {
-  try {
-    return inputs.eventName !== undefined;
-  } catch {
-    return false;
-  }
+export function isGithubPayload(inputs: object): inputs is PluginInputs {
+  return "eventName" in inputs;
 }
 
 export function isIssueLabeledEvent(context: Context): context is Context<"issues.labeled"> {

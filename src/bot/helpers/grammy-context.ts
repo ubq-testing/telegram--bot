@@ -6,6 +6,8 @@ import type { ParseModeFlavor } from "@grammyjs/parse-mode";
 import type { Logger } from "#root/utils/logger.js";
 import { Context as UbiquityOsContext } from "../../types";
 
+export type GrammyTelegramUpdate = Update;
+
 export interface SessionData {
   field?: string;
 }
@@ -27,11 +29,11 @@ export function createContextConstructor({ logger, config }: Dependencies) {
     logger: Logger;
     config: UbiquityOsContext["env"];
 
-    constructor(update: Update, api: Api, me: UserFromGetMe) {
+    constructor(update: GrammyTelegramUpdate, api: Api, me: UserFromGetMe) {
       super(update, api, me);
 
       this.logger = logger;
       this.config = config;
     }
-  } as unknown as new (update: Update, api: Api, me: UserFromGetMe) => Context;
+  } as unknown as new (update: GrammyTelegramUpdate, api: Api, me: UserFromGetMe) => Context;
 }

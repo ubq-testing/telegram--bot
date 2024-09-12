@@ -21,7 +21,7 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
   logger.info("Creating chat with name: ", { chatName });
 
   try {
-    const botIdString = await mtProto.client.getPeerId(config.botUsername, true);
+    const botIdString = await mtProto.client.getPeerId(config.botId, true);
 
     const chat = await mtProto.client.invoke(
       new mtProto.api.messages.CreateChat({

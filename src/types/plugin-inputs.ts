@@ -18,10 +18,6 @@ export const pluginSettingsSchema = T.Object({
   botId: T.Transform(T.Unknown())
     .Decode((value) => Number(value))
     .Encode((value) => value.toString()),
-  /**
-   * The bot username, NOT the username of the personal account.
-   */
-  botUsername: T.String(),
 });
 
 export const pluginSettingsValidator = new StandardValidator(pluginSettingsSchema);
