@@ -19,37 +19,33 @@ const allowedUpdates = T.Object({
   message_reaction_count: T.String(),
 });
 
-export const env = T.Object({
+
+const telegramBotSettings = T.Object({
   /**
-   * The token for the bot given by the BotFather.
-   */
-  BOT_TOKEN: T.String(),
+    * The token for the bot given by the BotFather.
+    */
+  TELEGRAM_BOT_TOKEN: T.String(),
   /**
    * The url to forward updates to.
    */
-  BOT_WEBHOOK: T.String(),
+  TELEGRAM_BOT_WEBHOOK: T.String(),
   /**
    * The secret to use when forwarding updates.
    */
-  BOT_WEBHOOK_SECRET: T.String(),
+  TELEGRAM_BOT_WEBHOOK_SECRET: T.String(),
   /**
    * Ids of the users who are allowed to use admin commands.
    */
-  BOT_ADMINS: T.Transform(T.Unknown())
+  TELEGRAM_BOT_ADMINS: T.Transform(T.Unknown())
     .Decode((str) => (Array.isArray(str) ? str.map(Number) : [Number(str)]))
     .Encode((arr) => arr.toString()),
   /**
    * Which updates the bot should receive, defaults to all.
    */
   ALLOWED_UPDATES: T.Optional(T.Array(T.KeyOf(allowedUpdates))),
-  /**
-   * The supabase instance url for storing chats, sessions, etc.
-   */
-  SUPABASE_URL: T.String(),
-  /**
-   * The supabase service key for storing chats, sessions, etc.
-   */
-  SUPABASE_SERVICE_KEY: T.String(),
+});
+
+const telegramMtProtoSettings = T.Object({
   /**
    * Obtained from https://my.telegram.org/apps
    */
@@ -60,6 +56,9 @@ export const env = T.Object({
    * Obtained from https://my.telegram.org/apps
    */
   TELEGRAM_API_HASH: T.String(),
+});
+
+const ubiquityOsSettings = T.Object({
   /**
    * Your UbiquityOS app id
    */
@@ -72,6 +71,37 @@ export const env = T.Object({
   APP_PRIVATE_KEY: T.Transform(T.Unknown())
     .Decode((str) => String(str))
     .Encode((str) => str),
+});
+
+const storageSettings = T.Object({
+  /**
+   * The supabase instance url for storing chats, sessions, etc.
+   */
+  SUPABASE_URL: T.String(),
+  /**
+   * The supabase service key for storing chats, sessions, etc.
+   */
+  SUPABASE_SERVICE_KEY: T.String(),
+});
+
+export const env = T.Object({
+  /**
+   * BotFather bot settings, worker instance.
+   */
+  telegramBotSettings,
+  /**
+   * MtProto bot settings, user instance.
+   */
+  telegramMtProtoSettings,
+  /**
+   * UbiquityOS settings. Kernel instance.
+   */
+  ubiquityOsSettings,
+  /**
+   * Storage settings. Supbase instance. 
+   * ###### TODO: Move to GitHub JSON based storage.
+   */
+  storageSettings,
 });
 
 export type Env = StaticDecode<typeof env>;

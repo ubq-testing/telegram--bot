@@ -24,7 +24,7 @@ export async function repositoryDispatch(context: Context, workflow: string) {
   const branch = "workflows";
 
   const {
-    env: { APP_ID, APP_PRIVATE_KEY },
+    env: { ubiquityOsSettings: { APP_ID, APP_PRIVATE_KEY } },
   } = context;
   const app = new App({ appId: APP_ID, privateKey: APP_PRIVATE_KEY });
   const installation = await app.octokit.rest.apps.getRepoInstallation({ owner, repo: repository });

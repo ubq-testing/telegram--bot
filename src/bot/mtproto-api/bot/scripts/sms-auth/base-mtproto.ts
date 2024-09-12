@@ -3,13 +3,8 @@ import { Api } from "telegram/tl";
 import { TelegramClientParams } from "telegram/client/telegramBaseClient";
 import dotenv from "dotenv";
 import { StringSession } from "telegram/sessions";
+import { Context } from "#root/types/context.js";
 dotenv.config();
-
-type Env = {
-  TELEGRAM_API_HASH: string;
-  TELEGRAM_APP_ID: number;
-  BOT_TOKEN: string;
-};
 
 /**
  * @dev Not abstract because we need it to be instantiated for sms-auth
@@ -23,7 +18,7 @@ export class BaseMtProto {
   _api: typeof Api = Api;
   _session: StringSession | null = null;
 
-  async initialize(env: Env, session: string) {
+  async initialize(env: Context["env"]["telegramMtProtoSettings"], session: string) {
     this._api = Api;
     this._session = new StringSession(session);
     this._client = await this._mtProtoInit(env, this._session);
@@ -41,7 +36,7 @@ export class BaseMtProto {
     return this._session;
   }
 
-  private async _mtProtoInit(env: Env, session: StringSession) {
+  private async _mtProtoInit(env: Context["env"]["telegramMtProtoSettings"], session: StringSession) {
     const { TELEGRAM_API_HASH, TELEGRAM_APP_ID } = env;
 
     if (!TELEGRAM_API_HASH || !TELEGRAM_APP_ID) {

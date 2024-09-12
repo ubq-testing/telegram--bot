@@ -17,7 +17,7 @@ export class PluginContext {
   private constructor(
     public readonly inputs: PluginInputs,
     public _env: Env
-  ) {}
+  ) { }
 
   get env() {
     return Value.Decode(envValidator.schema, Value.Default(envValidator.schema, this._env));
@@ -54,7 +54,7 @@ export class PluginContext {
       adapters: {} as ReturnType<typeof createAdapters>,
     };
 
-    ctx.adapters = createAdapters(createClient(ctx.env.SUPABASE_URL, ctx.env.SUPABASE_SERVICE_KEY), ctx);
+    ctx.adapters = createAdapters(createClient(ctx.env.storageSettings.SUPABASE_URL, ctx.env.storageSettings.SUPABASE_SERVICE_KEY), ctx);
 
     return ctx;
   }

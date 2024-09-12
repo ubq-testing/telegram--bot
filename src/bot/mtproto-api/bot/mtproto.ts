@@ -20,21 +20,20 @@ export class MtProto extends BaseMtProto {
   constructor(context: Context) {
     super();
 
-    const key = context.env.SUPABASE_SERVICE_KEY;
-    const url = context.env.SUPABASE_URL;
+    const { SUPABASE_URL, SUPABASE_SERVICE_KEY } = context.env.storageSettings;
 
-    if (!key || !url) {
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
       throw new Error("Missing required environment variables for Supabase");
     }
 
-    this._supabase = createClient(url, key);
+    this._supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
     this._context = context;
     this._session = new SupabaseSession(this._supabase, this._context);
   }
 
   async initialize() {
     const session = await this._session.getSession();
-    await super.initialize(this._context.env, session);
+    await super.initialize(this._context.env.telegramMtProtoSettings, session);
   }
 
   async saveSession() {
