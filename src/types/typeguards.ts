@@ -6,11 +6,13 @@ export function isIssueOpenedEvent(context: Context): context is Context<"issues
   return context.eventName === "issues.opened";
 }
 
-export function isTelegramPayload(payload: object): payload is GrammyTelegramUpdate {
+export function isTelegramPayload(payload: unknown): payload is GrammyTelegramUpdate {
+  if(typeof payload !== "object" || !payload) return false;
   return "update_id" in payload;
 }
 
-export function isGithubPayload(inputs: object): inputs is PluginInputs {
+export function isGithubPayload(inputs: unknown): inputs is PluginInputs {
+  if(typeof inputs !== "object" || !inputs) return false;
   return "eventName" in inputs;
 }
 
