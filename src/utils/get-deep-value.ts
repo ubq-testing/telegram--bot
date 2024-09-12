@@ -1,3 +1,4 @@
+import { Context } from "../types";
 /**
  * This function is a utility that allows us to access deeply nested properties in an object
  * primarily for use with the context.payload object. It should not be overused and the developer
@@ -8,11 +9,13 @@
  * - `getDeepValue(context, "payload.repository.owner.login")` will return the owner
  * - `getDeepValue(context, ["payload", "repository", "owner", "login"])` will return the owner
  */
-export function getDeepValue<T, TK extends string | string[]>(obj: T, path: TK | TK[]) {
-  if (!obj || !path) return undefined;
-
+export function getDeepValue<TK extends PropertyKey, T extends Context = Context>(obj: T, path: string | string[]): TK {
   const pathArray = Array.isArray(path) ? path : path.split(".");
+  const [head, ...tail] = pathArray;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return pathArray.reduce((prev, key) => prev?.[key], obj as any);
+  if (tail.length === 0) {
+    return obj[head as keyof T] as TK;
+  }
+
+  return getDeepValue(obj[head as keyof T] as Context, tail) as TK;
 }
