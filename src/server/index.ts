@@ -62,7 +62,7 @@ export function createServer(dependencies: Dependencies) {
   server.post(
     "/webhook",
     webhookCallback(bot, "hono", {
-      secretToken: config.telegramBotEnv.botSettings.TELEGRAM_BOT_WEBHOOK_SECRET,
+      secretToken: config.TELEGRAM_BOT_ENV.botSettings.TELEGRAM_BOT_WEBHOOK_SECRET,
     })
   );
 

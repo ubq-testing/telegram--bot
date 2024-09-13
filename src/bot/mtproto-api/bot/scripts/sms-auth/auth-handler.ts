@@ -20,12 +20,12 @@ export class AuthHandler {
   };
 
   constructor() {
-    const env = process.env.telegramBotEnv;
+    const env = process.env.TELEGRAM_BOT_ENV;
     if (!env) {
       throw new Error("Missing required environment variables for Telegram Bot");
     }
 
-    const parsedEnv: Context["env"]["telegramBotEnv"] = JSON.parse(env);
+    const parsedEnv: Context["env"]["TELEGRAM_BOT_ENV"] = JSON.parse(env);
     if (!parsedEnv) {
       throw new Error("Failed to parse environment variables for Telegram Bot");
     }

@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions: write-all
     env:
-      telegramBotEnv: ${{ secrets.telegramBotEnv }}
+      TELEGRAM_BOT_ENV: ${{ secrets.TELEGRAM_BOT_ENV }}
 
     steps:
       - uses: actions/checkout@v4
@@ -39,4 +39,4 @@ jobs:
         run: npx tsx ./src/workflow-entry.ts
         id: telegram-bot
         env:
-          telegramBotEnv: ${{ secrets.telegramBotEnv }}
+          TELEGRAM_BOT_ENV: ${{ secrets.TELEGRAM_BOT_ENV }}

@@ -83,7 +83,7 @@ const storageSettings = T.Object({
   SUPABASE_SERVICE_KEY: T.String(),
 });
 
-const telegramBotEnv = T.Object({
+const TELEGRAM_BOT_ENV = T.Object({
   botSettings,
   mtProtoSettings,
   ubiquityOsSettings,
@@ -91,10 +91,10 @@ const telegramBotEnv = T.Object({
 });
 
 export const env = T.Object({
-  telegramBotEnv: T.Transform(T.Union([T.String(), telegramBotEnv]))
+  TELEGRAM_BOT_ENV: T.Transform(T.Union([T.String(), TELEGRAM_BOT_ENV]))
     .Decode((str) => {
       if (typeof str === "string") {
-        const obj = JSON.parse(str) as StaticDecode<typeof telegramBotEnv>;
+        const obj = JSON.parse(str) as StaticDecode<typeof TELEGRAM_BOT_ENV>;
 
         if (!obj.botSettings || !obj.mtProtoSettings || !obj.ubiquityOsSettings || !obj.storageSettings) {
           throw new Error("Missing required environment variables for Telegram Bot settings");

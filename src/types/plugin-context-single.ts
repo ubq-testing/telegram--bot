@@ -54,7 +54,7 @@ export class PluginContext {
       adapters: {} as ReturnType<typeof createAdapters>,
     };
 
-    const { storageSettings } = ctx.env.telegramBotEnv;
+    const { storageSettings } = ctx.env.TELEGRAM_BOT_ENV;
 
     ctx.adapters = createAdapters(createClient(storageSettings.SUPABASE_URL, storageSettings.SUPABASE_SERVICE_KEY));
 

@@ -38,7 +38,7 @@ export function createContextConstructor({ logger, config }: Dependencies) {
 
       this.logger = logger;
       this.config = config;
-      const { SUPABASE_URL, SUPABASE_SERVICE_KEY } = config.telegramBotEnv.storageSettings;
+      const { SUPABASE_URL, SUPABASE_SERVICE_KEY } = config.TELEGRAM_BOT_ENV.storageSettings;
       this.adapters = createAdapters(createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY));
     }
   } as unknown as new (update: GrammyTelegramUpdate, api: Api, me: UserFromGetMe) => Context;

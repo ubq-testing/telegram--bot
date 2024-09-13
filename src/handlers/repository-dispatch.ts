@@ -25,7 +25,7 @@ export async function repositoryDispatch(context: Context, workflow: string) {
 
   const {
     env: {
-      telegramBotEnv: {
+      TELEGRAM_BOT_ENV: {
         ubiquityOsSettings: { APP_ID, APP_PRIVATE_KEY },
       },
     },

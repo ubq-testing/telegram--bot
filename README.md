@@ -65,45 +65,52 @@ This bot operates in two parts:
 
 #### Environment Variables
 
-`telegramBotEnv` is a single JSON object containing all the necessary environment variables for the bot to function. It is made up of four parts: `botSettings`, `mtProtoSettings`, `storageSettings`, and `ubiquityOsSettings`.
+The `TELEGRAM_BOT_ENV` is a single JSON object that encapsulates all necessary environment variables for the bot's operation. It consists of four key sections: `botSettings`, `mtProtoSettings`, `storageSettings`, and `ubiquityOsSettings`.
 
-A utility script exists to help you set up your environment variables, run `yarn setup-env` for a guided setup.
+You can set up your environment variables in two ways using the provided utility script:
 
-You must define these in three locations:
+1. **Guided Setup**: Run `yarn setup-env-guided`, which prompts you to enter each value via the CLI. The values will be serialized and stored both locally and in your repository secrets.
+2. **Manual Setup**: Modify the values directly in the script and then run `yarn setup-env-manual` to store them locally and in your repository secrets.
 
-- `.env` in order to use the `yarn sms-auth` command
-- `.dev.vars` for the Cloudflare Worker instance
-- GitHub Secrets for the GitHub Actions workflow
+**Important**: Before running the setup script, ensure that you store your `GITHUB_PAT_TOKEN` in the `.env` file. This token will be used to create repository secrets and will be deleted after the script runs.
 
-1. **botSettings**: Contains bot specific settings like `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_WEBHOOK_SECRET`, etc.
+- **GITHUB_PAT_TOKEN**: Create a classic personal access token (PAT) with the `repo` scope. Set the expiry to 24 hours, and save it in your `.env` file. This token will be used to generate repository secrets for the environment variables.
+
+The environment variables are stored in the following locations:
+
+- `.env` file: Required to run the `yarn sms-auth` command.
+- `.dev.vars` file: For the Cloudflare Worker instance.
+- **GitHub Secrets**: Used by the GitHub Actions workflow.
+
+##### Environment Variable Sections:
+
+1. **botSettings**: Contains bot-specific settings like `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_WEBHOOK_SECRET`, etc.
 2. **mtProtoSettings**: Contains settings for the MTProto API like `TELEGRAM_APP_ID`, `TELEGRAM_API_HASH`, etc.
 3. **storageSettings**: Contains settings for the Supabase database like `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, etc.
 4. **ubiquityOsSettings**: Contains settings for the UbiquityOS Kernel like `APP_PRIVATE_KEY`, `APP_ID`, etc.
 
-```ts
-interface TelegramBotEnv {
+```typescript
+interface TELEGRAM_BOT_ENV {
   botSettings: {
-    TELEGRAM_BOT_TOKEN: string;           // Telegram Bot Token from BotFather
-    TELEGRAM_BOT_WEBHOOK: string;         // Cloudflare Worker URL
-    TELEGRAM_BOT_WEBHOOK_SECRET: string;  // Cloudflare Worker Secret
-    TELEGRAM_BOT_ADMINS: number[];        // Telegram User IDs
+    TELEGRAM_BOT_TOKEN: string; // Telegram Bot Token from BotFather
+    TELEGRAM_BOT_WEBHOOK: string; // Cloudflare Worker URL
+    TELEGRAM_BOT_WEBHOOK_SECRET: string; // Cloudflare Worker Secret
+    TELEGRAM_BOT_ADMINS: number[]; // Telegram User IDs
   };
   mtProtoSettings: {
-    TELEGRAM_APP_ID: number;              // Telegram App ID
-    TELEGRAM_API_HASH: string;            // Telegram API Hash
+    TELEGRAM_APP_ID: number; // Telegram App ID
+    TELEGRAM_API_HASH: string; // Telegram API Hash
   };
   storageSettings: {
-    SUPABASE_URL: string;                 // Supabase URL
-    SUPABASE_SERVICE_KEY: string;         // Supabase Service Key 
+    SUPABASE_URL: string; // Supabase URL
+    SUPABASE_SERVICE_KEY: string; // Supabase Service Key
   };
   ubiquityOsSettings: {
-    APP_PRIVATE_KEY: string;              // GitHub App Private Key
-    APP_ID: number;                       // GitHub App ID 
+    APP_PRIVATE_KEY: string; // GitHub App Private Key
+    APP_ID: number; // GitHub App ID
   };
 }
 ```
-
-
 
 #### Supabase Configuration
 
@@ -126,12 +133,11 @@ interface TelegramBotEnv {
 
 ```yaml
 - uses:
+  - skipBotEvents: false
     - plugin: http://localhost:3000
       runsOn: ["issues.opened", "issues.labeled", "issues.reopened", "issues.closed"]
-      skipBotEvents: false
       with:
         botId: 00000000
-        botUsername: yourBotName
 ```
 
 ### Usage

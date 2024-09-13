@@ -20,7 +20,7 @@ export class MtProto extends BaseMtProto {
   constructor(context: Context) {
     super();
 
-    const { SUPABASE_URL, SUPABASE_SERVICE_KEY } = context.env.telegramBotEnv.storageSettings;
+    const { SUPABASE_URL, SUPABASE_SERVICE_KEY } = context.env.TELEGRAM_BOT_ENV.storageSettings;
 
     if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
       throw new Error("Missing required environment variables for Supabase");
@@ -33,7 +33,7 @@ export class MtProto extends BaseMtProto {
 
   async initialize() {
     const session = await this._session.getSession();
-    await super.initialize(this._context.env.telegramBotEnv.mtProtoSettings, session);
+    await super.initialize(this._context.env.TELEGRAM_BOT_ENV.mtProtoSettings, session);
   }
 
   async saveSession() {
