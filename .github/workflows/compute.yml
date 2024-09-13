@@ -22,19 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions: write-all
     env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-
-      BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-      BOT_ADMINS: ${{ secrets.BOT_ADMINS }}
-      BOT_WEBHOOK: ${{ secrets.BOT_WEBHOOK }}
-      BOT_WEBHOOK_SECRET: ${{ secrets.BOT_WEBHOOK_SECRET }}
-
-      TELEGRAM_APP_ID: ${{ secrets.TELEGRAM_APP_ID }}
-      TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
-
-      APP_ID: ${{ secrets.APP_ID }}
-      APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
+      telegramBotEnv: ${{ secrets.telegramBotEnv }}
 
     steps:
       - uses: actions/checkout@v4
@@ -51,16 +39,4 @@ jobs:
         run: npx tsx ./src/workflow-entry.ts
         id: telegram-bot
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
-
-          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-          BOT_ADMINS: ${{ secrets.BOT_ADMINS }}
-          BOT_WEBHOOK: ${{ secrets.BOT_WEBHOOK }}
-          BOT_WEBHOOK_SECRET: ${{ secrets.BOT_WEBHOOK_SECRET }}
-
-          TELEGRAM_APP_ID: ${{ secrets.TELEGRAM_APP_ID }}
-          TELEGRAM_API_HASH: ${{ secrets.TELEGRAM_API_HASH }}
-
-          APP_ID: ${{ secrets.APP_ID }}
-          APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
+          telegramBotEnv: ${{ secrets.telegramBotEnv }}

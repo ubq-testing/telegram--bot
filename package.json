@@ -25,7 +25,9 @@
     "dev": "tsc-watch --onSuccess \"tsx ./src/main.ts\"",
     "start": "tsx ./src/main.ts",
     "deploy": "wrangler deploy --minify src/main.ts",
-    "sms-auth": "npx tsx src/bot/mtproto-api/bot/scripts/sms-auth/sms-auth.ts"
+    "sms-auth": "npx tsx src/bot/mtproto-api/bot/scripts/sms-auth/sms-auth.ts",
+    "setup-env-guided": "npx tsx src/bot/mtproto-api/bot/scripts/sms-auth/setup-env.ts",
+    "setup-env-manual": "npx tsx src/bot/mtproto-api/bot/scripts/sms-auth/setup-env.ts --manual"
   },
   "keywords": [
     "typescript",

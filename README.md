@@ -65,20 +65,45 @@ This bot operates in two parts:
 
 #### Environment Variables
 
-Define these in both `dev.vars` and your GitHub repository secrets:
+`telegramBotEnv` is a single JSON object containing all the necessary environment variables for the bot to function. It is made up of four parts: `botSettings`, `mtProtoSettings`, `storageSettings`, and `ubiquityOsSettings`.
 
-```bash
-BOT_TOKEN=123:xyz               # Telegram Bot Token from BotFather
-BOT_WEBHOOK=...                 # Cloudflare Worker URL
-BOT_WEBHOOK_SECRET=...          # Cloudflare Worker Secret
-BOT_ADMINS=[1234,5678]          # Telegram User IDs
-SUPABASE_URL=...                # Supabase URL
-SUPABASE_SERVICE_KEY=...        # Supabase Service Key
-TELEGRAM_APP_ID=12345678        # Telegram App ID
-TELEGRAM_API_HASH=...           # Telegram API Hash
-APP_PRIVATE_KEY=...             # GitHub App Private Key
-APP_ID=123456                   # GitHub App ID
+A utility script exists to help you set up your environment variables, run `yarn setup-env` for a guided setup.
+
+You must define these in three locations:
+
+- `.env` in order to use the `yarn sms-auth` command
+- `.dev.vars` for the Cloudflare Worker instance
+- GitHub Secrets for the GitHub Actions workflow
+
+1. **botSettings**: Contains bot specific settings like `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_WEBHOOK_SECRET`, etc.
+2. **mtProtoSettings**: Contains settings for the MTProto API like `TELEGRAM_APP_ID`, `TELEGRAM_API_HASH`, etc.
+3. **storageSettings**: Contains settings for the Supabase database like `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, etc.
+4. **ubiquityOsSettings**: Contains settings for the UbiquityOS Kernel like `APP_PRIVATE_KEY`, `APP_ID`, etc.
+
+```ts
+interface TelegramBotEnv {
+  botSettings: {
+    TELEGRAM_BOT_TOKEN: string;           // Telegram Bot Token from BotFather
+    TELEGRAM_BOT_WEBHOOK: string;         // Cloudflare Worker URL
+    TELEGRAM_BOT_WEBHOOK_SECRET: string;  // Cloudflare Worker Secret
+    TELEGRAM_BOT_ADMINS: number[];        // Telegram User IDs
+  };
+  mtProtoSettings: {
+    TELEGRAM_APP_ID: number;              // Telegram App ID
+    TELEGRAM_API_HASH: string;            // Telegram API Hash
+  };
+  storageSettings: {
+    SUPABASE_URL: string;                 // Supabase URL
+    SUPABASE_SERVICE_KEY: string;         // Supabase Service Key 
+  };
+  ubiquityOsSettings: {
+    APP_PRIVATE_KEY: string;              // GitHub App Private Key
+    APP_ID: number;                       // GitHub App ID 
+  };
+}
 ```
+
+
 
 #### Supabase Configuration
 
