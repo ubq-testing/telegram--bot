@@ -18,9 +18,10 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
   logger.info("Closing chat with name: ", { chatName: payload.issue.title });
   const chat = await chats.getChatByTaskNodeId(payload.issue.node_id);
 
+  await mtProto.client.getDialogs();
   const fetchedChat = await mtProto.client.invoke(
     new mtProto.api.messages.GetFullChat({
-      chatId: chat.chatId,
+      chatId: chat.chat_id,
     })
   );
 
@@ -41,7 +42,7 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
     new mtProto.api.folders.EditPeerFolders({
       folderPeers: [
         new mtProto.api.InputFolderPeer({
-          peer: new mtProto.api.InputPeerChat({ chatId: chat.chatId }),
+          peer: new mtProto.api.InputPeerChat({ chatId: chat.chat_id }),
           folderId: 1, // 0 is active, 1 is archived
         }),
       ],
@@ -52,7 +53,7 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
     await mtProto.client.invoke(
       new mtProto.api.messages.SendMessage({
         message: "This task has been closed and this chat has been archived.",
-        peer: new mtProto.api.InputPeerChat({ chatId: chat.chatId }),
+        peer: new mtProto.api.InputPeerChat({ chatId: chat.chat_id }),
       })
     );
 
@@ -74,10 +75,10 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
     }
 
     userIds.push(creatorId);
-    const chatInput = await mtProto.client.getInputEntity(chat.chatId);
+    const chatInput = await mtProto.client.getInputEntity(chat.chat_id);
 
     await chats.userSnapshot(
-      chat.chatId,
+      chat.chat_id,
       userIds.map((id) => id.toJSNumber())
     );
 

@@ -8,7 +8,6 @@ import { exit, kill, nextTick } from "node:process";
 import { Octokit } from "@octokit/rest";
 import dotenv from "dotenv";
 import { writeFile } from "node:fs/promises";
-import { spawn, spawnSync } from "node:child_process";
 dotenv.config();
 /**
  * This script is used to help guide the user through setting up the environment variables.

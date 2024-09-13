@@ -22,7 +22,7 @@ export class Chats extends Super {
    */
   async userSnapshot(chatId: number, userIds: number[]) {
     const chat = await this.getChatByChatId(chatId);
-    const { error } = await this.supabase.from("chats").upsert({ ...chat, user_ids: userIds });
+    const { error } = await this.supabase.from("chats").update({ user_ids: userIds }).eq("chat_id", chat.chat_id);
     if (error) {
       this.logger.error("Failed to save chat users", { chatId, userIds, er: error });
     } else {
@@ -63,7 +63,7 @@ export class Chats extends Super {
       return;
     }
 
-    const { error } = await this.supabase.from("chats").upsert({ ...chat, status });
+    const { error } = await this.supabase.from("chats").update({ status }).eq("chat_id", chat.chat_id);
 
     if (error) {
       this.logger.error("Failed to update chat status", { chatId, taskNodeId, er: error });

@@ -20,7 +20,7 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
 
   const fetchedChat = await mtProto.client.invoke(
     new mtProto.api.messages.GetFullChat({
-      chatId: chat.chatId,
+      chatId: chat.chat_id,
     })
   );
 
@@ -33,7 +33,7 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
     new mtProto.api.folders.EditPeerFolders({
       folderPeers: [
         new mtProto.api.InputFolderPeer({
-          peer: new mtProto.api.InputPeerChat({ chatId: chat.chatId }),
+          peer: new mtProto.api.InputPeerChat({ chatId: chat.chat_id }),
           folderId: 0,
         }),
       ],
@@ -51,20 +51,20 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
   // add the creator back to obtain control of the chat
   await mtProto.client.invoke(
     new mtProto.api.messages.AddChatUser({
-      chatId: chat.chatId,
+      chatId: chat.chat_id,
       userId: chatCreator,
       fwdLimit: 50,
     })
   );
 
   await chats.updateChatStatus("reopened", payload.issue.node_id);
-  const users = await chats.getChatUsers(chat.chatId);
+  const users = await chats.getChatUsers(chat.chat_id);
   if (!users) {
     throw new Error("Failed to get chat users");
   }
 
   const { user_ids: userIds } = users;
-  const chatInput = await mtProto.client.getInputEntity(chat.chatId);
+  const chatInput = await mtProto.client.getInputEntity(chat.chat_id);
 
   for (const userId of userIds) {
     /**
@@ -96,7 +96,7 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
   await mtProto.client.invoke(
     new mtProto.api.messages.SendMessage({
       message: "This task has been reopened and this chat has been unarchived.",
-      peer: new mtProto.api.InputPeerChat({ chatId: chat.chatId }),
+      peer: new mtProto.api.InputPeerChat({ chatId: chat.chat_id }),
     })
   );
   return { status: 200, reason: "chat_reopened" };

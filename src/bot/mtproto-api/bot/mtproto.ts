@@ -5,6 +5,7 @@ import { SupabaseSession } from "./session";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 dotenv.config();
 
+
 /**
  * This class MUST ONLY be used in the context of workflow-functions as
  * it requires a Node.js environment which is not available with Cloudflare Workers.

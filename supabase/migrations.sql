@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS "chats" (
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now(),
   chat_id BIGINT NOT NULL,
+  chat_name TEXT NOT NULL,
   task_node_id TEXT UNIQUE NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('open', 'closed', 'reopened')),
   user_ids BIGINT[]
