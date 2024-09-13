@@ -75,6 +75,7 @@ You can set up your environment variables in two ways using the provided utility
 **Important**: Before running the setup script, ensure that you store your `GITHUB_PAT_TOKEN` in the `.env` file. This token will be used to create repository secrets and will be deleted after the script runs.
 
 - **GITHUB_PAT_TOKEN**: Create a classic personal access token (PAT) with the `repo` scope. Set the expiry to 24 hours, and save it in your `.env` file. This token will be used to generate repository secrets for the environment variables.
+- **Account Permission**: The account in which the PAT is associated with *must* be an `admin` of the repository to be able to save secrets this way. Visit your repository settings `telegram-bot` > `Collaborators & teams` to add the account as an admin first if needed.
 
 The environment variables are stored in the following locations:
 
