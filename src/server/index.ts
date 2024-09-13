@@ -68,5 +68,3 @@ export function createServer(dependencies: Dependencies) {
 
   return server;
 }
-
-export type Server = Awaited<ReturnType<typeof createServer>>;

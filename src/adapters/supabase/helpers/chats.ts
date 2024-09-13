@@ -1,13 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Super } from "./supabase";
 
-export type Chat = {
-  chatId: number;
-  chatName: string;
-  taskNodeId: string;
-  status: string;
-};
-
 /**
  * Handles all telegram chat storage and retrieval
  */
