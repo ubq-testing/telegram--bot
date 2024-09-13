@@ -42,9 +42,7 @@ export default {
         headers: { "content-type": "application/json" },
       });
     }
-
     const envSettings = Value.Decode(envValidator.schema, Value.Default(envValidator.schema, env));
-
     if (!envValidator.test(envSettings)) {
       const errors: string[] = [];
       for (const error of envValidator.errors(envSettings)) {
@@ -58,15 +56,15 @@ export default {
     }
 
     // inits the worker with the telegram bot
-    await TelegramBotSingleton.initialize(env);
+    await TelegramBotSingleton.initialize(envSettings);
 
     try {
       if (isGithubPayload(payload)) {
         // inits the worker with the plugin context for this call
-        PluginContext.initialize(payload, env);
-        await handleGithubWebhook(request, env);
+        PluginContext.initialize(payload, envSettings);
+        await handleGithubWebhook(request, envSettings);
       } else if (isTelegramPayload(payload)) {
-        await handleTelegramWebhook(request, env);
+        await handleTelegramWebhook(request, envSettings);
       } else {
         return new Response(JSON.stringify({ error: "Invalid environment provided" }), {
           status: 400,

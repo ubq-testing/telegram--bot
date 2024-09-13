@@ -24,13 +24,16 @@ export class User extends Super {
 
   async getWalletByGitHubUsername(username: string) {
     const ctx = PluginContext.getInstance().getContext();
-    const { octokit } = ctx
-    const githubUserID = (await octokit.rest.users.getByUsername({ username })).data.id;
-    const { data, error } = (await this.supabase.from("users").select("wallets(*)").eq("id", githubUserID).single()) as { data: { wallets: Wallet }; error: unknown };
+    const { octokit } = ctx;
+    const githubUserId = (await octokit.rest.users.getByUsername({ username })).data.id;
+    const { data, error } = (await this.supabase.from("users").select("wallets(*)").eq("id", githubUserId).single()) as {
+      data: { wallets: Wallet };
+      error: unknown;
+    };
     if ((error && !data) || !data.wallets?.address) {
-      this.logger.error("No wallet address found", { githubUserID });
+      this.logger.error("No wallet address found", { githubUserId });
     } else {
-      this.logger.info("Successfully fetched wallet", { githubUserID, address: data.wallets?.address });
+      this.logger.info("Successfully fetched wallet", { githubUserId, address: data.wallets?.address });
     }
 
     return data?.wallets?.address || null;

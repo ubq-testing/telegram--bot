@@ -1,6 +1,7 @@
 import { Value } from "@sinclair/typebox/value";
 import { plugin } from "../plugin";
 import { pluginSettingsSchema, pluginSettingsValidator, PluginInputs, Env } from "../types";
+import { logger } from "#root/utils/logger.js";
 
 export async function handleGithubWebhook(request: Request, env: Env): Promise<Response> {
   try {
@@ -9,9 +10,9 @@ export async function handleGithubWebhook(request: Request, env: Env): Promise<R
     const settings = Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, webhookPayload.settings));
     if (!pluginSettingsValidator.test(settings)) {
       const errors: string[] = [];
-      for (const error of pluginSettingsValidator.errors(settings)) {
-        console.error(error);
-        errors.push(`${error.path}: ${error.message}`);
+      for (const err of pluginSettingsValidator.errors(settings)) {
+        logger.error(err.message, { err });
+        errors.push(`${err.path}: ${err.message}`);
       }
       return new Response(JSON.stringify({ error: `Error: "Invalid settings provided. ${errors.join("; ")}"` }), {
         status: 400,
@@ -25,8 +26,8 @@ export async function handleGithubWebhook(request: Request, env: Env): Promise<R
       status: 200,
       headers: { "content-type": "application/json" },
     });
-  } catch (error) {
-    console.log("Error in handleGithubWebhook", error);
+  } catch (err) {
+    logger.error("Error in handleGithubWebhook", { err });
     throw new Error("Error in handleGithubWebhook");
   }
 }

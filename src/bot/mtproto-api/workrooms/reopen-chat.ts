@@ -70,8 +70,8 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
     /**
      * Dialogs are all of the chats, channels, and users that the account has interacted with.
      * By obtaining the dialogs, we guarantee our client (that's what we are considered to be by the MTProto API)
-     * has up to date context otherwise these operations seem to fail. 
-     * 
+     * has up to date context otherwise these operations seem to fail.
+     *
      * There is likely a better way to handle this, but this works for now.
      */
     await mtProto.client.getDialogs();

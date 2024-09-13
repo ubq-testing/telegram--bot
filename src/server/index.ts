@@ -32,7 +32,6 @@ export function createServer(dependencies: Dependencies) {
   server.use(requestLogger());
 
   server.onError(async (error, c) => {
-    console.error(c);
     if (error instanceof HTTPException) {
       if (error.status < 500)
         c.var.logger.info("Request info failed", {
@@ -63,7 +62,7 @@ export function createServer(dependencies: Dependencies) {
   server.post(
     "/webhook",
     webhookCallback(bot, "hono", {
-      secretToken: config.telegramBotSettings.TELEGRAM_BOT_WEBHOOK_SECRET,
+      secretToken: config.telegramBotEnv.botSettings.TELEGRAM_BOT_WEBHOOK_SECRET,
     })
   );
 

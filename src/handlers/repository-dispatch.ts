@@ -15,7 +15,7 @@ export async function repositoryDispatch(context: Context, workflow: string) {
   /**
    * These will remain hardcoded as `context` will have other repositories
    * and branches that are not relevant to the worker.
-   * 
+   *
    * If we release this bot as plugin for partners as opposed to it being just our
    * internal bot, we can make these configurable.
    */
@@ -24,7 +24,11 @@ export async function repositoryDispatch(context: Context, workflow: string) {
   const branch = "workflows";
 
   const {
-    env: { ubiquityOsSettings: { APP_ID, APP_PRIVATE_KEY } },
+    env: {
+      telegramBotEnv: {
+        ubiquityOsSettings: { APP_ID, APP_PRIVATE_KEY },
+      },
+    },
   } = context;
   const app = new App({ appId: APP_ID, privateKey: APP_PRIVATE_KEY });
   const installation = await app.octokit.rest.apps.getRepoInstallation({ owner, repo: repository });

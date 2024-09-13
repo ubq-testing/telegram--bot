@@ -19,11 +19,10 @@ const allowedUpdates = T.Object({
   message_reaction_count: T.String(),
 });
 
-
-const telegramBotSettings = T.Object({
+const botSettings = T.Object({
   /**
-    * The token for the bot given by the BotFather.
-    */
+   * The token for the bot given by the BotFather.
+   */
   TELEGRAM_BOT_TOKEN: T.String(),
   /**
    * The url to forward updates to.
@@ -42,14 +41,14 @@ const telegramBotSettings = T.Object({
   /**
    * Which updates the bot should receive, defaults to all.
    */
-  ALLOWED_UPDATES: T.Optional(T.Array(T.KeyOf(allowedUpdates))),
+  ALLOWED_UPDATES: T.Optional(T.Array(T.Enum(allowedUpdates))),
 });
 
-const telegramMtProtoSettings = T.Object({
+const mtProtoSettings = T.Object({
   /**
    * Obtained from https://my.telegram.org/apps
    */
-  TELEGRAM_APP_ID: T.Transform(T.Unknown())
+  TELEGRAM_APP_ID: T.Transform(T.Union([T.String(), T.Number()]))
     .Decode((str) => Number(str))
     .Encode((num) => num.toString()),
   /**
@@ -84,24 +83,27 @@ const storageSettings = T.Object({
   SUPABASE_SERVICE_KEY: T.String(),
 });
 
-export const env = T.Object({
-  /**
-   * BotFather bot settings, worker instance.
-   */
-  telegramBotSettings,
-  /**
-   * MtProto bot settings, user instance.
-   */
-  telegramMtProtoSettings,
-  /**
-   * UbiquityOS settings. Kernel instance.
-   */
+const telegramBotEnv = T.Object({
+  botSettings,
+  mtProtoSettings,
   ubiquityOsSettings,
-  /**
-   * Storage settings. Supbase instance. 
-   * ###### TODO: Move to GitHub JSON based storage.
-   */
   storageSettings,
+});
+
+export const env = T.Object({
+  telegramBotEnv: T.Transform(T.Union([T.String(), telegramBotEnv]))
+    .Decode((str) => {
+      if (typeof str === "string") {
+        const obj = JSON.parse(str) as StaticDecode<typeof telegramBotEnv>;
+
+        if (!obj.botSettings || !obj.mtProtoSettings || !obj.ubiquityOsSettings || !obj.storageSettings) {
+          throw new Error("Missing required environment variables for Telegram Bot settings");
+        }
+        return obj;
+      }
+      return str;
+    })
+    .Encode((obj) => JSON.stringify(obj)),
 });
 
 export type Env = StaticDecode<typeof env>;

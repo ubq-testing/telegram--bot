@@ -7,7 +7,7 @@ import { logHandle } from "#root/bot/helpers/logging.js";
 
 const composer = new Composer<Context>();
 
-const feature = composer.chatType("private").filter((ctx) => isAdmin(ctx.config.telegramBotSettings.TELEGRAM_BOT_ADMINS)(ctx));
+const feature = composer.chatType("private").filter((ctx) => isAdmin(ctx.config.telegramBotEnv.botSettings.TELEGRAM_BOT_ADMINS)(ctx));
 
 feature.command("setcommands", logHandle("command-setcommands"), chatAction("typing"), setCommandsHandler);
 

@@ -3,6 +3,8 @@ import input from "input";
 import dotenv from "dotenv";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { BaseMtProto } from "./base-mtproto";
+import { Context } from "#root/types/context.js";
+import { logger } from "#root/utils/logger.js";
 dotenv.config();
 
 /**
@@ -14,29 +16,53 @@ export class AuthHandler {
   private _env = {
     TELEGRAM_API_HASH: "",
     TELEGRAM_APP_ID: 0,
-    BOT_TOKEN: "",
+    TELEGRAM_BOT_TOKEN: "",
   };
 
   constructor() {
-    const key = process.env.SUPABASE_SERVICE_KEY;
-    const url = process.env.SUPABASE_URL;
-    if (!key || !url) {
-      throw new Error("Missing required environment variables for Supabase");
+    const env = process.env.telegramBotEnv;
+    if (!env) {
+      throw new Error("Missing required environment variables for Telegram Bot");
     }
-    this._supabase = createClient(url, key);
 
-    const hash = process.env.TELEGRAM_API_HASH;
-    const tgAppId = process.env.TELEGRAM_APP_ID;
-    const botToken = process.env.BOT_TOKEN;
-
-    if (!hash || !tgAppId || !botToken) {
-      throw new Error("Missing required environment variables for Telegram API");
+    const parsedEnv: Context["env"]["telegramBotEnv"] = JSON.parse(env);
+    if (!parsedEnv) {
+      throw new Error("Failed to parse environment variables for Telegram Bot");
     }
+
+    const { botSettings, mtProtoSettings, ubiquityOsSettings, storageSettings } = parsedEnv;
+
+    if (!botSettings || !mtProtoSettings || !ubiquityOsSettings || !storageSettings) {
+      throw new Error("Missing required environment variables for Telegram Bot settings");
+    }
+
+    const { TELEGRAM_BOT_TOKEN, TELEGRAM_BOT_WEBHOOK } = botSettings;
+    const { TELEGRAM_APP_ID, TELEGRAM_API_HASH } = mtProtoSettings;
+    const { SUPABASE_URL, SUPABASE_SERVICE_KEY } = storageSettings;
+    const { APP_ID, APP_PRIVATE_KEY } = ubiquityOsSettings;
+
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_BOT_WEBHOOK) {
+      throw new Error("Missing required environment variables for Telegram Bot settings");
+    }
+
+    if (!TELEGRAM_APP_ID || !TELEGRAM_API_HASH) {
+      throw new Error("Missing required environment variables for MtProto settings");
+    }
+
+    if (!APP_ID || !APP_PRIVATE_KEY) {
+      throw new Error("Missing required environment variables for UbiquityOS settings");
+    }
+
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+      throw new Error("Missing required environment variables for storage settings");
+    }
+
+    this._supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
     this._env = {
-      TELEGRAM_API_HASH: hash,
-      TELEGRAM_APP_ID: Number(tgAppId),
-      BOT_TOKEN: botToken,
+      TELEGRAM_API_HASH,
+      TELEGRAM_APP_ID,
+      TELEGRAM_BOT_TOKEN,
     };
   }
 
@@ -60,9 +86,9 @@ export class AuthHandler {
     try {
       await mtProto.client?.start({
         phoneNumber: async () => await input.text("Enter your phone number:"),
-        password: async () => await input.text("Enter your password if required:"),
+        password: async () => await input.password("Enter your password if required:"),
         phoneCode: async () => await input.text("Enter the code you received:"),
-        onError: (err: unknown) => console.error("Error during login:", err),
+        onError: (err: unknown) => logger.error("Error during login:", { err }),
       });
 
       const data = await this._supabase?.from("tg-bot-sessions").insert([{ session_data: mtProto.session?.save() }]);
@@ -71,10 +97,10 @@ export class AuthHandler {
         throw new Error("Failed to save session data to Supabase.");
       }
 
-      console.log("Successfully logged in and saved session data. You can now run the bot.");
+      logger.ok("Successfully logged in and saved session data. You can now run the bot.");
       process.exit(0);
-    } catch (error) {
-      console.error("Failed to log in:", error);
+    } catch (err) {
+      logger.error("Failed to log in:", { err });
     }
   }
 }

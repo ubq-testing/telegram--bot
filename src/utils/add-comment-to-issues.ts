@@ -9,12 +9,10 @@ export async function addCommentToIssue(context: Context, msg: string, owner?: s
   const { logger, octokit } = context;
   logger.info(`Adding comment to ${owner}/${repo}#${issueNumber}`);
 
-  let obj;
-
   if (!owner || !repo || !issueNumber) {
     owner = getDeepValue<string>(context, "payload.repository.owner.login");
     repo = getDeepValue<string>(context, "payload.repository.name");
-    obj = getDeepValue<number>(context, "payload.issue.number");
+    issueNumber = getDeepValue<number>(context, "payload.issue.number");
   }
 
   if (!owner || !repo || !issueNumber) {

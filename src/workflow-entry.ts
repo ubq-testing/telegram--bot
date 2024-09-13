@@ -6,6 +6,7 @@ import { PluginContext } from "./types/plugin-context-single";
 import { bubbleUpErrorComment } from "./utils/errors";
 import dotenv from "dotenv";
 import { proxyWorkflowCallbacks } from "./handlers/workflow-proxy";
+import { logger } from "./utils/logger";
 dotenv.config();
 
 /**
@@ -35,13 +36,13 @@ export async function run() {
   try {
     env = Value.Decode(envValidator.schema, payloadEnv);
   } catch (err) {
-    console.log("Error decoding env: ", err);
+    logger.error("Error decoding env: ", { err });
   }
 
   try {
     settings = Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, JSON.parse(payload.settings)));
   } catch (err) {
-    console.log("Error decoding settings: ", err);
+    logger.error("Error decoding settings: ", { err });
   }
 
   if (!(settings && env)) {
@@ -90,7 +91,7 @@ run()
   .then((result) => {
     core.setOutput("result", result);
   })
-  .catch((error) => {
-    console.error(error);
-    core.setFailed(error);
+  .catch((err) => {
+    logger.error("Error running workflow: ", { err });
+    core.setFailed(err);
   });

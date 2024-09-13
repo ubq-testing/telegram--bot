@@ -1,3 +1,4 @@
+import { logger } from "#root/utils/logger.js";
 import { AuthHandler } from "./auth-handler";
 import dotenv from "dotenv";
 dotenv.config();
@@ -10,4 +11,4 @@ async function main() {
   await authHandler.smsLogin();
 }
 
-main().catch(console.error);
+main().catch(logger.error);

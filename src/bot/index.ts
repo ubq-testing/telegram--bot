@@ -12,9 +12,10 @@ import { autoChatAction } from "@grammyjs/auto-chat-action";
 import { hydrate } from "@grammyjs/hydrate";
 import { hydrateReply, parseMode } from "@grammyjs/parse-mode";
 import { adminFeature } from "./features/admin/admin";
-import { userIdFeature } from "./features/commands/user-id";
-import { chatIdFeature } from "./features/commands/chat-id";
-import { botIdFeature } from "./features/commands/bot-id";
+import { userIdFeature } from "./features/commands/private-chat/user-id";
+import { chatIdFeature } from "./features/commands/shared/chat-id";
+import { botIdFeature } from "./features/commands/private-chat/bot-id";
+import { banCommand } from "./features/commands/groups/ban";
 
 interface Dependencies {
   config: UbiquityOsContext["env"];
@@ -60,6 +61,9 @@ export function createBot(token: string, dependencies: Dependencies, options: Op
   protectedBot.use(userIdFeature);
   protectedBot.use(chatIdFeature);
   protectedBot.use(botIdFeature);
+
+  // group commands
+  protectedBot.use(banCommand);
 
   // unhandled command handler
   protectedBot.use(unhandledFeature);

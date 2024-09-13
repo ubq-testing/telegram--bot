@@ -18,7 +18,7 @@ export class BaseMtProto {
   _api: typeof Api = Api;
   _session: StringSession | null = null;
 
-  async initialize(env: Context["env"]["telegramMtProtoSettings"], session: string) {
+  async initialize(env: Context["env"]["telegramBotEnv"]["mtProtoSettings"], session: string) {
     this._api = Api;
     this._session = new StringSession(session);
     this._client = await this._mtProtoInit(env, this._session);
@@ -36,7 +36,7 @@ export class BaseMtProto {
     return this._session;
   }
 
-  private async _mtProtoInit(env: Context["env"]["telegramMtProtoSettings"], session: StringSession) {
+  private async _mtProtoInit(env: Context["env"]["telegramBotEnv"]["mtProtoSettings"], session: StringSession) {
     const { TELEGRAM_API_HASH, TELEGRAM_APP_ID } = env;
 
     if (!TELEGRAM_API_HASH || !TELEGRAM_APP_ID) {

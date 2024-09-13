@@ -1,6 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { Super } from "./supabase";
-import { Context } from "../../../types/context";
 
 export type Chat = {
   chatId: number;
@@ -105,18 +104,13 @@ export class Chats extends Super {
   }
 
   async getChatByTaskNodeId(taskNodeId: string) {
-    try {
-      const { data, error } = await this.supabase.from("chats").select("*").eq("task_node_id", taskNodeId).single();
-      if (error || !data) {
-        this.logger.error("No chat found", { taskNodeId });
-      } else {
-        this.logger.info("Successfully fetched chat", { taskNodeId });
-      }
-
-      return data;
-    } catch (e) {
-      console.error(e);
-      throw new Error("Failed to fetch chat by task node id");
+    const { data, error } = await this.supabase.from("chats").select("*").eq("task_node_id", taskNodeId).single();
+    if (error || !data) {
+      this.logger.error("No chat found", { taskNodeId });
+    } else {
+      this.logger.info("Successfully fetched chat", { taskNodeId });
     }
+
+    return data;
   }
 }
