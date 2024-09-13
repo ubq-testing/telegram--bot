@@ -10,18 +10,16 @@ import { Context } from "../types";
  */
 export async function repositoryDispatch(context: Context, workflow: string) {
   const inputs = PluginContext.getInstance().getInputs();
-  const { logger } = context;
+  const {
+    logger,
+    env: { REPOSITORY },
+  } = context;
+  if (!REPOSITORY) {
+    throw new Error("REPOSITORY env variable is not set");
+  }
 
-  /**
-   * These will remain hardcoded as `context` will have other repositories
-   * and branches that are not relevant to the worker.
-   *
-   * If we release this bot as plugin for partners as opposed to it being just our
-   * internal bot, we can make these configurable.
-   */
-  const repository = "telegram--bot";
-  const owner = "ubq-testing";
-  const branch = "workflows-test";
+  const [owner, repository] = REPOSITORY.split("/");
+  const branch = "development";
 
   const {
     env: {

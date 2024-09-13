@@ -67,13 +67,12 @@ This bot operates in two parts:
 
 The `TELEGRAM_BOT_ENV` is a single JSON object that encapsulates all necessary environment variables for the bot's operation. It consists of four key sections: `botSettings`, `mtProtoSettings`, `storageSettings`, and `ubiquityOsSettings`.
 
-You can set up your environment variables in two ways using the provided utility script:
+You can set up your environment variables by using the provided utility script:
 
-1. **Guided Setup**: Run `yarn setup-env-guided`, which prompts you to enter each value via the CLI. The values will be serialized and stored both locally and in your repository secrets.
-2. **Manual Setup**: Modify the values directly in the script and then run `yarn setup-env-manual` to store them locally and in your repository secrets.
+- Run `yarn setup-env-guided`, which prompts you to enter each value via the CLI. The values will be serialized and stored both locally and in your repository secrets.
 
 - **GITHUB_PAT_TOKEN**: Create a classic personal access token (PAT) with the `repo` scope. Set the expiry to 24 hours. This token will be used to generate repository secrets for the environment variables and will be removed from `.env` after the secrets are saved.
-- **Account Permission**: The account in which the PAT is associated with *must* be an `admin` of the repository to be able to save secrets this way. Visit your repository settings `telegram-bot` > `Collaborators & teams` to add the account as an admin first if needed.
+- **Account Permission**: The account in which the PAT is associated with _must_ be an `admin` of the repository to be able to save secrets this way. Visit your repository settings `telegram-bot` > `Collaborators & teams` to add the account as an admin first if needed.
 
 The environment variables are stored in the following locations:
 
