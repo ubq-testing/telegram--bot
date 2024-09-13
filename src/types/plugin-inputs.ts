@@ -18,6 +18,10 @@ export const pluginSettingsSchema = T.Object({
   botId: T.Transform(T.Unknown())
     .Decode((value) => Number(value))
     .Encode((value) => value.toString()),
+  /**
+   * The target branch to run the workflows on. Will default to the default branch.
+   */
+  targetBranch: T.Optional(T.String({ default: "development" })),
 });
 
 export const pluginSettingsValidator = new StandardValidator(pluginSettingsSchema);

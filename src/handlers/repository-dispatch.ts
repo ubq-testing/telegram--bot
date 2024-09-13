@@ -19,7 +19,6 @@ export async function repositoryDispatch(context: Context, workflow: string) {
   }
 
   const [owner, repository] = REPOSITORY.split("/");
-  const branch = "development";
 
   const {
     env: {
@@ -27,6 +26,7 @@ export async function repositoryDispatch(context: Context, workflow: string) {
         ubiquityOsSettings: { APP_ID, APP_PRIVATE_KEY },
       },
     },
+    config: { targetBranch },
   } = context;
   const app = new App({ appId: APP_ID, privateKey: APP_PRIVATE_KEY });
   const installation = await app.octokit.rest.apps.getRepoInstallation({ owner, repo: repository });
@@ -46,7 +46,7 @@ export async function repositoryDispatch(context: Context, workflow: string) {
     owner,
     repo: repository,
     workflow_id: "compute.yml",
-    ref: branch,
+    ref: targetBranch ?? "development",
     inputs: {
       ...inputs,
       eventPayload: JSON.stringify(context.payload),
