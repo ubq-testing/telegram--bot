@@ -21,7 +21,7 @@ export async function repositoryDispatch(context: Context, workflow: string) {
    */
   const repository = "telegram--bot";
   const owner = "ubq-testing";
-  const branch = "workflows";
+  const branch = "workflows-test";
 
   const {
     env: {
