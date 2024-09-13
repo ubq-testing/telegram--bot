@@ -1,12 +1,11 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { Context } from "../../../types/context";
+import { logger } from "#root/utils/logger.js";
 
 export class Super {
   protected supabase: SupabaseClient;
-  protected context: Context;
+  protected logger = logger;
 
-  constructor(supabase: SupabaseClient, context: Context) {
+  constructor(supabase: SupabaseClient) {
     this.supabase = supabase;
-    this.context = context;
   }
 }
