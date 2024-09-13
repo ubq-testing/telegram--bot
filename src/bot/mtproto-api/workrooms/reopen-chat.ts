@@ -77,7 +77,7 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
     await mtProto.client.getDialogs();
     try {
       // don't add the bot or the chat creator, as they are already in the chat
-      if (userId === context.config.botId || userId === chatCreator) {
+      if (userId === context.config.botId || userId === chatCreator.toJSNumber()) {
         continue;
       }
 

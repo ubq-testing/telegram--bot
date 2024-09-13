@@ -26,7 +26,7 @@
     "start": "tsx ./src/main.ts",
     "deploy": "wrangler deploy --minify src/main.ts",
     "sms-auth": "npx tsx src/bot/mtproto-api/bot/scripts/sms-auth/sms-auth.ts",
-    "setup-env-guided": "npx tsx src/bot/mtproto-api/bot/scripts/sms-auth/setup-env.ts"
+    "setup-env": "npx tsx src/bot/mtproto-api/bot/scripts/sms-auth/setup-env.ts"
   },
   "keywords": [
     "typescript",

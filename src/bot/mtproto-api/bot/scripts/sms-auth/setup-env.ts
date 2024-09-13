@@ -260,7 +260,7 @@ class SetUpHandler {
 
     logger.ok("Local env files saved successfully");
     logger.info("Storing secrets in GitHub");
-    await this.storeRepoSecrets(telegramBotEnv, repositoryEnv);
+    await this.storeRepoSecrets();
   }
 
   getOwnerRepo() {
@@ -303,11 +303,11 @@ class SetUpHandler {
     }
   }
 
-  async storeRepoSecrets(botEnv: string, repositoryEnv: string) {
+  async storeRepoSecrets() {
     const octokit = new Octokit({ auth: process.env.GITHUB_PAT_TOKEN });
     const secrets = {
-      TELEGRAM_BOT_ENV: botEnv,
-      REPOSITORY: repositoryEnv,
+      TELEGRAM_BOT_ENV: this.env.TELEGRAM_BOT_ENV,
+      REPOSITORY: process.env.REPOSITORY,
     };
 
     try {
@@ -318,7 +318,13 @@ class SetUpHandler {
           repo,
         });
 
-        const encryptedSecret = await this.encryptSecret(value, pubKey.data.key);
+        const secret = typeof value === "object" ? JSON.stringify(value) : value;
+
+        if (!secret) {
+          throw new Error(`No secret found to save for key ${key}`);
+        }
+
+        const encryptedSecret = await this.encryptSecret(secret, pubKey.data.key);
 
         await octokit.actions.createOrUpdateRepoSecret({
           owner,

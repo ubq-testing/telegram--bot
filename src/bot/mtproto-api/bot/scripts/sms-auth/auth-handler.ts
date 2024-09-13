@@ -22,7 +22,7 @@ export class AuthHandler {
   constructor() {
     const env = process.env.TELEGRAM_BOT_ENV;
     if (!env) {
-      throw new Error("Have you ran the setup script? Try running 'yarn setup-env-guided' first.");
+      throw new Error("Have you ran the setup script? Try running 'yarn setup-env' first.");
     }
 
     const parsedEnv: Context["env"]["TELEGRAM_BOT_ENV"] = JSON.parse(env);
