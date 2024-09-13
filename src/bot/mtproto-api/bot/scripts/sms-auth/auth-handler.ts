@@ -88,7 +88,7 @@ export class AuthHandler {
         phoneNumber: async () => await input.text("Enter your phone number:"),
         password: async () => await input.password("Enter your password if required:"),
         phoneCode: async () => await input.text("Enter the code you received:"),
-        onError: (err: unknown) => logger.error("Error during login:", { err }),
+        onError: (err: unknown) => console.error("Error during login:", { err }),
       });
 
       const data = await this._supabase?.from("tg-bot-sessions").insert([{ session_data: mtProto.session?.save() }]);
