@@ -19,7 +19,7 @@ export const pluginSettingsSchema = T.Object({
     .Decode((value) => Number(value))
     .Encode((value) => value.toString()),
   /**
-   * The target branch to run the workflows on. Will default to the default branch.
+   * The target branch to run the workflows on. Will default to the `development` branch.
    */
   targetBranch: T.Optional(T.String({ default: "development" })),
 });

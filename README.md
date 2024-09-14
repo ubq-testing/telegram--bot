@@ -136,6 +136,7 @@ interface TELEGRAM_BOT_ENV {
       runsOn: ["issues.opened", "issues.labeled", "issues.reopened", "issues.closed"]
       with:
         botId: 00000000
+        targetBranch: development
 ```
 
 ### Usage
