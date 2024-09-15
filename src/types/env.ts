@@ -91,7 +91,7 @@ const TELEGRAM_BOT_ENV = T.Object({
 });
 
 export const env = T.Object({
-  REPOSITORY: T.Optional(T.String({ examples: ["owner/repo"], default: "ubiquibot/telegram-bot" })),
+  TELEGRAM_BOT_REPOSITORY_FULL_NAME: T.Optional(T.String({ examples: ["owner/repo"], default: "ubiquibot/telegram-bot" })),
   TELEGRAM_BOT_ENV: T.Transform(T.Union([T.String(), TELEGRAM_BOT_ENV]))
     .Decode((str) => {
       if (typeof str === "string") {

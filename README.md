@@ -86,6 +86,7 @@ The environment variables are stored in the following locations:
 2. **mtProtoSettings**: Contains settings for the MTProto API like `TELEGRAM_APP_ID`, `TELEGRAM_API_HASH`, etc.
 3. **storageSettings**: Contains settings for the Supabase database like `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, etc.
 4. **ubiquityOsSettings**: Contains settings for the UbiquityOS Kernel like `APP_PRIVATE_KEY`, `APP_ID`, etc.
+5. **TELEGRAM_BOT_REPOSITORY_FULL_NAME**: A standalone single string value for the full repository name (e.g., `ubiquity-os/telegram-bot`).
 
 ```typescript
 interface TELEGRAM_BOT_ENV {
@@ -119,9 +120,9 @@ interface TELEGRAM_BOT_ENV {
 #### Telegram Configuration
 
 1. Create a new bot using [BotFather](https://t.me/BotFather).
-2. Add your `BOT_TOKEN`, `TELEGRAM_APP_ID`, `TELEGRAM_API_HASH`, and `BOT_ADMINS` to the environment variables.
-3. Use [Smee.io](https://smee.io/new) to create a webhook and add the URL as `BOT_WEBHOOK`.
-4. Generate a secret for `BOT_WEBHOOK_SECRET` to verify webhook requests.
+2. Add your `TELEGRAM_BOT_TOKEN`, `TELEGRAM_APP_ID`, `TELEGRAM_API_HASH`, and `TELEGRAM_BOT_ADMINS` to the environment variables.
+3. Use [Smee.io](https://smee.io/new) to create a webhook and add the URL as `TELEGRAM_BOT_WEBHOOK`.
+4. Generate a secret for `TELEGRAM_BOT_WEBHOOK_SECRET` to verify webhook requests.
 
 #### GitHub Configuration
 

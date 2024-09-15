@@ -12,13 +12,13 @@ export async function repositoryDispatch(context: Context, workflow: string) {
   const inputs = PluginContext.getInstance().getInputs();
   const {
     logger,
-    env: { REPOSITORY },
+    env: { TELEGRAM_BOT_REPOSITORY_FULL_NAME },
   } = context;
-  if (!REPOSITORY) {
-    throw new Error("REPOSITORY env variable is not set");
+  if (!TELEGRAM_BOT_REPOSITORY_FULL_NAME) {
+    throw new Error("TELEGRAM_BOT_REPOSITORY_FULL_NAME env variable is not set");
   }
 
-  const [owner, repository] = REPOSITORY.split("/");
+  const [owner, repository] = TELEGRAM_BOT_REPOSITORY_FULL_NAME.split("/");
 
   const {
     env: {

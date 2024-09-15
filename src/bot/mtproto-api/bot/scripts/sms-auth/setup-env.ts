@@ -54,7 +54,7 @@ class SetUpHandler {
       questions: [
         {
           type: "input",
-          name: "REPOSITORY",
+          name: "TELEGRAM_BOT_REPOSITORY_FULL_NAME",
           message: "Enter your repository name (owner/repo).",
         },
       ],
@@ -143,15 +143,15 @@ class SetUpHandler {
   ];
 
   shouldTestToken = !!process.env.GITHUB_PAT_TOKEN;
-  hasSetRepository = !!process.env.REPOSITORY;
+  hasSetRepository = !!process.env.TELEGRAM_BOT_REPOSITORY_FULL_NAME;
 
   async handleFirstTwo(question: { name: string; message: string }, answer: string) {
-    if (question.name === "REPOSITORY") {
+    if (question.name === "TELEGRAM_BOT_REPOSITORY_FULL_NAME") {
       if (!answer.includes("/")) {
         logger.error("Invalid repository name. Please enter in the format 'owner/repo'");
         process.exit(1);
       }
-      await writeFile(".env", `REPOSITORY=${answer}`, "utf-8");
+      await writeFile(".env", `TELEGRAM_BOT_REPOSITORY_FULL_NAME=${answer}`, "utf-8");
       logger.ok("Repository name saved successfully");
     }
 
@@ -168,7 +168,10 @@ class SetUpHandler {
       const questions = step.questions;
 
       for (const question of questions) {
-        if ((question.name === "REPOSITORY" && this.hasSetRepository) || (question.name === "GITHUB_PAT_TOKEN" && (await this.testAccessToken()))) {
+        if (
+          (question.name === "TELEGRAM_BOT_REPOSITORY_FULL_NAME" && this.hasSetRepository) ||
+          (question.name === "GITHUB_PAT_TOKEN" && (await this.testAccessToken()))
+        ) {
           continue;
         }
         console.log(step.title);
@@ -251,7 +254,7 @@ class SetUpHandler {
     const paths = [".env", ".dev.vars"];
 
     const telegramBotEnv = `TELEGRAM_BOT_ENV=${JSON.stringify(this.env.TELEGRAM_BOT_ENV)}`;
-    const repositoryEnv = `REPOSITORY=${process.env.REPOSITORY}`;
+    const repositoryEnv = `TELEGRAM_BOT_REPOSITORY_FULL_NAME=${process.env.TELEGRAM_BOT_REPOSITORY_FULL_NAME}`;
 
     for (const path of paths) {
       const envVar = `${repositoryEnv}\n${telegramBotEnv}`;
@@ -264,11 +267,11 @@ class SetUpHandler {
   }
 
   getOwnerRepo() {
-    if (!process.env.REPOSITORY) {
+    if (!process.env.TELEGRAM_BOT_REPOSITORY_FULL_NAME) {
       logger.error("No repository found in environment variables");
       exit(1);
     }
-    const [owner, repo] = process.env.REPOSITORY.split("/");
+    const [owner, repo] = process.env.TELEGRAM_BOT_REPOSITORY_FULL_NAME.split("/");
     return { owner, repo };
   }
 
@@ -307,7 +310,7 @@ class SetUpHandler {
     const octokit = new Octokit({ auth: process.env.GITHUB_PAT_TOKEN });
     const secrets = {
       TELEGRAM_BOT_ENV: this.env.TELEGRAM_BOT_ENV,
-      REPOSITORY: process.env.REPOSITORY,
+      TELEGRAM_BOT_REPOSITORY_FULL_NAME: process.env.TELEGRAM_BOT_REPOSITORY_FULL_NAME,
     };
 
     try {
