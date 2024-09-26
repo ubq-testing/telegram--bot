@@ -6,7 +6,6 @@ import { logger } from "#root/utils/logger.js";
 export async function handleGithubWebhook(request: Request, env: Env): Promise<Response> {
   try {
     const webhookPayload = (await request.json()) as PluginInputs;
-
     const settings = Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, webhookPayload.settings));
     if (!pluginSettingsValidator.test(settings)) {
       const errors: string[] = [];

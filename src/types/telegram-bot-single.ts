@@ -19,26 +19,27 @@ export class TelegramBotSingleton {
         botSettings: { TELEGRAM_BOT_TOKEN, TELEGRAM_BOT_WEBHOOK, ALLOWED_UPDATES },
       },
     } = env;
+
     if (!TelegramBotSingleton._instance) {
       TelegramBotSingleton._instance = new TelegramBotSingleton();
       TelegramBotSingleton._bot = createBot(TELEGRAM_BOT_TOKEN, {
         config: env,
         logger,
       });
-
       await TelegramBotSingleton._bot.api.setWebhook(TELEGRAM_BOT_WEBHOOK, {
         allowed_updates: ALLOWED_UPDATES,
-        drop_pending_updates: true,
         secret_token: env.TELEGRAM_BOT_ENV.botSettings.TELEGRAM_BOT_WEBHOOK_SECRET,
       });
-
-      TelegramBotSingleton._server = createServer({
-        bot: TelegramBotSingleton._bot,
-        config: env,
-        logger,
-      });
+      try {
+        TelegramBotSingleton._server = createServer({
+          bot: TelegramBotSingleton._bot,
+          config: env,
+          logger,
+        });
+      } catch (er) {
+        logger.error("Error initializing TelegramBotSingleton", { er });
+      }
     }
-
     return TelegramBotSingleton._instance;
   }
 

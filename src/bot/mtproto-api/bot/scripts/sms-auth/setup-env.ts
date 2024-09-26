@@ -81,7 +81,7 @@ class SetUpHandler {
         {
           type: "input",
           name: "TELEGRAM_BOT_WEBHOOK",
-          message: "Enter your Telegram bot webhook. Cloudflare for production, ngrok/smee for development",
+          message: "Any URL used should end with '/telegram'. e.g 'https://example.com/telegram'",
         },
         {
           type: "input",

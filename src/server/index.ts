@@ -58,9 +58,7 @@ export function createServer(dependencies: Dependencies) {
     );
   });
 
-  server.get("/", (c) => c.json({ status: true }));
   server.post(
-    "/webhook",
     webhookCallback(bot, "hono", {
       secretToken: config.TELEGRAM_BOT_ENV.botSettings.TELEGRAM_BOT_WEBHOOK_SECRET,
     })
