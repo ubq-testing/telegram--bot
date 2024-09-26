@@ -119,11 +119,18 @@ interface TELEGRAM_BOT_ENV {
 1. Ensure your Ubiquity OS Kernel is set up.
 2. Configure the plugin in your private organization’s repository:
 
+These URLs **do not** contain url paths, only the domain. This is because as standard, the main entry (`/`) is used for github events and the `/telegram` path is used for Telegram events which is set via the bot's `/setwebhook` command or by worker environment variable.
+
 ```yaml
-- uses:
-  - plugin: http://localhost:3000
-    with:
-      botId: 00000000
+plugins:
+  - uses:
+    - plugin: https://cloudflare-worker-url.dev
+      with:
+        botId: 00000000
+  - uses:
+    - plugin: http://localhost:3000
+      with:
+        botId: 00000000
 ```
 
 #### Supabase Configuration
