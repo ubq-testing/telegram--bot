@@ -6,7 +6,7 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 dotenv.config();
 
 /**
- * This class MUST ONLY be used in the context of workflow-functions as
+ * This class MUST ONLY be used in the context of workflows as
  * it requires a Node.js environment which is not available with Cloudflare Workers.
  *
  * An extension of the BaseMtProto class that integrates with the Supabase based

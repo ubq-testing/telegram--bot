@@ -6,17 +6,9 @@ import { Context, SupportedEventsU } from "../types";
 import { handleCallback } from "./worker-proxy";
 
 /**
- * These are function which get dispatched by this worker to fire off workflows
- * in the repository. We enter through the main `compute.yml` just like a typical
- * action plugin would, we forward the same payload that the worker received to
- * the workflow the same way that the kernel does.
- *
- * - First event fires, `issues.labeled` and the worker catches it.
- * - The worker then dispatches a workflow to `compute.yml` with the event name as the input.
- * - The workflow receives a `issues.labeled` payload and runs the `createChat` function.
- *
- * I.e we're essentially running the first dual action/worker plugin which is
- * ideal for telegram-bot as it's a bot that needs to be able to be super flexible.
+ * These functions are run via workflow triggers. They can only run
+ * if this plugin is defined in `ubiquibot-config.yml` pointing to the workflow URL,
+ * see the README for more information on how to set this up.
  */
 export const workflowCallbacks = {
   "issues.labeled": [createChat],

@@ -48,28 +48,11 @@ const mtProtoSettings = T.Object({
   /**
    * Obtained from https://my.telegram.org/apps
    */
-  TELEGRAM_APP_ID: T.Transform(T.Union([T.String(), T.Number()]))
-    .Decode((str) => Number(str))
-    .Encode((num) => num.toString()),
+  TELEGRAM_APP_ID: T.Number(),
   /**
    * Obtained from https://my.telegram.org/apps
    */
   TELEGRAM_API_HASH: T.String(),
-});
-
-const ubiquityOsSettings = T.Object({
-  /**
-   * Your UbiquityOS app id
-   */
-  APP_ID: T.Transform(T.Unknown())
-    .Decode((str) => Number(str))
-    .Encode((num) => num.toString()),
-  /**
-   * Your UbiquityOS private key
-   */
-  APP_PRIVATE_KEY: T.Transform(T.Unknown())
-    .Decode((str) => String(str))
-    .Encode((str) => str),
 });
 
 const storageSettings = T.Object({
@@ -86,20 +69,21 @@ const storageSettings = T.Object({
 const TELEGRAM_BOT_ENV = T.Object({
   botSettings,
   mtProtoSettings,
-  ubiquityOsSettings,
   storageSettings,
 });
 
+const botEnvValidator = new StandardValidator(TELEGRAM_BOT_ENV);
+
 export const env = T.Object({
-  TELEGRAM_BOT_REPOSITORY_FULL_NAME: T.Optional(T.String({ examples: ["owner/repo"], default: "ubiquibot/telegram-bot" })),
   TELEGRAM_BOT_ENV: T.Transform(T.Union([T.String(), TELEGRAM_BOT_ENV]))
     .Decode((str) => {
       if (typeof str === "string") {
         const obj = JSON.parse(str) as StaticDecode<typeof TELEGRAM_BOT_ENV>;
 
-        if (!obj.botSettings || !obj.mtProtoSettings || !obj.ubiquityOsSettings || !obj.storageSettings) {
-          throw new Error("Missing required environment variables for Telegram Bot settings");
+        if (!botEnvValidator.test(obj)) {
+          throw new Error('Invalid TELEGRAM_BOT_ENV');
         }
+
         return obj;
       }
       return str;

@@ -61,20 +61,6 @@ export async function run() {
   }
 }
 
-// Might use this later to receive data back from it's own workflows
-// async function returnDataToKernel(repoToken: string, stateId: string, output: object) {
-//   const octokit = new Octokit({ auth: repoToken });
-//   await octokit.repos.createDispatchEvent({
-//     owner: github.context.repo.owner,
-//     repo: github.context.repo.repo,
-//     event_type: "return_data_to_ubiquibot_kernel",
-//     client_payload: {
-//       state_id: stateId,
-//       output: JSON.stringify(output),
-//     },
-//   });
-// }
-
 run()
   .then((result) => {
     core.setOutput("result", result);

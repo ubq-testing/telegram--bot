@@ -33,10 +33,6 @@ class SetUpHandler {
         SUPABASE_SERVICE_KEY: "",
         SUPABASE_URL: "",
       },
-      ubiquityOsSettings: {
-        APP_ID: 0,
-        APP_PRIVATE_KEY: "",
-      },
     },
   };
 
@@ -55,7 +51,7 @@ class SetUpHandler {
         {
           type: "input",
           name: "TELEGRAM_BOT_REPOSITORY_FULL_NAME",
-          message: "Enter your repository name (owner/repo).",
+          message: "Enter your repository name (owner/repo). Need to store your secrets in your repository.",
         },
       ],
     },
@@ -207,10 +203,6 @@ class SetUpHandler {
           SUPABASE_SERVICE_KEY: answers["Storage settings"]["SUPABASE_SERVICE_KEY"],
           SUPABASE_URL: answers["Storage settings"]["SUPABASE_URL"],
         },
-        ubiquityOsSettings: {
-          APP_ID: Number(answers["Ubiquity OS settings"]["APP_ID"]),
-          APP_PRIVATE_KEY: answers["Ubiquity OS settings"]["APP_PRIVATE_KEY"],
-        },
       },
     };
 
@@ -219,13 +211,12 @@ class SetUpHandler {
 
   async validateEnv() {
     const env = this.env.TELEGRAM_BOT_ENV;
-    const { botSettings, mtProtoSettings, storageSettings, ubiquityOsSettings } = env;
+    const { botSettings, mtProtoSettings, storageSettings } = env;
 
     const merged = {
       ...botSettings,
       ...mtProtoSettings,
       ...storageSettings,
-      ...ubiquityOsSettings,
     };
 
     const keys = Object.keys(merged);
@@ -310,7 +301,6 @@ class SetUpHandler {
     const octokit = new Octokit({ auth: process.env.GITHUB_PAT_TOKEN });
     const secrets = {
       TELEGRAM_BOT_ENV: this.env.TELEGRAM_BOT_ENV,
-      TELEGRAM_BOT_REPOSITORY_FULL_NAME: process.env.TELEGRAM_BOT_REPOSITORY_FULL_NAME,
     };
 
     try {

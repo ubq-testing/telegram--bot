@@ -1,6 +1,5 @@
 import { ProxyCallbacks } from "#root/types/proxy.js";
 import { Context, SupportedEventsU } from "../types";
-import { closeWorkroom, createWorkroom, reOpenWorkroom } from "./workflow-functions";
 
 /**
  * The `callbacks` object defines an array of callback functions for each supported event type.
@@ -9,11 +8,7 @@ import { closeWorkroom, createWorkroom, reOpenWorkroom } from "./workflow-functi
  * callback in an array. This design allows for extensibility and flexibility, enabling
  * us to add more callbacks for a particular event without modifying the core logic.
  */
-const callbacks = {
-  "issues.labeled": [createWorkroom],
-  "issues.closed": [closeWorkroom],
-  "issues.reopened": [reOpenWorkroom],
-} as ProxyCallbacks;
+const callbacks = {} as ProxyCallbacks;
 
 /**
  * The `proxyCallbacks` function returns a Proxy object that intercepts access to the

@@ -1,5 +1,4 @@
 import { Context } from "#root/types/context.js";
-import { getDeepValue } from "#root/utils/get-deep-value.js";
 
 /**
  * Ideally pass in owner, repo, and issueNumber, but if not provided,
@@ -10,9 +9,17 @@ export async function addCommentToIssue(context: Context, msg: string, owner?: s
   logger.info(`Adding comment to ${owner}/${repo}#${issueNumber}`);
 
   if (!owner || !repo || !issueNumber) {
-    owner = getDeepValue<string>(context, "payload.repository.owner.login");
-    repo = getDeepValue<string>(context, "payload.repository.name");
-    issueNumber = getDeepValue<number>(context, "payload.issue.number");
+    if ("issue" in context.payload) {
+      owner = context.payload.repository.owner.login;
+      repo = context.payload.repository.name;
+      issueNumber = context.payload.issue.number;
+    }
+
+    if ("pull_request" in context.payload) {
+      owner = context.payload.repository.owner.login;
+      repo = context.payload.repository.name;
+      issueNumber = context.payload.pull_request.number;
+    }
   }
 
   if (!owner || !repo || !issueNumber) {
