@@ -30,16 +30,15 @@ export class AuthHandler {
       throw new Error("Failed to parse environment variables for Telegram Bot");
     }
 
-    const { botSettings, mtProtoSettings, ubiquityOsSettings, storageSettings } = parsedEnv;
+    const { botSettings, mtProtoSettings, storageSettings } = parsedEnv;
 
-    if (!botSettings || !mtProtoSettings || !ubiquityOsSettings || !storageSettings) {
+    if (!botSettings || !mtProtoSettings || !storageSettings) {
       throw new Error("Missing required environment variables for Telegram Bot settings");
     }
 
     const { TELEGRAM_BOT_TOKEN, TELEGRAM_BOT_WEBHOOK } = botSettings;
     const { TELEGRAM_APP_ID, TELEGRAM_API_HASH } = mtProtoSettings;
     const { SUPABASE_URL, SUPABASE_SERVICE_KEY } = storageSettings;
-    const { APP_ID, APP_PRIVATE_KEY } = ubiquityOsSettings;
 
     if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_BOT_WEBHOOK) {
       throw new Error("Missing required environment variables for Telegram Bot settings");
@@ -49,9 +48,6 @@ export class AuthHandler {
       throw new Error("Missing required environment variables for MtProto settings");
     }
 
-    if (!APP_ID || !APP_PRIVATE_KEY) {
-      throw new Error("Missing required environment variables for UbiquityOS settings");
-    }
 
     if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
       throw new Error("Missing required environment variables for storage settings");

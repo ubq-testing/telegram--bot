@@ -77,7 +77,7 @@ class SetUpHandler {
         {
           type: "input",
           name: "TELEGRAM_BOT_WEBHOOK",
-          message: "Any URL used should end with '/telegram'. e.g 'https://example.com/telegram'",
+          message: "Any URL (except smee.io) used should end with '/telegram'. e.g 'https://example.com/telegram'",
         },
         {
           type: "input",
@@ -118,21 +118,6 @@ class SetUpHandler {
           type: "input",
           name: "SUPABASE_URL",
           message: "Enter your Supabase URL (https://<project_id>.supabase.co)",
-        },
-      ],
-    },
-    {
-      title: "Ubiquity OS settings",
-      questions: [
-        {
-          type: "input",
-          name: "APP_ID",
-          message: "Enter your Ubiquity OS app id. This can be obtained from your kernel env vars.",
-        },
-        {
-          type: "input",
-          name: "APP_PRIVATE_KEY",
-          message: "Enter your Ubiquity OS private key. This can be obtained from your kernel env vars.",
         },
       ],
     },
