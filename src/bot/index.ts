@@ -16,6 +16,7 @@ import { userIdFeature } from "./features/commands/private-chat/user-id";
 import { chatIdFeature } from "./features/commands/shared/chat-id";
 import { botIdFeature } from "./features/commands/private-chat/bot-id";
 import { banCommand } from "./features/commands/groups/ban";
+import { setWebhookFeature } from "./features/commands/private-chat/set-webhook";
 
 interface Dependencies {
   config: UbiquityOsContext["env"];
@@ -56,6 +57,7 @@ export function createBot(token: string, dependencies: Dependencies, options: Op
 
   // admin commands
   protectedBot.use(adminFeature);
+  protectedBot.use(setWebhookFeature);
 
   // development commands
   protectedBot.use(userIdFeature);
