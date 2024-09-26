@@ -1,6 +1,6 @@
 # `@ubiquity-os/telegram-bot`
 
-A dual-architecture Telegram bot for Ubiquity OS, uniquely combining Cloudflare Workers and GitHub Actions to deliver seamless integration with both Telegram and GitHub. This hybrid plugin is the first of its kind to support both worker and workflow functionality, running across Cloudflare V8 and Node.js environments for enhanced flexibility and performance across multiple runtimes.
+A Telegram bot for Ubiquity OS, uniquely combining Cloudflare Workers and GitHub Actions to deliver seamless integration with both Telegram and GitHub. This hybrid plugin is the first of its kind to support both worker and workflow functionality, running across Cloudflare V8 and Node.js environments for enhanced flexibility and performance across multiple runtimes.
 
 ## Table of Contents
 
@@ -39,7 +39,7 @@ This bot operates in two parts:
 #### Ubiquity OS Plugin
 
 - **Worker Plugin**: This is a worker plugin with workflow capabilities, allowing it to run on both Cloudflare Workers and GitHub Actions.
-- **Actions as a Feature**: By forwarding worker requests to the workflows, we enable collaboration between the two, maximizing functionality.
+- **Actions as a Feature**: With a dual-scoped configuration we target both the Worker and Workflow instances, enabling seamless integration with Ubiquity OS.
 - **Hybrid Architecture**: Combines the best of both worlds, leveraging Cloudflare Workers for speed and GitHub Actions for long-running features or those that require a Node.js environment.
 - **Bridges the Gap**: Connects our GitHub events to our Telegram bot instantaneously, enabling real-time interactions and seamless integration.
 
@@ -65,7 +65,7 @@ This bot operates in two parts:
 
 #### Environment Variables
 
-The `TELEGRAM_BOT_ENV` is a single JSON object that encapsulates all necessary environment variables for the bot's operation. It consists of four key sections: `botSettings`, `mtProtoSettings`, `storageSettings`, and `ubiquityOsSettings`.
+The `TELEGRAM_BOT_ENV` is a single JSON object that encapsulates all necessary environment variables for the bot's operation. It consists of three key sections: `botSettings`, `mtProtoSettings`, and `storageSettings`.
 
 You can set up your environment variables by using the provided utility script:
 
@@ -85,8 +85,6 @@ The environment variables are stored in the following locations:
 1. **botSettings**: Contains bot-specific settings like `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_WEBHOOK_SECRET`, etc.
 2. **mtProtoSettings**: Contains settings for the MTProto API like `TELEGRAM_APP_ID`, `TELEGRAM_API_HASH`, etc.
 3. **storageSettings**: Contains settings for the Supabase database like `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, etc.
-4. **ubiquityOsSettings**: Contains settings for the UbiquityOS Kernel like `APP_PRIVATE_KEY`, `APP_ID`, etc.
-5. **TELEGRAM_BOT_REPOSITORY_FULL_NAME**: A standalone single string value for the full repository name (e.g., `ubiquity-os/telegram-bot`).
 
 ```typescript
 interface TELEGRAM_BOT_ENV {
@@ -103,10 +101,6 @@ interface TELEGRAM_BOT_ENV {
   storageSettings: {
     SUPABASE_URL: string; // Supabase URL
     SUPABASE_SERVICE_KEY: string; // Supabase Service Key
-  };
-  ubiquityOsSettings: {
-    APP_PRIVATE_KEY: string; // GitHub App Private Key
-    APP_ID: number; // GitHub App ID
   };
 }
 ```
@@ -127,17 +121,14 @@ interface TELEGRAM_BOT_ENV {
 #### GitHub Configuration
 
 1. Ensure your Ubiquity OS Kernel is set up.
-2. Add `APP_PRIVATE_KEY` and `APP_ID` to your environment variables.
-3. Configure the plugin in your private organization’s repository:
+2. Configure the plugin in your private organization’s repository:
 
 ```yaml
 - uses:
-  - skipBotEvents: false
-    - plugin: http://localhost:3000
-      runsOn: ["issues.opened", "issues.labeled", "issues.reopened", "issues.closed"]
-      with:
-        botId: 00000000
-        targetBranch: development
+  - plugin: http://localhost:3000
+    with:
+      botId: 00000000
+      targetBranch: development
 ```
 
 ### Usage
@@ -146,7 +137,7 @@ interface TELEGRAM_BOT_ENV {
 2. Start your Ubiquity OS Kernel with the plugin installed in your repository.
 3. Run `yarn sms-auth` to authenticate your personal Telegram account with MTProto.
 4. Start the worker instance with `yarn worker`.
-5. In another terminal, run `smee -u https://smee.io/your-webhook-url -P "/webhook"` to receive Telegram webhook payloads locally.
+5. In another terminal, run `smee -u https://smee.io/your-webhook-url -P "/telegram"` to receive Telegram webhook payloads locally.
 6. Interact with the bot in Telegram chats or trigger GitHub webhooks as defined in `manifest.json`.
 
 ### Commands
