@@ -128,7 +128,6 @@ interface TELEGRAM_BOT_ENV {
   - plugin: http://localhost:3000
     with:
       botId: 00000000
-      targetBranch: development
 ```
 
 ### Usage
