@@ -105,11 +105,7 @@ interface TELEGRAM_BOT_ENV {
 }
 ```
 
-#### Supabase Configuration
 
-1. Create or use an existing Supabase project.
-2. Copy and run the SQL migration file from `./supabase/migrations` in the Supabase dashboard.
-3. Add your `SUPABASE_URL` and `SUPABASE_SERVICE_KEY` to your environment variables.
 
 #### Telegram Configuration
 
@@ -130,18 +126,72 @@ interface TELEGRAM_BOT_ENV {
       botId: 00000000
 ```
 
-### Usage
+#### Supabase Configuration
+1. Create or use an existing Supabase project.
+2. Run the migration or copypaste the SQL migration file from `./supabase/migrations` in the Supabase dashboard.
+3. Add your `SUPABASE_URL` and `SUPABASE_SERVICE_KEY` to your environment variables.
 
-1. Follow each part of the environment setup to configure your bot.
-2. Start your Ubiquity OS Kernel with the plugin installed in your repository.
-3. Run `yarn sms-auth` to authenticate your personal Telegram account with MTProto.
-4. Start the worker instance with `yarn worker`.
-5. In another terminal, run `smee -u https://smee.io/your-webhook-url -P "/telegram"` to receive Telegram webhook payloads locally.
-6. Interact with the bot in Telegram chats or trigger GitHub webhooks as defined in `manifest.json`.
+
+##### Running the Migration
+
+1. Install the Supabase CLI. If you don't have it installed yet, you can install it via npm:
+
+    ```bash
+    npm install -g supabase
+    ```
+
+2. Make sure your Supabase project is initialized. If not, initialize it:
+
+    ```bash
+    supabase init
+    ```
+
+3. Set up your `.env` file with your Supabase credentials (or make sure you have already logged in using `supabase login`).
+
+4. To run the migrations on your local environment, use:
+
+    ```bash
+    supabase db reset
+    ```
+
+    This command will reset your local database and apply all migrations.
+
+5. To push migrations to your remote database, use:
+
+    ```bash
+    supabase db push
+    ```
+
+    This will apply all migrations to the remote Supabase database.
+
+For more detailed information, refer to the official [Supabase documentation](https://supabase.com/docs).
+
+
+## Testing Locally
+
+1. Spin up a Supabase instance and run the migration/copypaste the SQL file into the SQL editor.
+2. Run `yarn setup-env` to set up your environment variables. `WEBHOOK_URL` should be set to your local Smee URL initially with no path.
+3. Run `yarn sms-auth` to authenticate your personal Telegram account with MTProto. This will store your session in Supabase.
+4. Run `yarn worker` to start the Cloudflare Worker instance.
+5. Run `smee -u https://smee.io/your-webhook-url -P "/telegram"` to receive Telegram webhook payloads locally.
+6. Define the plugin twice in your `ubiquibot-config.yml` file, one pointing at the Cloudflare Worker instance or localhost and the other at the GitHub Actions workflow.
+7. Interact with the bot in Telegram chats or trigger GitHub webhooks as defined in `manifest.json`.
+8. Run `yarn deploy` to deploy the Cloudflare Worker instance.
+9. Paste or push your CF secrets but this time replace the `WEBHOOK_URL` with the Cloudflare Worker URL.
+10. Once deployed, use `/setwebhook` to set the bot's webhook URL to the Cloudflare Worker instance. It may take a minute or two to propagate.
+11. If you need to revert back to your Smee URL, then simply ping your local worker and it will reset the webhook URL (example below).
+  
+  ```bash
+  curl -X POST http://localhost:3000/telegram -H "Content-Type: application/json" -d '{"message": ""}'
+  ```
 
 ### Commands
 
-TODO: Commands are not fully implemented yet. A couple of helper commands for obtaining IDs etc are available.
+- **/myid**: Get your Telegram User ID.
+- **/botid**: Get the bot's Telegram User ID.
+- **/chatid**: Get the chat ID.
+- **/setwebhook**: Set the bot's webhook url.
+- **/setcommands**: Set the bot's commands.
 
 ## Repository Structure
 
@@ -173,6 +223,8 @@ TODO: Commands are not fully implemented yet. A couple of helper commands for ob
 
 ## Considerations
 
-The bot has two "branches" due to Cloudflare Workers' limitations in handling long-running processes. The **Worker** handles most bot commands and API interactions, while the **Workflow** manages features the bot cannot perform.
+- The `WEBHOOK_URL` is set on each call essentially, so the worker should always have it's own URL set as the webhook environment variable. Your local worker preferably retains the Smee URL env var which allows you to switch between the two easily.
+- If you have to ping and reset the webhook URL, you will see an `unauthorized` error in the worker logs. This is expected and you can verify a successful reset by using a command like `/myid`.
 
-Most functionality is handled by the **Bot API**; the **Client API** is only used for advanced tasks. Due to the nature of the MTProto API, the owner of the personal account must run `yarn sms-auth` to authenticate the bot once, after which it can run uninterrupted. It is not fool-proof and it can be "knocked out" by erroneous auth replacement ceremonies.
+
+
