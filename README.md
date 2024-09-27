@@ -1,4 +1,4 @@
-# `@ubiquity-os/telegram-bridge`
+# `@ubiquity-os/kernel-telegram`
 
 A Telegram bridge for Ubiquity OS, uniquely combining Cloudflare Workers and GitHub Actions to deliver seamless integration with both Telegram and GitHub. This hybrid plugin is the first of its kind to support both worker and workflow functionality, running across Cloudflare V8 and Node.js environments for enhanced flexibility and performance across multiple runtimes.
 

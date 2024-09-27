@@ -18,7 +18,7 @@ on:
 
 jobs:
   compute:
-    name: "Telegram-Bot"
+    name: "Kernel-Telegram"
     runs-on: ubuntu-latest
     permissions: write-all
     env:
@@ -37,6 +37,6 @@ jobs:
 
       - name: execute directive
         run: npx tsx ./src/workflow-entry.ts
-        id: telegram-bridge
+        id: Kernel-Telegram
         env:
           TELEGRAM_BOT_ENV: ${{ secrets.TELEGRAM_BOT_ENV }}
