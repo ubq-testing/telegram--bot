@@ -3,8 +3,8 @@ import input from "input";
 import dotenv from "dotenv";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { BaseMtProto } from "./base-mtproto";
-import { Context } from "#root/types/context.js";
-import { logger } from "#root/utils/logger.js";
+import { Context } from "../../../../../types";
+import { logger } from "../../../../../utils/logger";
 dotenv.config();
 
 /**
@@ -47,7 +47,6 @@ export class AuthHandler {
     if (!TELEGRAM_APP_ID || !TELEGRAM_API_HASH) {
       throw new Error("Missing required environment variables for MtProto settings");
     }
-
 
     if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
       throw new Error("Missing required environment variables for storage settings");

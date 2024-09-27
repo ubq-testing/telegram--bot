@@ -1,6 +1,6 @@
-import { Context } from "#root/types/context.js";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { StringSession } from "telegram/sessions";
+import { Context } from "../../../types";
 
 /**
  * This class extends the StringSession class from the Telegram library.

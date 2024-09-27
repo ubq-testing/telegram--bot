@@ -1,8 +1,8 @@
-import { Context } from "#root/types/context.js";
 import dotenv from "dotenv";
 import { BaseMtProto } from "./scripts/sms-auth/base-mtproto";
 import { SupabaseSession } from "./session";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { Context } from "../../../types";
 dotenv.config();
 
 /**

@@ -1,7 +1,7 @@
 import { Value } from "@sinclair/typebox/value";
 import { plugin } from "../plugin";
 import { pluginSettingsSchema, pluginSettingsValidator, PluginInputs, Env } from "../types";
-import { logger } from "#root/utils/logger.js";
+import { logger } from "../utils/logger";
 
 export async function handleGithubWebhook(request: Request, env: Env): Promise<Response> {
   try {

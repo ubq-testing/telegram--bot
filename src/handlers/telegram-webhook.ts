@@ -1,6 +1,6 @@
 import { Env } from "../types";
-import { TelegramBotSingleton } from "#root/types/telegram-bot-single.js";
-import { logger } from "#root/utils/logger.js";
+import { TelegramBotSingleton } from "../types/telegram-bot-single";
+import { logger } from "../utils/logger";
 
 export async function handleTelegramWebhook(request: Request, env: Env): Promise<Response> {
   let server;

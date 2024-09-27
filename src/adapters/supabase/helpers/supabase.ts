@@ -1,5 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { logger } from "#root/utils/logger.js";
+import { logger } from "../../../utils/logger";
 
 export class Super {
   protected supabase: SupabaseClient;

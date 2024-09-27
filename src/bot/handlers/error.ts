@@ -1,8 +1,8 @@
 import type { ErrorHandler } from "grammy";
-import type { Context } from "#root/bot/helpers/grammy-context.js";
-import { getUpdateInfo } from "#root/bot/helpers/logging.js";
+import { GrammyContext } from "../helpers/grammy-context";
+import { getUpdateInfo } from "../helpers/logging";
 
-export function errorHandler(): ErrorHandler<Context> {
+export function errorHandler(): ErrorHandler<GrammyContext> {
   return (error) => {
     const { ctx } = error;
 

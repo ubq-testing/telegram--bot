@@ -1,8 +1,8 @@
-import { closeChat } from "#root/bot/mtproto-api/workrooms/close-chat.js";
-import { createChat } from "#root/bot/mtproto-api/workrooms/create-chat.js";
-import { reopenChat } from "#root/bot/mtproto-api/workrooms/reopen-chat.js";
-import { ProxyCallbacks } from "#root/types/proxy.js";
+import { closeChat } from "../bot/mtproto-api/workrooms/close-chat";
+import { createChat } from "../bot/mtproto-api/workrooms/create-chat";
+import { reopenChat } from "../bot/mtproto-api/workrooms/reopen-chat";
 import { Context, SupportedEventsU } from "../types";
+import { ProxyCallbacks } from "../types/proxy";
 import { handleCallback } from "./worker-proxy";
 
 /**

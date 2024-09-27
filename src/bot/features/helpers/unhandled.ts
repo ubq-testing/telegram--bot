@@ -1,9 +1,9 @@
 import { Composer } from "grammy";
-import type { Context } from "#root/bot/helpers/grammy-context.js";
-import { logHandle } from "#root/bot/helpers/logging.js";
 import { STRINGS } from "../../strings";
+import { GrammyContext } from "../../helpers/grammy-context";
+import { logHandle } from "../../helpers/logging";
 
-const composer = new Composer<Context>();
+const composer = new Composer<GrammyContext>();
 
 const feature = composer.chatType("private");
 

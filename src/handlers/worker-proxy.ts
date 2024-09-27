@@ -1,5 +1,5 @@
-import { ProxyCallbacks } from "#root/types/proxy.js";
 import { Context, SupportedEventsU } from "../types";
+import { ProxyCallbacks } from "../types/proxy";
 
 /**
  * The `callbacks` object defines an array of callback functions for each supported event type.

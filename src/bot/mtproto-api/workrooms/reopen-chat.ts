@@ -1,5 +1,5 @@
-import { Context, SupportedEvents } from "#root/types/context";
-import { CallbackResult } from "#root/types/proxy.js";
+import { Context, SupportedEvents } from "../../../types";
+import { CallbackResult } from "../../../types/proxy";
 import { MtProto } from "../bot/mtproto";
 import { Api } from "telegram";
 

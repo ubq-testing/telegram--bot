@@ -37,6 +37,6 @@ jobs:
 
       - name: execute directive
         run: npx tsx ./src/workflow-entry.ts
-        id: telegram-bot
+        id: telegram-bridge
         env:
           TELEGRAM_BOT_ENV: ${{ secrets.TELEGRAM_BOT_ENV }}

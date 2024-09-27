@@ -1,9 +1,9 @@
 import { type Middleware, type SessionOptions, session as createSession } from "grammy";
-import type { Context, SessionData } from "#root/bot/helpers/grammy-context.js";
+import { GrammyContext, SessionData } from "../helpers/grammy-context";
 
-type Options = Pick<SessionOptions<SessionData, Context>, "getSessionKey" | "storage">;
+type Options = Pick<SessionOptions<SessionData, GrammyContext>, "getSessionKey" | "storage">;
 
-export function session(options: Options): Middleware<Context> {
+export function session(options: Options): Middleware<GrammyContext> {
   return createSession({
     getSessionKey: options.getSessionKey,
     storage: options.storage,

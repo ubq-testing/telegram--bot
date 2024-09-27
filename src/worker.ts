@@ -11,13 +11,20 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const path = url.pathname;
+    if (request.method === "GET") {
+      if (path === "/manifest.json") {
+        return new Response(JSON.stringify(manifest), {
+          headers: { "content-type": "application/json" },
+        });
+      }
+    }
 
     let envSettings;
 
     try {
       envSettings = Value.Decode(envValidator.schema, Value.Default(envValidator.schema, env));
     } catch (err) {
-      return new Response(JSON.stringify({ error: "Invalid environment provided" }), {
+      return new Response(JSON.stringify({ err, message: "Invalid environment provided" }), {
         status: 400,
         headers: { "content-type": "application/json" },
       });
@@ -31,14 +38,6 @@ export default {
       } catch (err) {
         console.log("/webhook entry error", err);
         return handleUncaughtError(err);
-      }
-    }
-
-    if (request.method === "GET") {
-      if (path === "/manifest.json") {
-        return new Response(JSON.stringify(manifest), {
-          headers: { "content-type": "application/json" },
-        });
       }
     }
 

@@ -1,4 +1,4 @@
-import { Context } from "#root/types/context.js";
+import { Context } from "../types";
 
 /**
  * Ideally pass in owner, repo, and issueNumber, but if not provided,

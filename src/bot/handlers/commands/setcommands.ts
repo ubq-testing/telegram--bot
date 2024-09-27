@@ -1,6 +1,6 @@
 import type { BotCommand } from "@grammyjs/types";
 import type { CommandContext } from "grammy";
-import type { Context } from "#root/bot/helpers/grammy-context.js";
+import { GrammyContext } from "../../helpers/grammy-context";
 
 function getPrivateChatCommands(): BotCommand[] {
   return [
@@ -24,7 +24,7 @@ function getGroupChatCommands(): BotCommand[] {
   return [];
 }
 
-export async function setCommandsHandler(ctx: CommandContext<Context>) {
+export async function setCommandsHandler(ctx: CommandContext<GrammyContext>) {
   // set private chat commands
   await ctx.api.setMyCommands([...getPrivateChatCommands()], {
     scope: {

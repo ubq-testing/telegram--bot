@@ -1,7 +1,7 @@
 import { LogReturn } from "@ubiquity-dao/ubiquibot-logger";
 import { Context } from "../types";
-import { addCommentToIssue } from "#root/utils/add-comment-to-issues.js";
 import { logger } from "./logger";
+import { addCommentToIssue } from "./add-comment-to-issues";
 
 export function handleUncaughtError(err: unknown) {
   logger.error("An uncaught error occurred", { err });

@@ -2,11 +2,11 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { webhookCallback } from "grammy";
 import { getPath } from "hono/utils/url";
-import { setLogger } from "#root/server/middlewares/logger.js";
-import type { Bot } from "#root/bot/index.js";
-import { requestLogger } from "#root/server/middlewares/request-logger.js";
-import type { Logger } from "#root/utils/logger.js";
 import { Context as UbiquityOsContext } from "../types";
+import { Logger } from "../utils/logger";
+import { Bot } from "../bot";
+import { setLogger } from "./middlewares/logger";
+import { requestLogger } from "./middlewares/request-logger";
 
 interface Dependencies {
   bot: Bot;

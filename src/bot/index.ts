@@ -1,13 +1,6 @@
 import type { BotConfig, StorageAdapter } from "grammy";
 import { Bot as TelegramBot } from "grammy";
-import type { Context, SessionData } from "#root/bot/helpers/grammy-context.js";
-import { createContextConstructor } from "#root/bot/helpers/grammy-context.js";
-import type { Logger } from "#root/utils/logger.js";
 import { Context as UbiquityOsContext } from "../types";
-import { welcomeFeature } from "#root/bot/features/welcome.js";
-import { unhandledFeature } from "#root/bot/features/helpers/unhandled.js";
-import { errorHandler } from "#root/bot/handlers/error.js";
-import { session } from "#root/bot/middlewares/session.js";
 import { autoChatAction } from "@grammyjs/auto-chat-action";
 import { hydrate } from "@grammyjs/hydrate";
 import { hydrateReply, parseMode } from "@grammyjs/parse-mode";
@@ -17,6 +10,12 @@ import { chatIdFeature } from "./features/commands/shared/chat-id";
 import { botIdFeature } from "./features/commands/private-chat/bot-id";
 import { banCommand } from "./features/commands/groups/ban";
 import { setWebhookFeature } from "./features/commands/private-chat/set-webhook";
+import { Logger } from "../utils/logger";
+import { createContextConstructor, GrammyContext, SessionData } from "./helpers/grammy-context";
+import { errorHandler } from "./handlers/error";
+import { session } from "./middlewares/session";
+import { welcomeFeature } from "./features/welcome";
+import { unhandledFeature } from "./features/helpers/unhandled";
 
 interface Dependencies {
   config: UbiquityOsContext["env"];
@@ -25,10 +24,10 @@ interface Dependencies {
 
 interface Options {
   botSessionStorage?: StorageAdapter<SessionData>;
-  botConfig?: Omit<BotConfig<Context>, "ContextConstructor">;
+  botConfig?: Omit<BotConfig<GrammyContext>, "ContextConstructor">;
 }
 
-function getSessionKey(ctx: Omit<Context, "session">) {
+function getSessionKey(ctx: Omit<GrammyContext, "session">) {
   return ctx.chat?.id.toString();
 }
 

@@ -1,12 +1,12 @@
-# `@ubiquity-os/telegram-bot`
+# `@ubiquity-os/telegram-bridge`
 
-A Telegram bot for Ubiquity OS, uniquely combining Cloudflare Workers and GitHub Actions to deliver seamless integration with both Telegram and GitHub. This hybrid plugin is the first of its kind to support both worker and workflow functionality, running across Cloudflare V8 and Node.js environments for enhanced flexibility and performance across multiple runtimes.
+A Telegram bridge for Ubiquity OS, uniquely combining Cloudflare Workers and GitHub Actions to deliver seamless integration with both Telegram and GitHub. This hybrid plugin is the first of its kind to support both worker and workflow functionality, running across Cloudflare V8 and Node.js environments for enhanced flexibility and performance across multiple runtimes.
 
 ## Table of Contents
 
 - [High-Level Overview](#high-level-overview)
   - [Architecture Breakdown](#architecture-breakdown)
-    - [Telegram Bot Components](#telegram-bot-components)
+    - [Telegram Bridge Components](#telegram-bridge-components)
     - [Ubiquity OS Plugin](#ubiquity-os-plugin)
     - [Worker Instance](#worker-instance)
     - [Workflow Instance](#workflow-instance)
@@ -31,7 +31,7 @@ This bot operates in two parts:
 
 ### Architecture Breakdown
 
-#### Telegram Bot Components
+#### Telegram Bridge Components
 
 - **Worker Instance**: Runs Bot API methods on Cloudflare Workers. Handles bot commands, events, and chat interactions using a Telegram Bot created via BotFather.
 - **Client Instance**: Runs Client API methods on GitHub Actions, responsible for features unavailable to the bot, like creating groups or sending messages as a user.
@@ -72,7 +72,7 @@ You can set up your environment variables by using the provided utility script:
 - Run `yarn setup-env`, which prompts you to enter each value via the CLI. The values will be serialized and stored both locally and in your repository secrets.
 
 - **GITHUB_PAT_TOKEN**: Create a classic personal access token (PAT) with the `repo` scope. Set the expiry to 24 hours. This token will be used to generate repository secrets for the environment variables and will be removed from `.env` after the secrets are saved.
-- **Account Permission**: The account in which the PAT is associated with _must_ be an `admin` of the repository to be able to save secrets this way. Visit your repository settings `telegram-bot` > `Collaborators & teams` to add the account as an admin first if needed.
+- **Account Permission**: The account in which the PAT is associated with _must_ be an `admin` of the repository to be able to save secrets this way. Visit your repository settings `telegram-bridge` > `Collaborators & teams` to add the account as an admin first if needed.
 
 The environment variables are stored in the following locations:
 
@@ -105,8 +105,6 @@ interface TELEGRAM_BOT_ENV {
 }
 ```
 
-
-
 #### Telegram Configuration
 
 1. Create a new bot using [BotFather](https://t.me/BotFather).
@@ -124,55 +122,54 @@ These URLs **do not** contain url paths, only the domain. This is because as sta
 ```yaml
 plugins:
   - uses:
-    - plugin: https://cloudflare-worker-url.dev
-      with:
-        botId: 00000000
+      - plugin: https://cloudflare-worker-url.dev
+        with:
+          botId: 00000000
   - uses:
-    - plugin: http://localhost:3000
-      with:
-        botId: 00000000
+      - plugin: http://localhost:3000
+        with:
+          botId: 00000000
 ```
 
 #### Supabase Configuration
+
 1. Create or use an existing Supabase project.
 2. Run the migration or copypaste the SQL migration file from `./supabase/migrations` in the Supabase dashboard.
 3. Add your `SUPABASE_URL` and `SUPABASE_SERVICE_KEY` to your environment variables.
-
 
 ##### Running the Migration
 
 1. Install the Supabase CLI. If you don't have it installed yet, you can install it via npm:
 
-    ```bash
-    npm install -g supabase
-    ```
+   ```bash
+   npm install -g supabase
+   ```
 
 2. Make sure your Supabase project is initialized. If not, initialize it:
 
-    ```bash
-    supabase init
-    ```
+   ```bash
+   supabase init
+   ```
 
 3. Set up your `.env` file with your Supabase credentials (or make sure you have already logged in using `supabase login`).
 
 4. To run the migrations on your local environment, use:
 
-    ```bash
-    supabase db reset
-    ```
+   ```bash
+   supabase db reset
+   ```
 
-    This command will reset your local database and apply all migrations.
+   This command will reset your local database and apply all migrations.
 
 5. To push migrations to your remote database, use:
 
-    ```bash
-    supabase db push
-    ```
+   ```bash
+   supabase db push
+   ```
 
-    This will apply all migrations to the remote Supabase database.
+   This will apply all migrations to the remote Supabase database.
 
 For more detailed information, refer to the official [Supabase documentation](https://supabase.com/docs).
-
 
 ## Testing Locally
 
@@ -187,10 +184,10 @@ For more detailed information, refer to the official [Supabase documentation](ht
 9. Paste or push your CF secrets but this time replace the `WEBHOOK_URL` with the Cloudflare Worker URL.
 10. Once deployed, use `/setwebhook` to set the bot's webhook URL to the Cloudflare Worker instance. It may take a minute or two to propagate.
 11. If you need to revert back to your Smee URL, then simply ping your local worker and it will reset the webhook URL (example below).
-  
-  ```bash
-  curl -X POST http://localhost:3000/telegram -H "Content-Type: application/json" -d '{"message": ""}'
-  ```
+
+```bash
+curl -X POST http://localhost:3000/telegram -H "Content-Type: application/json" -d '{"message": ""}'
+```
 
 ### Commands
 
@@ -232,6 +229,3 @@ For more detailed information, refer to the official [Supabase documentation](ht
 
 - The `WEBHOOK_URL` is set on each call essentially, so the worker should always have it's own URL set as the webhook environment variable. Your local worker preferably retains the Smee URL env var which allows you to switch between the two easily.
 - If you have to ping and reset the webhook URL, you will see an `unauthorized` error in the worker logs. This is expected and you can verify a successful reset by using a command like `/myid`.
-
-
-

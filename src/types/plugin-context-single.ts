@@ -1,9 +1,11 @@
-import { Context, Env, envValidator, PluginInputs } from "#root/types";
 import { Octokit } from "@octokit/rest";
 import { Value } from "@sinclair/typebox/value";
 import { Logs } from "@ubiquity-dao/ubiquibot-logger";
 import { createAdapters } from "../adapters";
 import { createClient } from "@supabase/supabase-js";
+import { PluginInputs } from "./plugin-inputs";
+import { Env, envValidator } from "./env";
+import { Context } from "./context";
 
 /**
  * Singleton for the plugin context making accessing it throughout

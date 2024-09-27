@@ -3,7 +3,7 @@ import { Api } from "telegram/tl";
 import { TelegramClientParams } from "telegram/client/telegramBaseClient";
 import dotenv from "dotenv";
 import { StringSession } from "telegram/sessions";
-import { Context } from "#root/types/context.js";
+import { Context } from "../../../../../types";
 dotenv.config();
 
 /**

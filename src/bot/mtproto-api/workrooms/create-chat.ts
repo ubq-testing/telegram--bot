@@ -1,7 +1,7 @@
-import { Context, SupportedEvents } from "#root/types/context";
-import { CallbackResult } from "#root/types/proxy.js";
+import { Context, SupportedEvents } from "../../../types";
+import { CallbackResult } from "../../../types/proxy";
+import { addCommentToIssue } from "../../../utils/add-comment-to-issues";
 import { MtProto } from "../bot/mtproto";
-import { addCommentToIssue } from "#root/utils/add-comment-to-issues.js";
 import bigInt from "big-integer";
 
 export async function createChat(context: Context<"issues.labeled", SupportedEvents["issues.labeled"]>): Promise<CallbackResult> {

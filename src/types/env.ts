@@ -81,7 +81,7 @@ export const env = T.Object({
         const obj = JSON.parse(str) as StaticDecode<typeof TELEGRAM_BOT_ENV>;
 
         if (!botEnvValidator.test(obj)) {
-          throw new Error('Invalid TELEGRAM_BOT_ENV');
+          throw new Error("Invalid TELEGRAM_BOT_ENV");
         }
 
         return obj;

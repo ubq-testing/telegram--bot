@@ -1,4 +1,4 @@
-import { GrammyTelegramUpdate } from "#root/bot/helpers/grammy-context.js";
+import { GrammyTelegramUpdate } from "../bot/helpers/grammy-context";
 import { PluginInputs } from "./plugin-inputs";
 
 export function isTelegramPayload(payload: unknown): payload is GrammyTelegramUpdate {
