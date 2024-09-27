@@ -8,6 +8,10 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
   const { payload, config, logger } = context;
   const chatName = "@" + payload.repository.full_name + "#" + payload.issue.number;
 
+  if (chatName.includes("devpool-directory")) {
+    return { status: 200, reason: "skipped" };
+  }
+
   const labelName = payload.label?.name.toLowerCase();
 
   if (!labelName?.toLowerCase().includes("price")) {

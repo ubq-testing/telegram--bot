@@ -12,6 +12,10 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
     logger,
   } = context;
 
+  if (payload.repository.full_name.includes("devpool-directory")) {
+    return { status: 200, reason: "skipped" };
+  }
+
   const mtProto = new MtProto(context);
   await mtProto.initialize();
 
