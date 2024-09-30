@@ -137,37 +137,22 @@ plugins:
 2. Run the migration or copypaste the SQL migration file from `./supabase/migrations` in the Supabase dashboard.
 3. Add your `SUPABASE_URL` and `SUPABASE_SERVICE_KEY` to your environment variables.
 
-##### Running the Migration
+##### Supabase Commands
 
-1. Install the Supabase CLI. If you don't have it installed yet, you can install it via npm:
+- To start the Supabase database locally, run the following command:
+```bash
+yarn supabase db start
+```
 
-   ```bash
-   npm install -g supabase
-   ```
+- To reset the Supabase database, run the following command:
+```bash
+yarn supabase db reset
+```
 
-2. Make sure your Supabase project is initialized. If not, initialize it:
-
-   ```bash
-   supabase init
-   ```
-
-3. Set up your `.env` file with your Supabase credentials (or make sure you have already logged in using `supabase login`).
-
-4. To run the migrations on your local environment, use:
-
-   ```bash
-   supabase db reset
-   ```
-
-   This command will reset your local database and apply all migrations.
-
-5. To push migrations to your remote database, use:
-
-   ```bash
-   supabase db push
-   ```
-
-   This will apply all migrations to the remote Supabase database.
+- To stop the Supabase database, run the following command:
+```bash
+yarn supabase stop
+```
 
 For more detailed information, refer to the official [Supabase documentation](https://supabase.com/docs).
 

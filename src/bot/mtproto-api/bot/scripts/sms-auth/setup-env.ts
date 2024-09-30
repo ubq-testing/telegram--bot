@@ -277,7 +277,8 @@ class SetUpHandler {
       });
 
       return true;
-    } catch {
+    } catch (e) {
+      logger.error("Error testing access token", { e });
       return false;
     }
   }
