@@ -7,6 +7,7 @@ import { Context as UbiquityOsContext } from "../../types";
 import { createClient } from "@supabase/supabase-js";
 import { Logger } from "../../utils/logger";
 import { createAdapters } from "../../adapters";
+import { PluginContext } from "../../types/plugin-context-single";
 
 export type GrammyTelegramUpdate = Update;
 
@@ -38,8 +39,9 @@ export function createContextConstructor({ logger, config }: Dependencies) {
 
       this.logger = logger;
       this.config = config;
+      const ctx = PluginContext.getInstance().getContext();
       const { SUPABASE_URL, SUPABASE_SERVICE_KEY } = config.TELEGRAM_BOT_ENV.storageSettings;
-      this.adapters = createAdapters(createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY));
+      this.adapters = createAdapters(ctx, createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY));
     }
   } as unknown as new (update: GrammyTelegramUpdate, api: Api, me: UserFromGetMe) => GrammyContext;
 }
