@@ -141,7 +141,7 @@ plugins:
 
 - To start the Supabase database locally, run the following command:
 ```bash
-yarn supabase db start
+yarn supabase start
 ```
 
 - To reset the Supabase database, run the following command:
