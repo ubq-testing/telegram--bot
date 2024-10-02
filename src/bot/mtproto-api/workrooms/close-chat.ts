@@ -8,7 +8,8 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
   const {
     payload,
     adapters: {
-      supabase: { chats },
+      github,
+      // supabase: { chats },
     },
     logger,
   } = context;
@@ -20,12 +21,17 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
   await mtProto.initialize();
 
   logger.info("Closing chat with name: ", { chatName: payload.issue.title });
-  const chat = await chats.getChatByTaskNodeId(payload.issue.node_id);
+  const chat = await github.retrieveChatByTaskNodeId(payload.issue.node_id);
+  // const chat = await chats.getChatByTaskNodeId(payload.issue.node_id);
+
+  if (!chat) {
+    return { status: 500, reason: "chat_not_found" };
+  }
 
   await mtProto.client.getDialogs();
   const fetchedChat = await mtProto.client.invoke(
     new mtProto.api.messages.GetFullChat({
-      chatId: chat.chat_id,
+      chatId: bigInt(chat.chatId),
     })
   );
 
@@ -46,7 +52,7 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
     new mtProto.api.folders.EditPeerFolders({
       folderPeers: [
         new mtProto.api.InputFolderPeer({
-          peer: new mtProto.api.InputPeerChat({ chatId: chat.chat_id }),
+          peer: new mtProto.api.InputPeerChat({ chatId: bigInt(chat.chatId) }),
           folderId: 1, // 0 is active, 1 is archived
         }),
       ],
@@ -57,7 +63,7 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
     await mtProto.client.invoke(
       new mtProto.api.messages.SendMessage({
         message: "This task has been closed and this chat has been archived.",
-        peer: new mtProto.api.InputPeerChat({ chatId: chat.chat_id }),
+        peer: new mtProto.api.InputPeerChat({ chatId: bigInt(chat.chatId) }),
       })
     );
 
@@ -79,10 +85,10 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
     }
 
     userIds.push(creatorId);
-    const chatInput = await mtProto.client.getInputEntity(chat.chat_id);
+    const chatInput = await mtProto.client.getInputEntity(chat.chatId);
 
-    await chats.userSnapshot(
-      chat.chat_id,
+    await github.userSnapshot(
+      chat.chatId,
       userIds.map((id) => id.toJSNumber())
     );
 
@@ -102,7 +108,7 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
     }
   }
 
-  await chats.updateChatStatus("closed", payload.issue.node_id);
+  // await chats.updateChatStatus("closed", payload.issue.node_id);
   return { status: 200, reason: "chat_closed" };
 }
 
