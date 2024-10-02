@@ -19,7 +19,7 @@ export class PluginContext {
   private constructor(
     public readonly inputs: PluginInputs,
     public _env: Env
-  ) {}
+  ) { }
 
   get env() {
     return Value.Decode(envValidator.schema, Value.Default(envValidator.schema, this._env));
@@ -57,9 +57,9 @@ export class PluginContext {
     };
 
     const { storageSettings } = ctx.env.TELEGRAM_BOT_ENV;
-
-    ctx.adapters = createAdapters(createClient(storageSettings.SUPABASE_URL, storageSettings.SUPABASE_SERVICE_KEY));
-
-    return ctx;
+    return {
+      ...ctx,
+      adapters: createAdapters(ctx, createClient(storageSettings.SUPABASE_URL, storageSettings.SUPABASE_SERVICE_KEY))
+    }
   }
 }
