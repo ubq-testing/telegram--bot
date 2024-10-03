@@ -2,7 +2,7 @@ import { Octokit } from "@octokit/rest";
 import { Context } from "../../types";
 
 interface Withsha {
-    sha: string;
+    sha?: string;
 }
 
 /**
@@ -13,6 +13,7 @@ type UserBank = {
     [key: string]: {
         telegramId: number;
         githubId: number;
+        githubUsername: string;
         /**
          * TODO: How we'll handle subscribing to particular triggers.
          */
@@ -24,8 +25,8 @@ type UserBank = {
          * per additional user.
          */
         additionalUserListeners: string[];
-    };
-} & Withsha;
+    } & Withsha
+} & Withsha
 
 type Chat = {
     status: "open" | "closed" | "reopened";
@@ -35,15 +36,15 @@ type Chat = {
     userIds: number[];
     createdAt: string;
     modifiedAt: string;
-} & Partial<Withsha>;
+} & Withsha
 
 type ChatStorage = {
     chats: Chat[];
-} & Withsha;
+} & Withsha
 
 type SessionStorage = {
     session: string;
-} & Withsha;
+} & Withsha
 
 type StorageTypes = "allChats" | "userBank" | "singleChat" | "session";
 type ChatAction = "create" | "reopen" | "close";
@@ -57,7 +58,10 @@ type RetrievalHelper<TType extends StorageTypes> =
     TType extends "allChats" ? ChatStorage :
     TType extends "userBank" ? UserBank :
     TType extends "singleChat" ? Chat :
-    TType extends "session" ? SessionStorage : never;
+    TType extends "session" ? SessionStorage :
+    never
+
+
 
 /**
  * Uses GitHub as a storage layer, in particular, a JSON
@@ -84,34 +88,51 @@ export class GithubStorage {
     async retrieveChatByTaskNodeId(taskNodeId: string, dbObj?: ChatStorage): Promise<Chat | undefined> {
         const dbObject = dbObj ?? await this.retrieveStorageDataObject("allChats");
 
-        return dbObject.chats.find((chat) => chat.taskNodeId === taskNodeId);
+        const chat = dbObject.chats.find((chat) => chat.taskNodeId === taskNodeId);
+        if (chat) {
+            return {
+                ...chat,
+                sha: dbObject.sha
+            };
+        }
     }
 
     async retrieveChatByChatId(chatId: number, dbObj?: ChatStorage): Promise<Chat | undefined> {
         const dbObject = dbObj ?? await this.retrieveStorageDataObject("allChats");
 
-        return dbObject.chats.find((chat) => chat.chatId === chatId);
+        const chat = dbObject.chats.find((chat) => chat.chatId === chatId)
+        if (chat) {
+            return {
+                ...chat,
+                sha: dbObject.sha
+            };
+        }
     }
 
     async retrieveUserByTelegramId(telegramId: number, dbObj?: UserBank): Promise<UserBank[string] | undefined> {
         const dbObject = dbObj ?? await this.retrieveStorageDataObject("userBank");
 
-        return dbObject[telegramId];
+        const user = dbObject[telegramId];
+
+        if (user) {
+            return {
+                ...user,
+                sha: dbObject.sha
+            };
+        }
     }
 
     async retrieveUserByGithubId(githubId: number, dbObj?: UserBank): Promise<UserBank[string] | undefined> {
         const dbObject = dbObj ?? await this.retrieveStorageDataObject("userBank");
 
-        return Object.values(dbObject).find((user) => user.githubId === githubId);
-    }
+        const user = Object.values(dbObject).find((user) => user.githubId === githubId);
 
-    async retrieveChatUsers(chatId: number) {
-        const chat = await this.retrieveChatByChatId(chatId);
-        if (!chat) {
-            throw new Error("Chat not found");
+        if (user) {
+            return {
+                ...user,
+                sha: dbObject.sha
+            };
         }
-
-        return chat.userIds;
     }
 
     async retrieveSession() {
@@ -122,15 +143,27 @@ export class GithubStorage {
 
     // Functions for handling data
 
-    async userSnapshot(chatId: number, userIds: number[]) {
-        const chat = await this.retrieveChatByChatId(chatId);
+    async userSnapshot(chatId: number, userIds: number[], dbObj?: ChatStorage) {
+        const dbObject = dbObj ?? await this.retrieveStorageDataObject("allChats");
+
+        const chat = dbObject.chats.find((chat) => chat.chatId === chatId);
+
         if (!chat) {
             throw new Error("Chat not found");
         }
 
-        chat.userIds = userIds;
+        dbObject.chats = dbObject.chats.map((dbChat) => {
+            if (dbChat.chatId === chatId) {
+                return {
+                    ...dbChat,
+                    userIds
+                }
+            }
 
-        await this.storeData(chat);
+            return dbChat;
+        });
+
+        await this.storeData(dbObject);
     }
 
     // Storage handlers
@@ -230,8 +263,9 @@ export class GithubStorage {
     async storeData<TType extends StorageTypes>(data: RetrievalHelper<TType>) {
         let path;
         let type: StorageTypes;
-        const sha = data.sha;
-        Reflect.deleteProperty(data, "sha");
+        const { sha } = data;
+
+        data = deleteAllShas(data);
 
         if (isChatsStorage(data)) {
             path = this.chatStoragePath;
@@ -313,6 +347,30 @@ export class GithubStorage {
             sha: data.sha
         }
     }
+}
+
+function deleteAllShas<T extends Withsha>(data: T) {
+    Object.keys(data).forEach((key) => {
+        const value = data[key as keyof typeof data];
+
+        if (key === "sha") {
+            Reflect.deleteProperty(data, key);
+        }
+
+        if (typeof value === "object" && value) {
+            deleteAllShas(value);
+        }
+
+        if (Array.isArray(value)) {
+            value.forEach((item) => {
+                if (typeof item === "object" && item) {
+                    deleteAllShas(item);
+                }
+            })
+        }
+    });
+
+    return data
 }
 
 function isSessionStorage(data: unknown): data is SessionStorage {

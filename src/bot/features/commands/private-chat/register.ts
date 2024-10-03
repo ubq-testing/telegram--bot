@@ -47,14 +47,12 @@ feature.command("register", logHandle("command-register"), chatAction("typing"),
         parts.push(`<b>Bio:</b> ${user.data.bio}`);
     }
 
-
-
-
     try {
         await ctx.adapters.github.handleUserBank({
             additionalUserListeners: [],
             githubId,
             telegramId: userId,
+            githubUsername,
             listeningTo: [],
         }, "create")
     } catch (er) {

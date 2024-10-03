@@ -1,5 +1,6 @@
 import { Context, SupportedEventsU } from "../types";
 import { ProxyCallbacks } from "../types/proxy";
+import { handleIssueCommentCreated } from "./private-notifcations/issue-comment-created";
 
 /**
  * The `callbacks` object defines an array of callback functions for each supported event type.
@@ -8,7 +9,9 @@ import { ProxyCallbacks } from "../types/proxy";
  * callback in an array. This design allows for extensibility and flexibility, enabling
  * us to add more callbacks for a particular event without modifying the core logic.
  */
-const callbacks = {} as ProxyCallbacks;
+const callbacks = {
+  "issue_comment.created": [handleIssueCommentCreated],
+} as ProxyCallbacks;
 
 /**
  * The `proxyCallbacks` function returns a Proxy object that intercepts access to the

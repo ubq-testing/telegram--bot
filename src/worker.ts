@@ -3,7 +3,6 @@ import { handleGithubWebhook } from "./handlers/github-webhook";
 import { handleTelegramWebhook } from "./handlers/telegram-webhook";
 import manifest from "../manifest.json";
 import { handleUncaughtError } from "./utils/errors";
-import { TelegramBotSingleton } from "./types/telegram-bot-single";
 import { PluginContext } from "./types/plugin-context-single";
 import { Value } from "@sinclair/typebox/value";
 
@@ -32,7 +31,6 @@ export default {
 
     if (["/telegram", "/telegram/"].includes(path)) {
       try {
-        await TelegramBotSingleton.initialize(envSettings);
         PluginContext.initialize(await request.clone().json(), envSettings);
         return await handleTelegramWebhook(request, envSettings);
       } catch (err) {

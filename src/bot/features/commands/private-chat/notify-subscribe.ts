@@ -2,18 +2,11 @@ import { chatAction } from "@grammyjs/auto-chat-action";
 import { Composer } from "grammy";
 import { GrammyContext } from "../../../helpers/grammy-context";
 import { logHandle } from "../../../helpers/logging";
-import { SupportedEventsU } from "../../../../types";
+import { notifyTriggers } from "../../../../constants";
 
 const composer = new Composer<GrammyContext>();
 
 const feature = composer.chatType("private");
-
-const notifyTriggers: Record<string, SupportedEventsU> = {
-    "payment": "issues.closed",
-    "reminder": "issue_comment.created",
-    "disqualification": "issues.unassigned",
-    "review": "pull_request.review_requested",
-}
 
 feature.command("subscribe", logHandle("command-notifySubscribe"), chatAction("typing"), async (ctx) => {
     const user = ctx.adapters.github.retrieveUserByTelegramId(ctx.from?.id);
