@@ -9,7 +9,7 @@ import { userIdFeature } from "./features/commands/private-chat/user-id";
 import { chatIdFeature } from "./features/commands/shared/chat-id";
 import { botIdFeature } from "./features/commands/private-chat/bot-id";
 import { banCommand } from "./features/commands/groups/ban";
-import { setWebhookFeature } from "./features/commands/private-chat/set-webhook";
+import { setWebhookFeature } from "./features/admin/set-webhook";
 import { Logger } from "../utils/logger";
 import { createContextConstructor, GrammyContext, SessionData } from "./helpers/grammy-context";
 import { errorHandler } from "./handlers/error";

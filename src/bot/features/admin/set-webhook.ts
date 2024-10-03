@@ -1,8 +1,8 @@
 import { chatAction } from "@grammyjs/auto-chat-action";
 import { Composer } from "grammy";
-import { GrammyContext } from "../../../helpers/grammy-context";
-import { isAdmin } from "../../../filters/is-admin";
-import { logHandle } from "../../../helpers/logging";
+import { GrammyContext } from "../../helpers/grammy-context";
+import { isAdmin } from "../../filters/is-admin";
+import { logHandle } from "../../helpers/logging";
 
 const composer = new Composer<GrammyContext>();
 

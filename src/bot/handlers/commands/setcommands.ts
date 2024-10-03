@@ -5,9 +5,26 @@ import { GrammyContext } from "../../helpers/grammy-context";
 function getPrivateChatCommands(): BotCommand[] {
   return [
     {
-      command: "start",
-      description: "start-command-description",
+      command: "botid",
+      description: "Get the bot's ID",
     },
+    {
+      command: "myid",
+      description: "Get your user ID",
+    },
+    {
+      command: "register",
+      description: "Pair your GitHub account for use with private notifications and more",
+    },
+    {
+      command: "subscribe",
+      description: "Subscribe to notifications",
+    },
+    {
+      command: "unsubscribe",
+      description: "Unsubscribe from selected notifications",
+    },
+
   ];
 }
 
@@ -15,7 +32,11 @@ function getPrivateChatAdminCommands(): BotCommand[] {
   return [
     {
       command: "setcommands",
-      description: "setcommands-command-description",
+      description: "Set the bot's commands",
+    },
+    {
+      command: "setwebhook",
+      description: "Set the webhook URL",
     },
   ];
 }
