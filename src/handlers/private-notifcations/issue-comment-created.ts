@@ -17,6 +17,17 @@ export async function handleIssueCommentCreated(context: Context<"issue_comment.
     // depending on the trigger key we'll detect different messages
     const usernameToClaimUrl = parsePaymentComment(payload.comment.body)
 
+    let bot;
+    try {
+        bot = (await TelegramBotSingleton.initialize(context.env)).getBot()
+    } catch (er) {
+        logger.error(`Error getting bot instance`, { er })
+    }
+
+    if (!bot) {
+        throw new Error("Bot instance not found")
+    }
+
     for (const [telegramId, user] of Object.entries(users)) {
         for (const trigger of user.listeningTo) {
             switch (trigger) {
@@ -30,21 +41,11 @@ export async function handleIssueCommentCreated(context: Context<"issue_comment.
 
                     if (Object.keys(usernameToClaimUrl).includes(user.githubUsername)) {
                         const message = `${user.githubUsername}, a task reward has been generated for you\\. You can claim it [here](https://pay\\.ubq\\.fi?claim=${usernameToClaimUrl[user.githubUsername]})`
-                        let bot;
-                        try {
-                            bot = (await TelegramBotSingleton.initialize(context.env)).getBot()
-                        } catch (er) {
-                            logger.error(`Error getting bot instance`, { er })
-                        }
 
-                        if (!bot) {
-                            throw new Error("Bot instance not found")
-                        }
-
-                        let userChat;
+                        let userPrivateChat;
 
                         try {
-                            userChat = await bot?.api.getChat(telegramId)
+                            userPrivateChat = await bot?.api.getChat(telegramId)
                         } catch (er) {
                             logger.error(`Error getting chat for ${telegramId}`, { er })
                         }
