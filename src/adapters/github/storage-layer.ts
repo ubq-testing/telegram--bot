@@ -200,7 +200,7 @@ export class GithubStorage {
      * them may choose to listen into other users, but cannot enable notifications for
      * another user.
      */
-    async handleUserBank<TType extends "create" | "delete">(user: UserBank[string], action: TType) {
+    async handleUserBank<TType extends "create" | "delete" | "update">(user: UserBank[string], action: TType) {
         const dbObject = await this.retrieveStorageDataObject("userBank");
 
         const existingUser = dbObject[user.telegramId];
@@ -209,7 +209,7 @@ export class GithubStorage {
             throw new Error("User already exists or does not exist");
         }
 
-        if (action === "create") {
+        if (action === "create" || action === "update") {
             dbObject[user.telegramId] = user;
         } else {
             delete dbObject[user.telegramId];
