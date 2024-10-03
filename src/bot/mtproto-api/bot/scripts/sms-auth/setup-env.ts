@@ -144,7 +144,15 @@ class SetUpHandler {
         }
 
         console.log(step.title);
-        const answer = await input.password(`  ${question.message}\n>  `);
+
+        const passwords = ["TELEGRAM_BOT_WEBHOOK_SECRET", "REPO_ADMIN_ACCESS_TOKEN", "TELEGRAM_API_HASH", "TELEGRAM_BOT_TOKEN", "TELEGRAM_APP_ID"];
+        let answer;
+
+        if (passwords.includes(question.name)) {
+          answer = await input.password(`  ${question.message}\n>  `);
+        } else {
+          answer = await input.text(`  ${question.message}\n>  `);
+        }
 
         await this.handleFirstTwo(question, answer);
 
