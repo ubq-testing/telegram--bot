@@ -1,73 +1,99 @@
+import { Bot } from "../../bot";
 import { Context, SupportedEvents } from "../../types";
+import { UserBank } from "../../types/github-storage";
 import { CallbackResult } from "../../types/proxy";
 import { TelegramBotSingleton } from "../../types/telegram-bot-single";
+import { logger } from "../../utils/logger";
 
 export async function handleIssueCommentCreated(context: Context<"issue_comment.created", SupportedEvents["issue_comment.created"]>): Promise<CallbackResult> {
-    const { adapters: { github }, payload, logger } = context
+    const { adapters: { github }, payload, logger } = context;
 
-    // okay first we need to collect our users to see who needs notified
-    const users = await github.retrieveStorageDataObject("userBank")
+    const users = await github.retrieveStorageDataObject("userBank", false);
 
     if (!users) {
-        logger.error("No users found in the database.")
-        return { status: 500, reason: "No users found in the database." }
+        logger.error("No users found in the database.");
+        return { status: 500, reason: "No users found in the database." };
     }
 
-    // now we need to notify all of our users
-    // depending on the trigger key we'll detect different messages
-    const usernameToClaimUrl = parsePaymentComment(payload.comment.body)
+    const usernameToClaimUrls: Record<string, string> = parsePaymentComment(payload.comment.body);
 
     let bot;
     try {
-        bot = (await TelegramBotSingleton.initialize(context.env)).getBot()
+        bot = (await TelegramBotSingleton.initialize(context.env)).getBot();
     } catch (er) {
-        logger.error(`Error getting bot instance`, { er })
+        logger.error(`Error getting bot instance`, { er });
     }
 
     if (!bot) {
-        throw new Error("Bot instance not found")
+        throw new Error("Bot instance not found");
     }
 
     for (const [telegramId, user] of Object.entries(users)) {
-        for (const trigger of user.listeningTo) {
-            switch (trigger) {
-                case "payment":
-                    if (Object.keys(usernameToClaimUrl).length === 0) {
-                        break
-                    }
-                    if (!usernameToClaimUrl[user.githubUsername]) {
-                        break
-                    }
+        if (!user.listeningTo?.length) {
+            continue;
+        }
 
-                    if (Object.keys(usernameToClaimUrl).includes(user.githubUsername)) {
-                        const message = `${user.githubUsername}, a task reward has been generated for you\\. You can claim it [here](https://pay\\.ubq\\.fi?claim=${usernameToClaimUrl[user.githubUsername]})`
-
-                        let userPrivateChat;
-
-                        try {
-                            userPrivateChat = await bot?.api.getChat(telegramId)
-                        } catch (er) {
-                            logger.error(`Error getting chat for ${telegramId}`, { er })
-                        }
-
-                        try {
-                            await bot?.api.sendMessage(telegramId, message, { parse_mode: "MarkdownV2" })
-                        } catch (er) {
-                            logger.error(`Error sending message to ${telegramId}`, { er })
-                        }
-                    }
-                    break
-                case "reminder":
-                    break
-                case "disqualification":
-                    break
-                case "review":
-                    break
+        if (user.listeningTo.length === 1) {
+            const trigger = user.listeningTo[0];
+            await handleCommentNotificationTrigger(trigger, user, usernameToClaimUrls, telegramId, bot, logger);
+        } else {
+            for (const trigger of user.listeningTo) {
+                await handleCommentNotificationTrigger(trigger, user, usernameToClaimUrls, telegramId, bot, logger);
             }
         }
     }
 
-    return { status: 200, reason: "success" }
+    return { status: 200, reason: "success" };
+}
+
+async function handleCommentNotificationTrigger(trigger: string, user: UserBank[0], usernameToClaimUrls: Record<string, string>, telegramId: string, bot: any, logger: any) {
+    try {
+        switch (trigger) {
+            case "payment":
+                for (const [username, claimUrl] of Object.entries(usernameToClaimUrls)) {
+                    if (user.githubUsername === username) {
+                        await handlePaymentNotification(username, claimUrl, telegramId, bot);
+                    }
+                }
+                break;
+            case "reminder":
+                break;
+            case "disqualification":
+                break;
+            default:
+                logger.error(`Unknown trigger key ${trigger}`);
+        }
+    } catch (er) {
+        logger.error(`Error sending message to ${telegramId}`, { er });
+    }
+}
+
+async function handlePaymentNotification(
+    username: string,
+    claimUrlBase64String: string,
+    telegramId: string,
+    bot: Bot
+) {
+    const message = `${username}, a task reward has been generated for you\\. You can claim it [here](https://pay\\.ubq\\.fi?claim=${claimUrlBase64String})`
+
+    let userPrivateChat;
+
+    try {
+        userPrivateChat = await bot?.api.getChat(telegramId)
+    } catch (er) {
+        logger.error(`Error getting chat for ${telegramId}`, { er })
+    }
+
+    if (!userPrivateChat) {
+        logger.error(`This user has not started a chat with the bot yet`, { telegramId })
+        return;
+    }
+
+    try {
+        await bot?.api.sendMessage(telegramId, message, { parse_mode: "MarkdownV2" })
+    } catch (er) {
+        logger.error(`Error sending message to ${telegramId}`, { er })
+    }
 }
 
 function parsePaymentComment(comment: string) {
@@ -84,10 +110,3 @@ function parsePaymentComment(comment: string) {
 
     return claims
 }
-
-function parseReminderComment(comment: string) {
-}
-
-function parseDisqualificationComment(comment: string) {
-}
-

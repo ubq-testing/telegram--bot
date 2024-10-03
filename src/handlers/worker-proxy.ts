@@ -1,5 +1,7 @@
 import { Context, SupportedEventsU } from "../types";
 import { ProxyCallbacks } from "../types/proxy";
+import { bubbleUpErrorComment } from "../utils/errors";
+import { logger } from "../utils/logger";
 import { handleIssueCommentCreated } from "./private-notifcations/issue-comment-created";
 
 /**
@@ -40,7 +42,7 @@ export function proxyCallbacks(context: Context): ProxyCallbacks {
         try {
           return await Promise.all(target[prop].map((callback) => handleCallback(callback, context)));
         } catch (er) {
-          context.logger.error(`Failed to handle event ${prop}`, { er });
+          bubbleUpErrorComment(context, er)
           return { status: 500, reason: "failed" };
         }
       })();

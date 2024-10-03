@@ -1,66 +1,6 @@
 import { Octokit } from "@octokit/rest";
-import { Context } from "../../types";
 import { logger } from "../../utils/logger";
-
-interface Withsha {
-    sha?: string;
-}
-
-/**
- * Used as our user-base storage layer. We'll demo by setting up
- * direct DMs based on webhook events/plugin outcomes.
- */
-type UserBank = {
-    [key: string]: {
-        telegramId: number;
-        githubId: number;
-        githubUsername: string;
-        /**
-         * TODO: How we'll handle subscribing to particular triggers.
-         */
-        listeningTo: string[];
-        /**
-         * If you want to hook into another user's events, you can
-         * but they'll use your own `listeningTo` array. This
-         * could be expanded to allow for customizing the events
-         * per additional user.
-         */
-        additionalUserListeners: string[];
-    } & Withsha
-} & Withsha
-
-type Chat = {
-    status: "open" | "closed" | "reopened";
-    taskNodeId: string;
-    chatName: string;
-    chatId: number;
-    userIds: number[];
-    createdAt: string;
-    modifiedAt: string;
-} & Withsha
-
-type ChatStorage = {
-    chats: Chat[];
-} & Withsha
-
-type SessionStorage = {
-    session: string;
-} & Withsha
-
-type StorageTypes = "allChats" | "userBank" | "singleChat" | "session";
-type ChatAction = "create" | "reopen" | "close";
-
-type HandleChatParams<TAction extends ChatAction = ChatAction> = {
-    chat: Chat;
-    action: TAction;
-}
-
-type RetrievalHelper<TType extends StorageTypes> =
-    TType extends "allChats" ? ChatStorage :
-    TType extends "userBank" ? UserBank :
-    TType extends "singleChat" ? Chat :
-    TType extends "session" ? SessionStorage :
-    never
+import { Chat, ChatAction, ChatStorage, HandleChatParams, RetrievalHelper, StorageTypes, UserBank, SessionStorage, Withsha } from "../../types/github-storage";
 
 /**
  * Uses GitHub as a storage layer, in particular, a JSON
@@ -306,7 +246,7 @@ export class GithubStorage {
      * 
      * Fitted with a helper for returning the correct storage type depending on the param.
      */
-    async retrieveStorageDataObject<TType extends StorageTypes = StorageTypes>(type: TType): Promise<RetrievalHelper<TType>> {
+    async retrieveStorageDataObject<TType extends StorageTypes = StorageTypes>(type: TType, withSha?: boolean): Promise<RetrievalHelper<TType>> {
         let path;
         switch (type) {
             case "singleChat":
@@ -349,7 +289,7 @@ export class GithubStorage {
 
         return {
             ...parsedData,
-            sha: data.sha
+            ...(withSha ? { sha: data.sha } : {})
         }
     }
 }
