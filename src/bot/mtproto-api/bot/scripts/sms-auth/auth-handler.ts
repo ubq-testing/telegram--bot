@@ -15,10 +15,14 @@ dotenv.config();
 export class AuthHandler {
   private _github: GithubStorage | undefined;
   private _env = {
-    TELEGRAM_API_HASH: "",
+    TELEGRAM_API_HASH: null,
     TELEGRAM_APP_ID: 0,
-    TELEGRAM_BOT_TOKEN: "",
-  };
+    TELEGRAM_BOT_TOKEN: null,
+  } as {
+    TELEGRAM_API_HASH: string | null;
+    TELEGRAM_APP_ID: number;
+    TELEGRAM_BOT_TOKEN: string | null;
+  }
 
   constructor() {
     const env = process.env.TELEGRAM_BOT_ENV;
@@ -79,7 +83,27 @@ export class AuthHandler {
   async smsLogin() {
     const mtProto = new BaseMtProto();
     // empty string as it's a new session
-    await mtProto.initialize(this._env, "");
+
+
+    if (this._env.TELEGRAM_API_HASH === null) {
+      throw new Error("Missing required environment variables for Telegram API");
+    }
+
+    if (this._env.TELEGRAM_APP_ID === 0) {
+      throw new Error("Missing required environment variables for Telegram API");
+    }
+
+    if (this._env.TELEGRAM_BOT_TOKEN === null) {
+      throw new Error("Missing required environment variables for Telegram API");
+    }
+
+    const envObj = {
+      TELEGRAM_API_HASH: this._env.TELEGRAM_API_HASH,
+      TELEGRAM_APP_ID: this._env.TELEGRAM_APP_ID,
+      TELEGRAM_BOT_TOKEN: this._env.TELEGRAM_BOT_TOKEN,
+    }
+
+    await mtProto.initialize(envObj, null);
     try {
       await mtProto.client?.start({
         phoneNumber: async () => await input.text("Enter your phone number:"),

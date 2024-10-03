@@ -18,9 +18,9 @@ export class BaseMtProto {
   _api: typeof Api = Api;
   _session: StringSession | null = null;
 
-  async initialize(env: Context["env"]["TELEGRAM_BOT_ENV"]["mtProtoSettings"], session: string) {
+  async initialize(env: Context["env"]["TELEGRAM_BOT_ENV"]["mtProtoSettings"], session: string | null) {
     this._api = Api;
-    this._session = new StringSession(session);
+    this._session = new StringSession(session ?? ""); // Empty String Required.
     this._client = await this._mtProtoInit(env, this._session);
   }
 

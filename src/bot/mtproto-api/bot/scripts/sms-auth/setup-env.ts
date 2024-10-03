@@ -17,21 +17,21 @@ dotenv.config();
  */
 
 class SetUpHandler {
-  private _env: Context["env"] = {
-    GITHUB_PAT_TOKEN: "",
+  private _env = {
+    GITHUB_PAT_TOKEN: null,
     TELEGRAM_BOT_ENV: {
       botSettings: {
         TELEGRAM_BOT_ADMINS: [],
-        TELEGRAM_BOT_TOKEN: "",
-        TELEGRAM_BOT_WEBHOOK: "",
-        TELEGRAM_BOT_WEBHOOK_SECRET: "",
+        TELEGRAM_BOT_TOKEN: null,
+        TELEGRAM_BOT_WEBHOOK: null,
+        TELEGRAM_BOT_WEBHOOK_SECRET: null,
       },
       mtProtoSettings: {
-        TELEGRAM_API_HASH: "",
+        TELEGRAM_API_HASH: null,
         TELEGRAM_APP_ID: 0,
       },
     },
-  };
+  } as unknown as Context["env"];
 
   get env() {
     return this._env;
