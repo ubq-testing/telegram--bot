@@ -135,7 +135,6 @@ plugins:
 
 ## Testing Locally
 
-
 1. Run `yarn setup-env` to set up your environment variables. `WEBHOOK_URL` should be set to your local Smee URL initially with no path.
 2. Run `yarn sms-auth` to authenticate your personal Telegram account with MTProto. This will store your session in a private storage repo.
 3. Run `yarn worker` to start the Cloudflare Worker instance.
@@ -150,6 +149,7 @@ plugins:
 ```bash
 curl -X POST http://localhost:3000/telegram -H "Content-Type: application/json" -d '{"message": ""}'
 ```
+
 - If you have to ping and reset the webhook URL, you will see an `unauthorized` error in the worker logs. This is expected and you can verify a successful reset by using a command like `/myid`.
 - When setting your webhook url, it may take between 1-2 minutes to propagate, send one or two `/myid` commands and once it finally sets, the bot will respond asynchronously.
 

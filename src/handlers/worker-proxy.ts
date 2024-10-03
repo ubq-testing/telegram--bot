@@ -1,8 +1,7 @@
 import { Context, SupportedEventsU } from "../types";
 import { ProxyCallbacks } from "../types/proxy";
 import { bubbleUpErrorComment } from "../utils/errors";
-import { logger } from "../utils/logger";
-import { handleIssueCommentCreated } from "./private-notifcations/issue-comment-created";
+import { handleIssueCommentCreated } from "./private-notifications/issue-comment-created";
 
 /**
  * The `callbacks` object defines an array of callback functions for each supported event type.
@@ -42,7 +41,7 @@ export function proxyCallbacks(context: Context): ProxyCallbacks {
         try {
           return await Promise.all(target[prop].map((callback) => handleCallback(callback, context)));
         } catch (er) {
-          bubbleUpErrorComment(context, er)
+          await bubbleUpErrorComment(context, er);
           return { status: 500, reason: "failed" };
         }
       })();

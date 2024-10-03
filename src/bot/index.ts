@@ -65,7 +65,6 @@ export function createBot(token: string, dependencies: Dependencies, options: Op
   protectedBot.use(chatIdFeature);
   protectedBot.use(botIdFeature);
 
-
   // Private chat commands
   protectedBot.use(registerFeature); // /register 0x4007
   protectedBot.use(notifySubscribeFeature); // /subscribe ... TODO:

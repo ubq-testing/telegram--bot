@@ -27,7 +27,7 @@ export class MtProto extends BaseMtProto {
     }
 
     this._context = context;
-    this.githubStorage = context.adapters.github
+    this.githubStorage = context.adapters.github;
     this._session = new GithubSession(this.githubStorage, context);
   }
 

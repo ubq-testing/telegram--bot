@@ -7,9 +7,7 @@ import { CallbackResult } from "../../../types/proxy";
 export async function closeChat(context: Context<"issues.closed", SupportedEvents["issues.closed"]>): Promise<CallbackResult> {
   const {
     payload,
-    adapters: {
-      github,
-    },
+    adapters: { github },
     logger,
   } = context;
   if (payload.repository.full_name.includes("devpool-directory")) {

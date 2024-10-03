@@ -7,9 +7,7 @@ import { Api } from "telegram";
 export async function reopenChat(context: Context<"issues.reopened", SupportedEvents["issues.reopened"]>): Promise<CallbackResult> {
   const {
     payload,
-    adapters: {
-      github,
-    },
+    adapters: { github },
     logger,
   } = context;
 
@@ -22,7 +20,6 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
 
   logger.info("Reopening chat with name: ", { chatName: payload.issue.title });
   const chat = await github.retrieveChatByTaskNodeId(payload.issue.node_id);
-  // const chat = await chats.getChatByTaskNodeId(payload.issue.node_id);
 
   if (!chat) {
     return { status: 500, reason: "chat_not_found" };
@@ -59,7 +56,6 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
     throw new Error("Failed to get chat creator");
   }
 
-
   // add the creator back to obtain control of the chat
   await mtProto.client.invoke(
     new mtProto.api.messages.AddChatUser({
@@ -71,15 +67,10 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
 
   await github.handleChat({
     action: "reopen",
-    chat
+    chat,
   });
 
-  const users = chat
-  if (!users) {
-    throw new Error("Failed to get chat users");
-  }
-
-  const { userIds } = users;
+  const { userIds } = chat;
   const chatInput = await mtProto.client.getInputEntity(chatIdBigInt);
 
   for (const userId of userIds) {

@@ -3,6 +3,6 @@ import { Context } from "../types";
 
 export function createAdapters(octokit: Context["octokit"]) {
   return {
-    github: new GithubStorage(octokit)
+    github: new GithubStorage(octokit),
   };
 }

@@ -91,6 +91,6 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
       status: "open",
       // sha: // SHA is only for when we retrieve it from the GitHub API, as a ref to the latest commit
     },
-  })
+  });
   return { status: 200, reason: "chat_created" };
 }

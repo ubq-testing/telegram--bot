@@ -24,7 +24,6 @@ function getPrivateChatCommands(): BotCommand[] {
       command: "unsubscribe",
       description: "Unsubscribe from selected notifications",
     },
-
   ];
 }
 
