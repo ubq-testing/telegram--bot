@@ -45,7 +45,7 @@ export class PluginContext {
   }
 
   getContext(): Context {
-    const octokit = new Octokit({ auth: this.inputs.authToken });
+    const octokit = new Octokit({ auth: this.inputs.authToken ?? this.env.GITHUB_PAT_TOKEN });
     const ctx: Context = {
       eventName: this.inputs.eventName,
       payload: this.inputs.eventPayload,

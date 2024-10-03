@@ -203,6 +203,12 @@ export class GithubStorage {
     async handleUserBank<TType extends "create" | "delete">(user: UserBank[string], action: TType) {
         const dbObject = await this.retrieveStorageDataObject("userBank");
 
+        const existingUser = dbObject[user.telegramId];
+
+        if (action === "create" && existingUser || action === "delete" && !existingUser) {
+            throw new Error("User already exists or does not exist");
+        }
+
         if (action === "create") {
             dbObject[user.telegramId] = user;
         } else {
@@ -224,6 +230,8 @@ export class GithubStorage {
     async storeData<TType extends StorageTypes>(data: RetrievalHelper<TType>) {
         let path;
         let type: StorageTypes;
+        const sha = data.sha;
+        Reflect.deleteProperty(data, "sha");
 
         if (isChatsStorage(data)) {
             path = this.chatStoragePath;
@@ -241,8 +249,6 @@ export class GithubStorage {
             throw new Error("Invalid data type");
         }
 
-        Reflect.deleteProperty(data, "sha");
-
         const content = JSON.stringify(data, null, 2);
 
         await this.octokit.repos.createOrUpdateFileContents({
@@ -251,7 +257,7 @@ export class GithubStorage {
             path,
             message: `Update ${type} data`,
             content: Buffer.from(content).toString("base64"),
-            sha: data.sha
+            sha
         });
     }
 
@@ -321,8 +327,10 @@ function isChatsStorage(data: unknown): data is ChatStorage {
 
 function isUserBankStorage(data: unknown): data is UserBank {
     if (typeof data !== "object" || !data) return false;
-    return "telegramId" in data || "githubId" in data;
-
+    const firstItem = Object.values(data)[0];
+    if (typeof firstItem !== "object" || !firstItem) return false;
+    const keys = Object.keys(firstItem);
+    return keys.includes("telegramId") && keys.includes("githubId") && keys.includes("listeningTo") && keys.includes("additionalUserListeners");
 }
 
 function isSingleChatStorage(data: unknown): data is Chat {

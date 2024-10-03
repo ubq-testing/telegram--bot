@@ -18,6 +18,7 @@ dotenv.config();
 
 class SetUpHandler {
   private _env: Context["env"] = {
+    GITHUB_PAT_TOKEN: "",
     TELEGRAM_BOT_ENV: {
       botSettings: {
         TELEGRAM_BOT_ADMINS: [],
@@ -173,6 +174,7 @@ class SetUpHandler {
     console.clear();
 
     this.env = {
+      GITHUB_PAT_TOKEN: answers["Secret upload"]["GITHUB_PAT_TOKEN"],
       TELEGRAM_BOT_ENV: {
         botSettings: {
           TELEGRAM_BOT_ADMINS: JSON.parse(answers["Bot settings"]["TELEGRAM_BOT_ADMINS"]),
@@ -287,6 +289,7 @@ class SetUpHandler {
     const octokit = new Octokit({ auth: process.env.GITHUB_PAT_TOKEN });
     const secrets = {
       TELEGRAM_BOT_ENV: this.env.TELEGRAM_BOT_ENV,
+      GITHUB_PAT_TOKEN: this.env.GITHUB_PAT_TOKEN,
     };
 
     try {
