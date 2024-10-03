@@ -30,10 +30,6 @@ class SetUpHandler {
         TELEGRAM_API_HASH: "",
         TELEGRAM_APP_ID: 0,
       },
-      storageSettings: {
-        SUPABASE_SERVICE_KEY: "",
-        SUPABASE_URL: "",
-      },
     },
   };
 
@@ -107,21 +103,6 @@ class SetUpHandler {
         },
       ],
     },
-    {
-      title: "Storage settings",
-      questions: [
-        {
-          type: "input",
-          name: "SUPABASE_SERVICE_KEY",
-          message: "Enter your Supabase service key (read/write access)",
-        },
-        {
-          type: "input",
-          name: "SUPABASE_URL",
-          message: "Enter your Supabase URL (https://<project_id>.supabase.co)",
-        },
-      ],
-    },
   ];
 
   shouldTestToken = !!process.env.GITHUB_PAT_TOKEN;
@@ -186,10 +167,6 @@ class SetUpHandler {
           TELEGRAM_API_HASH: answers["MTProto settings"]["TELEGRAM_API_HASH"],
           TELEGRAM_APP_ID: Number(answers["MTProto settings"]["TELEGRAM_APP_ID"]),
         },
-        storageSettings: {
-          SUPABASE_SERVICE_KEY: answers["Storage settings"]["SUPABASE_SERVICE_KEY"],
-          SUPABASE_URL: answers["Storage settings"]["SUPABASE_URL"],
-        },
       },
     };
 
@@ -198,12 +175,11 @@ class SetUpHandler {
 
   async validateEnv() {
     const env = this.env.TELEGRAM_BOT_ENV;
-    const { botSettings, mtProtoSettings, storageSettings } = env;
+    const { botSettings, mtProtoSettings } = env;
 
     const merged = {
       ...botSettings,
       ...mtProtoSettings,
-      ...storageSettings,
     };
 
     const keys = Object.keys(merged);
@@ -233,9 +209,10 @@ class SetUpHandler {
 
     const telegramBotEnv = `TELEGRAM_BOT_ENV=${JSON.stringify(this.env.TELEGRAM_BOT_ENV)}`;
     const repositoryEnv = `TELEGRAM_BOT_REPOSITORY_FULL_NAME=${process.env.TELEGRAM_BOT_REPOSITORY_FULL_NAME}`;
+    const githubPatEnv = `GITHUB_PAT_TOKEN=${process.env.GITHUB_PAT_TOKEN}`;
 
     for (const path of paths) {
-      const envVar = `${repositoryEnv}\n${telegramBotEnv}`;
+      const envVar = `${repositoryEnv}\n${telegramBotEnv}\n${githubPatEnv}`;
       await writeFile(path, envVar, "utf-8");
     }
 

@@ -14,7 +14,6 @@ A Telegram bridge for Ubiquity OS, uniquely combining Cloudflare Workers and Git
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
     - [Environment Variables](#environment-variables)
-    - [Supabase Configuration](#supabase-configuration)
     - [Telegram Configuration](#telegram-configuration)
     - [GitHub Configuration](#github-configuration)
   - [Usage](#usage)
@@ -65,7 +64,9 @@ This bot operates in two parts:
 
 #### Environment Variables
 
-The `TELEGRAM_BOT_ENV` is a single JSON object that encapsulates all necessary environment variables for the bot's operation. It consists of three key sections: `botSettings`, `mtProtoSettings`, and `storageSettings`.
+The `TELEGRAM_BOT_ENV` is a single JSON object that encapsulates all necessary environment variables for the bot's operation. It consists of two key sections: `botSettings` and `mtProtoSettings`.
+
+We also need `GITHUB_PAT_TOKEN` for setting up GitHub secrets during the initial setup. This token is used to save the environment variables as secrets in the repository settings.
 
 You can set up your environment variables by using the provided utility script:
 
@@ -85,6 +86,7 @@ The environment variables are stored in the following locations:
 1. **botSettings**: Contains bot-specific settings like `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_WEBHOOK_SECRET`, etc.
 2. **mtProtoSettings**: Contains settings for the MTProto API like `TELEGRAM_APP_ID`, `TELEGRAM_API_HASH`, etc.
 3. **storageSettings**: Contains settings for the Supabase database like `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, etc.
+4. **GITHUB_PAT_TOKEN**: GitHub Personal Access Token for saving secrets during setup, and used for TG bot commands.
 
 ```typescript
 interface TELEGRAM_BOT_ENV {
@@ -131,48 +133,25 @@ plugins:
           botId: 00000000
 ```
 
-#### Supabase Configuration
-
-1. Create or use an existing Supabase project.
-2. Run the migration or copypaste the SQL migration file from `./supabase/migrations` in the Supabase dashboard.
-3. Add your `SUPABASE_URL` and `SUPABASE_SERVICE_KEY` to your environment variables.
-
-##### Supabase Commands
-
-- To start the Supabase database locally, run the following command:
-```bash
-yarn supabase start
-```
-
-- To reset the Supabase database, run the following command:
-```bash
-yarn supabase db reset
-```
-
-- To stop the Supabase database, run the following command:
-```bash
-yarn supabase stop
-```
-
-For more detailed information, refer to the official [Supabase documentation](https://supabase.com/docs).
-
 ## Testing Locally
 
-1. Spin up a Supabase instance and run the migration/copypaste the SQL file into the SQL editor.
-2. Run `yarn setup-env` to set up your environment variables. `WEBHOOK_URL` should be set to your local Smee URL initially with no path.
-3. Run `yarn sms-auth` to authenticate your personal Telegram account with MTProto. This will store your session in Supabase.
-4. Run `yarn worker` to start the Cloudflare Worker instance.
-5. Run `smee -u https://smee.io/your-webhook-url -P "/telegram"` to receive Telegram webhook payloads locally.
-6. Define the plugin twice in your `ubiquibot-config.yml` file, one pointing at the Cloudflare Worker instance or localhost and the other at the GitHub Actions workflow.
-7. Interact with the bot in Telegram chats or trigger GitHub webhooks as defined in `manifest.json`.
-8. Run `yarn deploy` to deploy the Cloudflare Worker instance.
-9. Paste or push your CF secrets but this time replace the `WEBHOOK_URL` with the Cloudflare Worker URL.
-10. Once deployed, use `/setwebhook` to set the bot's webhook URL to the Cloudflare Worker instance. It may take a minute or two to propagate.
-11. If you need to revert back to your Smee URL, then simply ping your local worker and it will reset the webhook URL (example below).
+
+1. Run `yarn setup-env` to set up your environment variables. `WEBHOOK_URL` should be set to your local Smee URL initially with no path.
+2. Run `yarn sms-auth` to authenticate your personal Telegram account with MTProto. This will store your session in a private storage repo.
+3. Run `yarn worker` to start the Cloudflare Worker instance.
+4. Run `smee -u https://smee.io/your-webhook-url -P "/telegram"` to receive Telegram webhook payloads locally.
+5. Define the plugin twice in your `ubiquibot-config.yml` file, one pointing at the Cloudflare Worker instance or localhost and the other at the GitHub Actions workflow.
+6. Interact with the bot in Telegram chats or trigger GitHub webhooks as defined in `manifest.json`.
+7. Run `yarn deploy` to deploy the Cloudflare Worker instance.
+8. Paste or push your CF secrets but this time replace the `WEBHOOK_URL` with the Cloudflare Worker URL.
+9. Once deployed, use `/setwebhook` to set the bot's webhook URL to the Cloudflare Worker instance. It may take a minute or two to propagate.
+10. If you need to revert back to your Smee URL, then simply ping your local worker and it will reset the webhook URL (example below).
 
 ```bash
 curl -X POST http://localhost:3000/telegram -H "Content-Type: application/json" -d '{"message": ""}'
 ```
+- If you have to ping and reset the webhook URL, you will see an `unauthorized` error in the worker logs. This is expected and you can verify a successful reset by using a command like `/myid`.
+- When setting your webhook url, it may take between 1-2 minutes to propagate, send one or two `/myid` commands and once it finally sets, the bot will respond asynchronously.
 
 ### Commands
 
@@ -181,6 +160,9 @@ curl -X POST http://localhost:3000/telegram -H "Content-Type: application/json" 
 - **/chatid**: Get the chat ID.
 - **/setwebhook**: Set the bot's webhook url.
 - **/setcommands**: Set the bot's commands.
+- **/register**: Pair your GitHub account with your Telegram account.
+- **/subscribe**: Subscribe to various private notifications from the bot.
+- **/unsubscribe**: Unsubscribe from private notifications.
 
 ## Repository Structure
 
@@ -188,7 +170,6 @@ curl -X POST http://localhost:3000/telegram -H "Content-Type: application/json" 
 .
 ├── .github/                    # GitHub Actions workflows (CI/CD, not for workflow-function logic)
 ├── manifest.json               # Plugin manifest for Ubiquity OS Kernel
-├── supabase/                   # SQL migration files for Supabase schema
 ├── src/                        # Source code
 │   ├── adapters/               # Storage adapters (e.g., Supabase integrations)
 │   ├── bot/                    # Core Telegram bot functionality (Worker and Workflow)
@@ -213,4 +194,3 @@ curl -X POST http://localhost:3000/telegram -H "Content-Type: application/json" 
 ## Considerations
 
 - The `WEBHOOK_URL` is set on each call essentially, so the worker should always have it's own URL set as the webhook environment variable. Your local worker preferably retains the Smee URL env var which allows you to switch between the two easily.
-- If you have to ping and reset the webhook URL, you will see an `unauthorized` error in the worker logs. This is expected and you can verify a successful reset by using a command like `/myid`.

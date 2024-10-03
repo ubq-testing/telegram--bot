@@ -9,7 +9,6 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
     payload,
     adapters: {
       github,
-      // supabase: { chats },
     },
     logger,
   } = context;

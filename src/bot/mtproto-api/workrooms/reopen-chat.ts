@@ -9,7 +9,6 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
     payload,
     adapters: {
       github,
-      supabase: { chats },
     },
     logger,
   } = context;
@@ -70,13 +69,17 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
     })
   );
 
-  await chats.updateChatStatus("reopened", payload.issue.node_id);
-  const users = await chats.getChatUsers(chat.chatId);
+  await github.handleChat({
+    action: "reopen",
+    chat
+  });
+
+  const users = chat
   if (!users) {
     throw new Error("Failed to get chat users");
   }
 
-  const { user_ids: userIds } = users;
+  const { userIds } = users;
   const chatInput = await mtProto.client.getInputEntity(chatIdBigInt);
 
   for (const userId of userIds) {

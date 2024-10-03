@@ -92,6 +92,5 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
       // sha: // SHA is only for when we retrieve it from the GitHub API, as a ref to the latest commit
     },
   })
-  // await context.adapters.supabase.chats.saveChat(chatId, payload.issue.title, payload.issue.node_id);
   return { status: 200, reason: "chat_created" };
 }

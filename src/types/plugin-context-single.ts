@@ -2,7 +2,6 @@ import { Octokit } from "@octokit/rest";
 import { Value } from "@sinclair/typebox/value";
 import { Logs } from "@ubiquity-dao/ubiquibot-logger";
 import { createAdapters } from "../adapters";
-import { createClient } from "@supabase/supabase-js";
 import { PluginInputs } from "./plugin-inputs";
 import { Env, envValidator } from "./env";
 import { Context } from "./context";
@@ -46,20 +45,14 @@ export class PluginContext {
 
   getContext(): Context {
     const octokit = new Octokit({ auth: this.inputs.authToken ?? this.env.GITHUB_PAT_TOKEN });
-    const ctx: Context = {
+    return {
       eventName: this.inputs.eventName,
       payload: this.inputs.eventPayload,
       config: this.inputs.settings,
       octokit,
       env: this.env,
       logger: new Logs("verbose"),
-      adapters: {} as ReturnType<typeof createAdapters>,
+      adapters: createAdapters(octokit)
     };
-
-    const { storageSettings } = ctx.env.TELEGRAM_BOT_ENV;
-    return {
-      ...ctx,
-      adapters: createAdapters(ctx, createClient(storageSettings.SUPABASE_URL, storageSettings.SUPABASE_SERVICE_KEY))
-    }
   }
 }

@@ -1,5 +1,6 @@
 import { Octokit } from "@octokit/rest";
 import { Context } from "../../types";
+import { logger } from "../../utils/logger";
 
 interface Withsha {
     sha?: string;
@@ -61,15 +62,13 @@ type RetrievalHelper<TType extends StorageTypes> =
     TType extends "session" ? SessionStorage :
     never
 
-
-
 /**
  * Uses GitHub as a storage layer, in particular, a JSON
  * based private repository. TODO: confirm repo location.
  */
 export class GithubStorage {
-    _context: Context;
     octokit: Octokit;
+    logger = logger;
 
     // could probs pull from the payload...
     repo = "ubiquibot-config"
@@ -78,9 +77,8 @@ export class GithubStorage {
     userBankPath = "plugin-storage/telegram-bot/user-bank.json"
     telegramSessionPath = "plugin-storage/telegram-bot/session-storage.json"
 
-    constructor(context: Context) {
-        this._context = context;
-        this.octokit = context.octokit;
+    constructor(octokit: Octokit) {
+        this.octokit = octokit;
     }
 
     // Granular Data Retrieval
@@ -163,7 +161,7 @@ export class GithubStorage {
             return dbChat;
         });
 
-        await this.storeData(dbObject);
+        return await this.storeData(dbObject);
     }
 
     // Storage handlers
@@ -203,7 +201,7 @@ export class GithubStorage {
             }
         }
 
-        await this.storeData(dbObject);
+        return await this.storeData(dbObject);
     }
 
     /**
@@ -221,7 +219,7 @@ export class GithubStorage {
             dbObject.session = "";
         }
 
-        await this.storeData(dbObject);
+        return await this.storeData(dbObject);
     }
 
     /**
@@ -248,7 +246,7 @@ export class GithubStorage {
             delete dbObject[user.telegramId];
         }
 
-        await this.storeData(dbObject);
+        return await this.storeData(dbObject);
     }
 
     // Low level fetching and storage
@@ -285,14 +283,21 @@ export class GithubStorage {
 
         const content = JSON.stringify(data, null, 2);
 
-        await this.octokit.repos.createOrUpdateFileContents({
-            owner: this.owner,
-            repo: this.repo,
-            path,
-            message: `Update ${type} data`,
-            content: Buffer.from(content).toString("base64"),
-            sha
-        });
+        try {
+            await this.octokit.repos.createOrUpdateFileContents({
+                owner: this.owner,
+                repo: this.repo,
+                path,
+                message: `Update ${type} data`,
+                content: Buffer.from(content).toString("base64"),
+                sha
+            });
+        } catch (er) {
+            this.logger.error("Failed to store data", { er });
+            return false;
+        }
+
+        return true;
     }
 
     /**

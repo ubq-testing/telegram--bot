@@ -1,10 +1,11 @@
 // @ts-expect-error no types for this package
 import input from "input";
 import dotenv from "dotenv";
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { BaseMtProto } from "./base-mtproto";
 import { Context } from "../../../../../types";
 import { logger } from "../../../../../utils/logger";
+import { GithubStorage } from "../../../../../adapters/github/storage-layer";
+import { Octokit } from "@octokit/rest";
 dotenv.config();
 
 /**
@@ -12,7 +13,7 @@ dotenv.config();
  * this will give us the necessary session information to login in the future.
  */
 export class AuthHandler {
-  private _supabase: SupabaseClient | null = null;
+  private _github: GithubStorage | undefined;
   private _env = {
     TELEGRAM_API_HASH: "",
     TELEGRAM_APP_ID: 0,
@@ -25,20 +26,27 @@ export class AuthHandler {
       throw new Error("Have you ran the setup script? Try running 'yarn setup-env' first.");
     }
 
+    const key = process.env.GITHUB_PAT_TOKEN;
+
+    if (!key) {
+      throw new Error("Missing Github PAT token.");
+    }
+
+    this._github = new GithubStorage(new Octokit({ auth: key }));
+
     const parsedEnv: Context["env"]["TELEGRAM_BOT_ENV"] = JSON.parse(env);
     if (!parsedEnv) {
       throw new Error("Failed to parse environment variables for Telegram Bot");
     }
 
-    const { botSettings, mtProtoSettings, storageSettings } = parsedEnv;
+    const { botSettings, mtProtoSettings } = parsedEnv;
 
-    if (!botSettings || !mtProtoSettings || !storageSettings) {
+    if (!botSettings || !mtProtoSettings) {
       throw new Error("Missing required environment variables for Telegram Bot settings");
     }
 
     const { TELEGRAM_BOT_TOKEN, TELEGRAM_BOT_WEBHOOK } = botSettings;
     const { TELEGRAM_APP_ID, TELEGRAM_API_HASH } = mtProtoSettings;
-    const { SUPABASE_URL, SUPABASE_SERVICE_KEY } = storageSettings;
 
     if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_BOT_WEBHOOK) {
       throw new Error("Missing required environment variables for Telegram Bot settings");
@@ -47,12 +55,6 @@ export class AuthHandler {
     if (!TELEGRAM_APP_ID || !TELEGRAM_API_HASH) {
       throw new Error("Missing required environment variables for MtProto settings");
     }
-
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-      throw new Error("Missing required environment variables for storage settings");
-    }
-
-    this._supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
     this._env = {
       TELEGRAM_API_HASH,
@@ -86,9 +88,13 @@ export class AuthHandler {
         onError: (err: unknown) => console.error("Error during login:", { err }),
       });
 
-      const data = await this._supabase?.from("tg-bot-sessions").insert([{ session_data: mtProto.session?.save() }]);
+      if (!mtProto.session) {
+        throw new Error("Failed to get session data.");
+      }
 
-      if (data?.error) {
+      const data = await this._github?.handleSession(mtProto.session.save(), "create");
+
+      if (data === false) {
         throw new Error("Failed to save session data to Supabase.");
       }
 
