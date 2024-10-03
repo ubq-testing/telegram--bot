@@ -77,7 +77,7 @@ export const env = T.Object({
       return str;
     })
     .Encode((obj) => JSON.stringify(obj)),
-  GITHUB_PAT_TOKEN: T.String(),
+  REPO_ADMIN_ACCESS_TOKEN: T.String(),
 });
 
 export type Env = StaticDecode<typeof env>;

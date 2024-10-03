@@ -66,13 +66,13 @@ This bot operates in two parts:
 
 The `TELEGRAM_BOT_ENV` is a single JSON object that encapsulates all necessary environment variables for the bot's operation. It consists of two key sections: `botSettings` and `mtProtoSettings`.
 
-We also need `GITHUB_PAT_TOKEN` for setting up GitHub secrets during the initial setup. This token is used to save the environment variables as secrets in the repository settings.
+We also need `REPO_ADMIN_ACCESS_TOKEN` for setting up GitHub secrets during the initial setup. This token is used to save the environment variables as secrets in the repository settings.
 
 You can set up your environment variables by using the provided utility script:
 
 - Run `yarn setup-env`, which prompts you to enter each value via the CLI. The values will be serialized and stored both locally and in your repository secrets.
 
-- **GITHUB_PAT_TOKEN**: Create a classic personal access token (PAT) with the `repo` scope. Set the expiry to 24 hours. This token will be used to generate repository secrets for the environment variables and will be removed from `.env` after the secrets are saved.
+- **REPO_ADMIN_ACCESS_TOKEN**: Create a classic personal access token (PAT) with the `repo` scope. Set the expiry to 24 hours. This token will be used to generate repository secrets for the environment variables and will be removed from `.env` after the secrets are saved.
 - **Account Permission**: The account in which the PAT is associated with _must_ be an `admin` of the repository to be able to save secrets this way. Visit your repository settings `telegram-bridge` > `Collaborators & teams` to add the account as an admin first if needed.
 
 The environment variables are stored in the following locations:
@@ -86,7 +86,7 @@ The environment variables are stored in the following locations:
 1. **botSettings**: Contains bot-specific settings like `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_WEBHOOK_SECRET`, etc.
 2. **mtProtoSettings**: Contains settings for the MTProto API like `TELEGRAM_APP_ID`, `TELEGRAM_API_HASH`, etc.
 3. **storageSettings**: Contains settings for the Supabase database like `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, etc.
-4. **GITHUB_PAT_TOKEN**: GitHub Personal Access Token for saving secrets during setup, and used for TG bot commands.
+4. **REPO_ADMIN_ACCESS_TOKEN**: GitHub Personal Access Token for saving secrets during setup, and used for TG bot commands.
 
 ```typescript
 interface TELEGRAM_BOT_ENV {

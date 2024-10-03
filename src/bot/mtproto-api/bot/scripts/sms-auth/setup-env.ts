@@ -18,7 +18,7 @@ dotenv.config();
 
 class SetUpHandler {
   private _env = {
-    GITHUB_PAT_TOKEN: null,
+    REPO_ADMIN_ACCESS_TOKEN: null,
     TELEGRAM_BOT_ENV: {
       botSettings: {
         TELEGRAM_BOT_ADMINS: [],
@@ -57,7 +57,7 @@ class SetUpHandler {
       questions: [
         {
           type: "input",
-          name: "GITHUB_PAT_TOKEN",
+          name: "REPO_ADMIN_ACCESS_TOKEN",
           message:
             "Enter your GitHub PAT token.\n    This is used to store secrets in your repository so it should have the 'repo' scope and be an admin of the repository.",
         },
@@ -105,7 +105,7 @@ class SetUpHandler {
     },
   ];
 
-  shouldTestToken = !!process.env.GITHUB_PAT_TOKEN;
+  shouldTestToken = !!process.env.REPO_ADMIN_ACCESS_TOKEN;
   hasSetRepository = !!process.env.TELEGRAM_BOT_REPOSITORY_FULL_NAME;
 
   async handleFirstTwo(question: { name: string; message: string }, answer: string) {
@@ -118,8 +118,8 @@ class SetUpHandler {
       logger.ok("Repository name saved successfully");
     }
 
-    if (question.name === "GITHUB_PAT_TOKEN") {
-      await appendFile(".env", `\nGITHUB_PAT_TOKEN=${answer}`, "utf-8");
+    if (question.name === "REPO_ADMIN_ACCESS_TOKEN") {
+      await appendFile(".env", `\nREPO_ADMIN_ACCESS_TOKEN=${answer}`, "utf-8");
       logger.ok("GitHub PAT token saved successfully, we must restart the script to continue.");
       process.exit(0);
     }
@@ -131,18 +131,22 @@ class SetUpHandler {
       const questions = step.questions;
 
       for (const question of questions) {
-        if (
-          (question.name === "TELEGRAM_BOT_REPOSITORY_FULL_NAME" && this.hasSetRepository) ||
-          (question.name === "GITHUB_PAT_TOKEN" && (await this.testAccessToken()))
-        ) {
+        answers[step.title] ??= {};
+
+        // Skip these as they are already set
+        if (question.name === "TELEGRAM_BOT_REPOSITORY_FULL_NAME" && this.hasSetRepository) {
+          answers[step.title][question.name] = process.env.TELEGRAM_BOT_REPOSITORY_FULL_NAME as string;
           continue;
         }
+        if (question.name === "REPO_ADMIN_ACCESS_TOKEN" && (await this.testAccessToken())) {
+          answers[step.title][question.name] = process.env.REPO_ADMIN_ACCESS_TOKEN as string;
+          continue;
+        }
+
         console.log(step.title);
-        const answer = await input.text(`  ${question.message}\n>  `);
+        const answer = await input.password(`  ${question.message}\n>  `);
 
         await this.handleFirstTwo(question, answer);
-
-        answers[step.title] ??= {};
 
         if (question.name === "TELEGRAM_BOT_ADMINS") {
           answers[step.title][question.name] = JSON.stringify(answer.split(",").map((id: string) => Number(id)));
@@ -155,7 +159,7 @@ class SetUpHandler {
     console.clear();
 
     this.env = {
-      GITHUB_PAT_TOKEN: answers["Secret upload"]["GITHUB_PAT_TOKEN"],
+      REPO_ADMIN_ACCESS_TOKEN: answers["Secret upload"]["REPO_ADMIN_ACCESS_TOKEN"],
       TELEGRAM_BOT_ENV: {
         botSettings: {
           TELEGRAM_BOT_ADMINS: JSON.parse(answers["Bot settings"]["TELEGRAM_BOT_ADMINS"]),
@@ -209,7 +213,7 @@ class SetUpHandler {
 
     const telegramBotEnv = `TELEGRAM_BOT_ENV=${JSON.stringify(this.env.TELEGRAM_BOT_ENV)}`;
     const repositoryEnv = `TELEGRAM_BOT_REPOSITORY_FULL_NAME=${process.env.TELEGRAM_BOT_REPOSITORY_FULL_NAME}`;
-    const githubPatEnv = `GITHUB_PAT_TOKEN=${process.env.GITHUB_PAT_TOKEN}`;
+    const githubPatEnv = `REPO_ADMIN_ACCESS_TOKEN=${process.env.REPO_ADMIN_ACCESS_TOKEN}`;
 
     for (const path of paths) {
       const envVar = `${repositoryEnv}\n${telegramBotEnv}\n${githubPatEnv}`;
@@ -234,7 +238,7 @@ class SetUpHandler {
     if (!this.shouldTestToken) {
       return false;
     }
-    const octokit = new Octokit({ auth: process.env.GITHUB_PAT_TOKEN });
+    const octokit = new Octokit({ auth: process.env.REPO_ADMIN_ACCESS_TOKEN });
     const secret = `{}`;
 
     try {
@@ -263,10 +267,10 @@ class SetUpHandler {
   }
 
   async storeRepoSecrets() {
-    const octokit = new Octokit({ auth: process.env.GITHUB_PAT_TOKEN });
+    const octokit = new Octokit({ auth: process.env.REPO_ADMIN_ACCESS_TOKEN });
     const secrets = {
       TELEGRAM_BOT_ENV: this.env.TELEGRAM_BOT_ENV,
-      GITHUB_PAT_TOKEN: this.env.GITHUB_PAT_TOKEN,
+      REPO_ADMIN_ACCESS_TOKEN: this.env.REPO_ADMIN_ACCESS_TOKEN,
     };
 
     try {

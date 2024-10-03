@@ -18,7 +18,7 @@ export class PluginContext {
   private constructor(
     public readonly inputs: PluginInputs,
     public _env: Env
-  ) {}
+  ) { }
 
   get env() {
     return Value.Decode(envValidator.schema, Value.Default(envValidator.schema, this._env));
@@ -44,7 +44,7 @@ export class PluginContext {
   }
 
   getContext(): Context {
-    const octokit = new Octokit({ auth: this.inputs.authToken ?? this.env.GITHUB_PAT_TOKEN });
+    const octokit = new Octokit({ auth: this.inputs.authToken ?? this.env.REPO_ADMIN_ACCESS_TOKEN });
     return {
       eventName: this.inputs.eventName,
       payload: this.inputs.eventPayload,

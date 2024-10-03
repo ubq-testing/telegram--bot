@@ -30,7 +30,7 @@ export class AuthHandler {
       throw new Error("Have you ran the setup script? Try running 'yarn setup-env' first.");
     }
 
-    const key = process.env.GITHUB_PAT_TOKEN;
+    const key = process.env.REPO_ADMIN_ACCESS_TOKEN;
 
     if (!key) {
       throw new Error("Missing Github PAT token.");
