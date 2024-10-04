@@ -57,7 +57,7 @@ export class PluginContext {
   }
 
   getContext(): Context {
-    const octokit: Context["octokit"] = this.getStorageApp()?.octokit ?? new Octokit({ auth: this.inputs.authToken });
+    const octokit: Context["octokit"] = new Octokit({ auth: this.inputs.authToken });
 
     if (!octokit) {
       throw new Error("Octokit could not be initialized");
@@ -71,6 +71,7 @@ export class PluginContext {
       env: this.env,
       logger: new Logs("verbose"),
     } as Context;
+    
     return {
       ...ctx,
       adapters: createAdapters(ctx),
