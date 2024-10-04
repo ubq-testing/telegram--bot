@@ -131,37 +131,7 @@ class SetUpHandler {
       const questions = step.questions;
 
       for (const question of questions) {
-        answers[step.title] ??= {};
-
-        // Skip these as they are already set
-        if (question.name === "TELEGRAM_BOT_REPOSITORY_FULL_NAME" && this.hasSetRepository) {
-          answers[step.title][question.name] = process.env.TELEGRAM_BOT_REPOSITORY_FULL_NAME as string;
-          continue;
-        }
-        if (question.name === "REPO_ADMIN_ACCESS_TOKEN" && (await this.testAccessToken())) {
-          answers[step.title][question.name] = process.env.REPO_ADMIN_ACCESS_TOKEN as string;
-          continue;
-        }
-
-        console.log(step.title);
-
-        const passwords = ["TELEGRAM_BOT_WEBHOOK_SECRET", "REPO_ADMIN_ACCESS_TOKEN", "TELEGRAM_API_HASH", "TELEGRAM_BOT_TOKEN", "TELEGRAM_APP_ID"];
-        let answer;
-
-        if (passwords.includes(question.name)) {
-          answer = await input.password(`  ${question.message}\n>  `);
-        } else {
-          answer = await input.text(`  ${question.message}\n>  `);
-        }
-
-        await this.handleFirstTwo(question, answer);
-
-        if (question.name === "TELEGRAM_BOT_ADMINS") {
-          answers[step.title][question.name] = JSON.stringify(answer.split(",").map((id: string) => Number(id)));
-          continue;
-        }
-
-        answers[step.title][question.name] = answer;
+        await this.handleQuestions(answers, step, question);
       }
     }
     console.clear();
@@ -183,6 +153,44 @@ class SetUpHandler {
     };
 
     await this.validateEnv();
+  }
+
+  async handleQuestions(
+    answers: Record<string, Record<string, string>>,
+    step: { title: string; questions: { type: string; name: string; message: string }[] },
+    question: { name: string; message: string }
+  ) {
+    answers[step.title] ??= {};
+
+    // Skip these as they are already set
+    if (question.name === "TELEGRAM_BOT_REPOSITORY_FULL_NAME" && this.hasSetRepository) {
+      answers[step.title][question.name] = process.env.TELEGRAM_BOT_REPOSITORY_FULL_NAME as string;
+      return;
+    }
+    if (question.name === "REPO_ADMIN_ACCESS_TOKEN" && (await this.testAccessToken())) {
+      answers[step.title][question.name] = process.env.REPO_ADMIN_ACCESS_TOKEN as string;
+      return;
+    }
+
+    console.log(step.title);
+
+    const passwords = ["TELEGRAM_BOT_WEBHOOK_SECRET", "REPO_ADMIN_ACCESS_TOKEN", "TELEGRAM_API_HASH", "TELEGRAM_BOT_TOKEN", "TELEGRAM_APP_ID"];
+    let answer;
+
+    if (passwords.includes(question.name)) {
+      answer = await input.password(`  ${question.message}\n>  `);
+    } else {
+      answer = await input.text(`  ${question.message}\n>  `);
+    }
+
+    await this.handleFirstTwo(question, answer);
+
+    if (question.name === "TELEGRAM_BOT_ADMINS") {
+      answers[step.title][question.name] = JSON.stringify(answer.split(",").map((id: string) => Number(id)));
+      return;
+    }
+
+    answers[step.title][question.name] = answer;
   }
 
   async validateEnv() {

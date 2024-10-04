@@ -9,7 +9,7 @@ const composer = new Composer<GrammyContext>();
 const feature = composer.chatType("private");
 
 feature.command("subscribe", logHandle("command-notifySubscribe"), chatAction("typing"), async (ctx) => {
-  const user = ctx.adapters.github.retrieveUserByTelegramId(ctx.from?.id);
+  const user = await ctx.adapters.github.retrieveUserByTelegramId(ctx.from?.id);
 
   if (!user) {
     await ctx.reply("You are not registered. Please register first.");
@@ -37,7 +37,8 @@ feature.callbackQuery(/^notifySubscribe:(\d+)/, logHandle("callback-notifySubscr
   }
 
   const selected = ctx.match[1];
-  const trigger = Object.keys(notifyTriggers).find((_, index) => index === parseInt(selected));
+
+  const trigger = Object.keys(notifyTriggers).find((a, index) => index === parseInt(selected));
 
   if (!trigger) {
     await ctx.reply("Invalid trigger selected.");
@@ -49,8 +50,8 @@ feature.callbackQuery(/^notifySubscribe:(\d+)/, logHandle("callback-notifySubscr
   user.listeningTo.push(trigger);
 
   try {
-    await ctx.adapters.github.handleUserBank(user, "update");
-  } catch (er) {
+    await ctx.adapters.github.handleUserBaseStorage(user, "update");
+  } catch {
     await ctx.reply("An error occurred while updating your subscription.");
   }
 });
@@ -84,7 +85,9 @@ feature.callbackQuery(/^notifyUnsubscribe:(\d+)/, logHandle("callback-notifyUnsu
   }
 
   const selected = ctx.match[1];
-  const trigger = user.listeningTo.find((_, index) => index === parseInt(selected));
+  // - ignoring "_" in this case
+
+  const trigger = user.listeningTo.find((a, index) => index === parseInt(selected));
   if (!trigger) {
     await ctx.reply("Invalid trigger selected.");
     return;
@@ -95,8 +98,8 @@ feature.callbackQuery(/^notifyUnsubscribe:(\d+)/, logHandle("callback-notifyUnsu
   user.listeningTo = user.listeningTo.filter((part) => part !== trigger);
 
   try {
-    await ctx.adapters.github.handleUserBank(user, "update");
-  } catch (er) {
+    await ctx.adapters.github.handleUserBaseStorage(user, "update");
+  } catch {
     await ctx.reply("An error occurred while updating your subscription.");
   }
 });

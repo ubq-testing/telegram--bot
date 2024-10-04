@@ -48,10 +48,11 @@ feature.command("register", logHandle("command-register"), chatAction("typing"),
   }
 
   try {
-    await ctx.adapters.github.handleUserBank(
+    await ctx.adapters.github.handleUserBaseStorage(
       {
         additionalUserListeners: [],
         githubId,
+        walletAddress: null,
         telegramId: userId,
         githubUsername,
         listeningTo: [],
@@ -67,13 +68,12 @@ feature.command("register", logHandle("command-register"), chatAction("typing"),
     return;
   }
 
-  await ctx
-    .reply(`Successfully paired your GitHub account.\n\n${parts.join("\n")}\n\nYou can now use the <b>/subscribe</b> command to subscribe to notifications.`, {
+  await ctx.reply(
+    `Successfully paired your GitHub account.\n\n${parts.join("\n")}\n\nYou can now use the <b>/subscribe</b> command to subscribe to notifications.`,
+    {
       parse_mode: "HTML",
-    })
-    .catch((er) => {
-      ctx.logger.error(er.message, { er, userId, githubId }).logMessage.raw;
-    });
+    }
+  );
 });
 
 export { composer as registerFeature };

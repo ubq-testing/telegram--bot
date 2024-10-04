@@ -18,7 +18,7 @@ export class PluginContext {
   private constructor(
     public readonly inputs: PluginInputs,
     public _env: Env
-  ) { }
+  ) {}
 
   get env() {
     return Value.Decode(envValidator.schema, Value.Default(envValidator.schema, this._env));

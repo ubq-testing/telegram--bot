@@ -19,7 +19,6 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
 
   logger.info("Closing chat with name: ", { chatName: payload.issue.title });
   const chat = await github.retrieveChatByTaskNodeId(payload.issue.node_id);
-  // const chat = await chats.getChatByTaskNodeId(payload.issue.node_id);
 
   if (!chat) {
     return { status: 500, reason: "chat_not_found" };
@@ -105,7 +104,7 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
     }
   }
 
-  // await chats.updateChatStatus("closed", payload.issue.node_id);
+  await github.handleChat({ action: "close", chat });
   return { status: 200, reason: "chat_closed" };
 }
 

@@ -7,31 +7,31 @@ export type StorageUser = {
   githubId: number;
   githubUsername: string;
   /**
-    * The user's wallet address for receiving payments. This will likely
-    * exist in the global user-base storage object for the given partner.
-    *
-    * But we can also store it here for easy access or perhaps this will be
-    * the global user-base storage object.
-    */
-  walletAddress: string;
+   * The user's wallet address for receiving payments. This will likely
+   * exist in the global user-base storage object for the given partner.
+   *
+   * But we can also store it here for easy access or perhaps this will be
+   * the global user-base storage object.
+   */
+  walletAddress: string | null;
   /**
-    * These are offered the to user via the Telegram UI and work like this:
-    *
-    * "Notify of Reward Comment" === "Payment" -> "issue_comment.created"
-    *
-    * listeningTo: ["payment"]
-    */
+   * These are offered the to user via the Telegram UI and work like this:
+   *
+   * "Notify of Reward Comment" === "Payment" -> "issue_comment.created"
+   *
+   * listeningTo: ["payment"]
+   */
   listeningTo: string[];
   /**
-    * Push a GitHub username to this array to apply the same
-    * listeners that your own notifications use, allowing a user
-    * to track multiple GitHub accounts.
-    *
-    * Maybe this can be expanded to have a separate set of triggers
-    * compared to the user's own notifications.
-    */
+   * Push a GitHub username to this array to apply the same
+   * listeners that your own notifications use, allowing a user
+   * to track multiple GitHub accounts.
+   *
+   * Maybe this can be expanded to have a separate set of triggers
+   * compared to the user's own notifications.
+   */
   additionalUserListeners: string[];
-}
+};
 
 /**
  * Used as our user-base storage layer. We'll demo by setting up
@@ -70,9 +70,9 @@ export type HandleChatParams<TAction extends ChatAction = ChatAction> = {
 export type RetrievalHelper<TType extends StorageTypes> = TType extends "allChats"
   ? ChatStorage
   : TType extends "userBase"
-  ? UserBaseStorage
-  : TType extends "singleChat"
-  ? Chat
-  : TType extends "session"
-  ? SessionStorage
-  : never;
+    ? UserBaseStorage
+    : TType extends "singleChat"
+      ? Chat
+      : TType extends "session"
+        ? SessionStorage
+        : never;

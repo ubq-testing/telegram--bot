@@ -18,6 +18,7 @@ import { welcomeFeature } from "./features/welcome";
 import { unhandledFeature } from "./features/helpers/unhandled";
 import { registerFeature } from "./features/commands/private-chat/register";
 import { notifySubscribeFeature } from "./features/commands/private-chat/notify-subscribe";
+import { walletFeature } from "./features/commands/private-chat/wallet";
 
 interface Dependencies {
   config: UbiquityOsContext["env"];
@@ -66,8 +67,9 @@ export function createBot(token: string, dependencies: Dependencies, options: Op
   protectedBot.use(botIdFeature);
 
   // Private chat commands
-  protectedBot.use(registerFeature); // /register 0x4007
-  protectedBot.use(notifySubscribeFeature); // /subscribe ... TODO:
+  protectedBot.use(registerFeature); // /register <GitHub username>
+  protectedBot.use(notifySubscribeFeature); // /subscribe
+  protectedBot.use(walletFeature); // /wallet <wallet address>
 
   // group commands
   protectedBot.use(banCommand);

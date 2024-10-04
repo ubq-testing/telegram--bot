@@ -9,12 +9,12 @@ import {
   StorageTypes,
   UserBaseStorage,
   SessionStorage,
-  Withsha
+  Withsha,
 } from "../../types/github-storage";
 
 /**
  * Uses GitHub as a storage layer, in particular, a JSON
- * based private repository. TODO: confirm repo location.
+ * based private repository.
  */
 export class GithubStorage {
   octokit: Octokit;
@@ -159,7 +159,7 @@ export class GithubStorage {
    * "delete" will remove the session, this will break things without a new session.
    */
   async handleSession<TAction extends "create" | "delete">(session: string, action: TAction) {
-    const dbObject = await this.retrieveStorageDataObject("session");
+    const dbObject = await this.retrieveStorageDataObject("session", true);
 
     if (action === "create") {
       dbObject.session = session;
@@ -292,7 +292,7 @@ export class GithubStorage {
 
     try {
       parsedData = JSON.parse(content);
-    } catch (e) {
+    } catch {
       throw new Error("Failed to parse JSON data");
     }
 

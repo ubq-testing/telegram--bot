@@ -22,7 +22,7 @@ export class AuthHandler {
     TELEGRAM_API_HASH: string | null;
     TELEGRAM_APP_ID: number;
     TELEGRAM_BOT_TOKEN: string | null;
-  }
+  };
 
   constructor() {
     const env = process.env.TELEGRAM_BOT_ENV;
@@ -81,9 +81,21 @@ export class AuthHandler {
    * The session data will be saved to Supabase for future use.
    */
   async smsLogin() {
+    const env = process.env.TELEGRAM_BOT_ENV;
+    if (!env) {
+      throw new Error("Have you ran the setup script? Try running 'yarn setup-env' first.");
+    }
+
+    const key = process.env.REPO_ADMIN_ACCESS_TOKEN;
+
+    if (!key) {
+      throw new Error("Missing Github PAT token.");
+    }
+
+    this._github = new GithubStorage(new Octokit({ auth: key }));
+
     const mtProto = new BaseMtProto();
     // empty string as it's a new session
-
 
     if (this._env.TELEGRAM_API_HASH === null) {
       throw new Error("Missing required environment variables for Telegram API");
@@ -101,12 +113,12 @@ export class AuthHandler {
       TELEGRAM_API_HASH: this._env.TELEGRAM_API_HASH,
       TELEGRAM_APP_ID: this._env.TELEGRAM_APP_ID,
       TELEGRAM_BOT_TOKEN: this._env.TELEGRAM_BOT_TOKEN,
-    }
+    };
 
-    await mtProto.initialize(envObj, null);
+    await mtProto.initialize(envObj);
     try {
       await mtProto.client?.start({
-        phoneNumber: async () => await input.text("Enter your phone number:"),
+        phoneNumber: async () => await input.password("Enter your phone number:"),
         password: async () => await input.password("Enter your password if required:"),
         phoneCode: async () => await input.text("Enter the code you received:"),
         onError: (err: unknown) => console.error("Error during login:", { err }),
@@ -116,10 +128,10 @@ export class AuthHandler {
         throw new Error("Failed to get session data.");
       }
 
-      const data = await this._github?.handleSession(mtProto.session.save(), "create");
+      const didSave = await this._github.handleSession(mtProto.session.save(), "create");
 
-      if (data === false) {
-        throw new Error("Failed to save session data to Supabase.");
+      if (!didSave) {
+        throw new Error("Failed to save session data to GitHub.");
       }
 
       logger.ok("Successfully logged in and saved session data. You can now run the bot.");

@@ -10,13 +10,13 @@ import { GithubStorage } from "../../../adapters/github/storage-layer";
 export class GithubSession extends StringSession {
   github: GithubStorage;
   context: Context;
-  session?: string
+  session?: string;
 
   constructor(github: GithubStorage, context: Context, session?: string) {
     super(session);
     this.github = github;
     this.context = context;
-    this.session = session
+    this.session = session;
   }
 
   async saveSession(): Promise<void> {
