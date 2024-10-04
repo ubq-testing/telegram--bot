@@ -44,7 +44,7 @@ export class PluginContext {
   }
 
   getContext(): Context {
-    const octokit = new Octokit({ auth: this.inputs.authToken ?? this.env.REPO_ADMIN_ACCESS_TOKEN });
+    const octokit = new Octokit({ auth: this.inputs.authToken  });
     return {
       eventName: this.inputs.eventName,
       payload: this.inputs.eventPayload,
