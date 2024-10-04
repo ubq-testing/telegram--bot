@@ -39,7 +39,11 @@ export function createContextConstructor({ logger, config }: Dependencies) {
       this.logger = logger;
       this.config = config;
       const ctx = PluginContext.getInstance().getContext();
-      this.adapters = createAdapters(ctx);
+      /**
+       * We only operate as one organization on telegram, so I'm assuming 
+       * that we'll be centralizing the storage obtained.
+       */
+      this.adapters = createAdapters(ctx, "ubiquity-os");
     }
   } as unknown as new (update: GrammyTelegramUpdate, api: Api, me: UserFromGetMe) => GrammyContext;
 }
