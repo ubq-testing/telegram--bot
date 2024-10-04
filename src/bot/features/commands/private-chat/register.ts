@@ -17,7 +17,7 @@ feature.command("register", logHandle("command-register"), chatAction("typing"),
     const githubUsername = ctx.message?.text?.split(" ")[1];
 
     if (!githubUsername) {
-      await ctx.reply("Please provide your GitHub username like this: /register <GitHubUsername>");
+      await ctx.reply("Please provide your GitHub username like this: /register username");
       return;
     }
 
