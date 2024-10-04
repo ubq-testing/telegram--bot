@@ -85,8 +85,7 @@ The environment variables are stored in the following locations:
 
 1. **botSettings**: Contains bot-specific settings like `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_WEBHOOK_SECRET`, etc.
 2. **mtProtoSettings**: Contains settings for the MTProto API like `TELEGRAM_APP_ID`, `TELEGRAM_API_HASH`, etc.
-3. **storageSettings**: Contains settings for the Supabase database like `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, etc.
-4. **REPO_ADMIN_ACCESS_TOKEN**: GitHub Personal Access Token for saving secrets during setup, and used for TG bot commands.
+3. **REPO_ADMIN_ACCESS_TOKEN**: GitHub Personal Access Token for saving secrets during setup, and used for TG bot commands.
 
 ```typescript
 interface TELEGRAM_BOT_ENV {
@@ -99,10 +98,6 @@ interface TELEGRAM_BOT_ENV {
   mtProtoSettings: {
     TELEGRAM_APP_ID: number; // Telegram App ID
     TELEGRAM_API_HASH: string; // Telegram API Hash
-  };
-  storageSettings: {
-    SUPABASE_URL: string; // Supabase URL
-    SUPABASE_SERVICE_KEY: string; // Supabase Service Key
   };
 }
 ```
@@ -171,7 +166,7 @@ curl -X POST http://localhost:3000/telegram -H "Content-Type: application/json" 
 ├── .github/                    # GitHub Actions workflows (CI/CD, not for workflow-function logic)
 ├── manifest.json               # Plugin manifest for Ubiquity OS Kernel
 ├── src/                        # Source code
-│   ├── adapters/               # Storage adapters (e.g., Supabase integrations)
+│   ├── adapters/               # Storage adapters (e.g., GitHub storage layer)
 │   ├── bot/                    # Core Telegram bot functionality (Worker and Workflow)
 │   │   ├── features/           # Bot features, including commands and event handlers
 │   │   ├── filters/            # Grammy filters (e.g., isAdmin, isPrivateChat)

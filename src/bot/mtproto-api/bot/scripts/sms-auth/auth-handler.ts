@@ -78,7 +78,7 @@ export class AuthHandler {
    * In that order and the code will be sent to a Telegram instance
    * which the associated phone number is logged in.
    *
-   * The session data will be saved to Supabase for future use.
+   * The session data will be saved to GitHub plugin storage for future use.
    */
   async smsLogin() {
     const env = process.env.TELEGRAM_BOT_ENV;

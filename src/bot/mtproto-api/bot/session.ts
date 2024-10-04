@@ -5,7 +5,7 @@ import { GithubStorage } from "../../../adapters/github/storage-layer";
 /**
  * This class extends the StringSession class from the Telegram library.
  *
- * It adds the ability to save and load the session data from Supabase.
+ * It adds the ability to save and load the session data from GitHub storage.
  */
 export class GithubSession extends StringSession {
   github: GithubStorage;
