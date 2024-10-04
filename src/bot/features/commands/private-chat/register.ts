@@ -20,7 +20,7 @@ feature.command("register", logHandle("command-register"), chatAction("typing"),
   }
 
   const octokit = ctx.adapters.github.octokit;
-  const user = await octokit.users.getByUsername({ username: githubUsername });
+  const user = await octokit.rest.users.getByUsername({ username: githubUsername });
 
   if (user.status !== 200) {
     await ctx.reply("User not found.");
