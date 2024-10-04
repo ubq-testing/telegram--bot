@@ -209,7 +209,7 @@ export class GithubStorage {
   async storeData<TType extends StorageTypes>(data: RetrievalHelper<TType>) {
     let path;
     let type: StorageTypes;
-    const { sha } = data;
+    let { sha } = data;
 
     data = deleteAllShas(data);
 
@@ -230,6 +230,19 @@ export class GithubStorage {
     }
 
     const content = JSON.stringify(data, null, 2);
+
+    if (!sha) {
+      const { data: shaData } = await this.octokit.repos.getContent({
+        owner: this.owner,
+        repo: this.repo,
+        path,
+        ref: "storage",
+      });
+
+      if ("sha" in shaData) {
+        sha = shaData.sha;
+      }
+    }
 
     try {
       await this.octokit.repos.createOrUpdateFileContents({
