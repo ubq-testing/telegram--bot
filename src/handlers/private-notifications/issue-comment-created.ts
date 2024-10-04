@@ -91,6 +91,7 @@ async function handlePaymentNotification(username: string, claimUrlBase64String:
 
   try {
     await bot?.api.sendMessage(telegramId, message, { parse_mode: "MarkdownV2" });
+
   } catch (er) {
     logger.error(`Error sending message to ${telegramId}`, { er });
   }
