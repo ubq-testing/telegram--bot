@@ -14,7 +14,6 @@ feature.command("wallet", logHandle("command-wallet"), chatAction("typing"), asy
   const userId = ctx.from?.id;
   const walletAddress = ctx.message?.text?.split(" ")[1];
   try {
-
     if (!walletAddress || walletAddress.trim().length !== 42) {
       await ctx.reply("Please provide a valid wallet address like this: /wallet 0x...");
       return;

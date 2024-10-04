@@ -43,15 +43,15 @@ export function createContextConstructor({ logger, config }: Dependencies) {
       /**
        * We'll need to add handling to detect forks and in such cases
        * we'll need to handle the storage differently.
-       * 
+       *
        * Storing the repository full name would work, and we already have it
        * during setup. Otherwise via plugin config.
-       * 
+       *
        * if (me.username !== "ubiquity_os_bot") { }
        */
 
       /**
-       * We only operate as one organization on telegram, so I'm assuming 
+       * We only operate as one organization on telegram, so I'm assuming
        * that we'll be centralizing the storage obtained.
        */
       this.adapters = createAdapters(ctx, "ubq-testing");

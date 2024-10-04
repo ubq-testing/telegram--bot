@@ -53,7 +53,6 @@ export class GithubStorage {
    * This way we'll be able to build a single storage location
    * for partners, we'll be able to access data directly from
    * a Telegram payload as otherwise we'd need a PAT.
-   *
    */
   async getStorageOctokit() {
     if (this.isEnvSetup) {
