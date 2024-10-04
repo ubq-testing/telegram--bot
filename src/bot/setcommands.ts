@@ -1,6 +1,6 @@
 import type { BotCommand } from "@grammyjs/types";
 import type { CommandContext } from "grammy";
-import { GrammyContext } from "../../helpers/grammy-context";
+import { GrammyContext } from "./helpers/grammy-context";
 
 function getPrivateChatCommands(): BotCommand[] {
   return [
