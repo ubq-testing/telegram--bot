@@ -96,7 +96,7 @@ You can claim your reward by clicking the link below:
 
 [Claim Your Reward](https://pay.ubq.fi?claim=${claimUrlBase64String})
 
-Thank you for your contribution!`
+Thank you for your contribution!`;
 
   let userPrivateChat;
 

@@ -19,7 +19,8 @@ export async function run() {
 
   const payloadEnv = {
     TELEGRAM_BOT_ENV: process.env.TELEGRAM_BOT_ENV,
-    REPO_ADMIN_ACCESS_TOKEN: process.env.REPO_ADMIN_ACCESS_TOKEN,
+    STORAGE_APP_ID: process.env.STORAGE_APP_ID,
+    STORAGE_APP_PRIVATE_KEY: process.env.STORAGE_APP_PRIVATE_KEY,
   };
 
   try {

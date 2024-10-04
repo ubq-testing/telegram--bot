@@ -1,4 +1,3 @@
-import { Octokit } from "@octokit/rest";
 import { Value } from "@sinclair/typebox/value";
 import { Logs } from "@ubiquity-dao/ubiquibot-logger";
 import { createAdapters } from "../adapters";
@@ -57,25 +56,24 @@ export class PluginContext {
   }
 
   getContext(): Context {
-    let octokit: Octokit | InstanceType<typeof App<Octokit>>["octokit"];
-    if (!this.inputs.authToken) {
-      octokit = this.getStorageApp()?.octokit;
-    } else {
-      octokit = new Octokit({ auth: this.inputs.authToken });
-    }
+    const octokit: Context["octokit"] = this.getStorageApp()?.octokit;
 
     if (!octokit) {
       throw new Error("Octokit could not be initialized");
     }
 
-    return {
+    const ctx = {
       eventName: this.inputs.eventName,
       payload: this.inputs.eventPayload,
       config: this.inputs.settings,
       octokit,
       env: this.env,
       logger: new Logs("verbose"),
-      adapters: createAdapters(octokit),
+    } as Context;
+
+    return {
+      ...ctx,
+      adapters: createAdapters(ctx),
     };
   }
 }

@@ -36,7 +36,21 @@ export class AuthHandler {
       throw new Error("Missing Github PAT token.");
     }
 
-    this._github = new GithubStorage(new Octokit({ auth: key }));
+    const owner = process.env.TELEGRAM_BOT_REPOSITORY_FULL_NAME?.split("/")[0];
+
+    if (!owner) {
+      throw new Error("Missing TELEGRAM_BOT_REPOSITORY_FULL_NAME");
+    }
+
+    this._github = new GithubStorage(
+      {
+        octokit: new Octokit({ auth: key }),
+      } as unknown as Context,
+      {
+        storageOwner: owner,
+        isEnvSetup: true,
+      }
+    );
 
     const parsedEnv: Context["env"]["TELEGRAM_BOT_ENV"] = JSON.parse(env);
     if (!parsedEnv) {
@@ -92,10 +106,23 @@ export class AuthHandler {
       throw new Error("Missing Github PAT token.");
     }
 
-    this._github = new GithubStorage(new Octokit({ auth: key }));
+    const owner = process.env.TELEGRAM_BOT_REPOSITORY_FULL_NAME?.split("/")[0];
+
+    if (!owner) {
+      throw new Error("Missing TELEGRAM_BOT_REPOSITORY_FULL_NAME");
+    }
+
+    this._github = new GithubStorage(
+      {
+        octokit: new Octokit({ auth: key }),
+      } as unknown as Context,
+      {
+        storageOwner: owner,
+        isEnvSetup: true,
+      }
+    );
 
     const mtProto = new BaseMtProto();
-    // empty string as it's a new session
 
     if (this._env.TELEGRAM_API_HASH === null) {
       throw new Error("Missing required environment variables for Telegram API");

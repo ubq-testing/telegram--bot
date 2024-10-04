@@ -39,7 +39,7 @@ export function createContextConstructor({ logger, config }: Dependencies) {
       this.logger = logger;
       this.config = config;
       const ctx = PluginContext.getInstance().getContext();
-      this.adapters = createAdapters(ctx.octokit);
+      this.adapters = createAdapters(ctx);
     }
   } as unknown as new (update: GrammyTelegramUpdate, api: Api, me: UserFromGetMe) => GrammyContext;
 }

@@ -39,10 +39,12 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           secrets: |
             TELEGRAM_BOT_ENV
-            REPO_ADMIN_ACCESS_TOKEN
+            STORAGE_APP_ID
+            STORAGE_APP_PRIVATE_KEY
         env:
           TELEGRAM_BOT_ENV: ${{ secrets.TELEGRAM_BOT_ENV }}
-          REPO_ADMIN_ACCESS_TOKEN: ${{ secrets.REPO_ADMIN_ACCESS_TOKEN }}
+          STORAGE_APP_ID: ${{ secrets.STORAGE_APP_ID }}
+          STORAGE_APP_PRIVATE_KEY: ${{ secrets.STORAGE_APP_PRIVATE_KEY }}
 
       - name: Write Deployment URL to Summary
         run: |

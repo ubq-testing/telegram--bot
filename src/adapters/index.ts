@@ -1,8 +1,8 @@
 import { GithubStorage } from "./github/storage-layer";
 import { Context } from "../types";
 
-export function createAdapters(octokit: Context["octokit"]) {
+export function createAdapters(ctx: Context) {
   return {
-    github: new GithubStorage(octokit),
+    github: new GithubStorage(ctx),
   };
 }

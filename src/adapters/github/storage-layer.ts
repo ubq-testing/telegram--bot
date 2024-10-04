@@ -22,13 +22,25 @@ export class GithubStorage {
   logger = logger;
 
   repo = "ubiquibot-config";
-  owner = "ubq-testing";
+  owner: string | undefined = undefined;
+  installID: number | null = null;
   chatStoragePath = "plugin-storage/telegram-bot/chat-storage.json";
   userStoragePath = "plugin-storage/telegram-bot/user-base.json";
   telegramSessionPath = "plugin-storage/telegram-bot/session-storage.json";
+  isEnvSetup = false;
 
-  constructor(octokit: Context["octokit"]) {
-    this.octokit = octokit;
+  constructor(ctx: Context, { storageOwner, isEnvSetup }: { storageOwner?: string; isEnvSetup?: boolean } = {}) {
+    this.isEnvSetup = isEnvSetup ?? false;
+    this.octokit = ctx.octokit;
+    this.owner = storageOwner;
+
+    if (!this.owner) {
+      const { payload } = ctx;
+
+      if (payload) {
+        this.getOwnerFromPayload(payload);
+      }
+    }
   }
 
   /**
@@ -44,12 +56,24 @@ export class GithubStorage {
    *
    */
   async getStorageOctokit() {
+    if (this.isEnvSetup) {
+      return this.octokit;
+    }
+
     try {
+      if (this.installID) {
+        return await PluginContext.getInstance().getStorageApp()?.getInstallationOctokit(this.installID);
+      }
+
+      if (!this.owner) {
+        throw new Error("Unable to initialize storage octokit: owner not found");
+      }
+
       const installs = await this.octokit.request("GET /app/installations");
       const thisInstall = installs.data.find((install) => install.account?.login === this.owner);
 
       if (!thisInstall) {
-        throw new Error("Install not found");
+        throw new Error("Unable to initialize storage octokit: installation not found");
       }
 
       return await PluginContext.getInstance().getStorageApp()?.getInstallationOctokit(thisInstall.id);
@@ -259,11 +283,17 @@ export class GithubStorage {
 
     const content = JSON.stringify(data, null, 2);
 
+    const owner = this.owner;
+
+    if (!owner) {
+      throw new Error("Unable to store data: owner not found");
+    }
+
     try {
       const storageOctokit = await this.getStorageOctokit();
       if (!sha) {
         const { data: shaData } = await storageOctokit.rest.repos.getContent({
-          owner: this.owner,
+          owner,
           repo: this.repo,
           path,
           ref: "storage",
@@ -275,7 +305,7 @@ export class GithubStorage {
       }
 
       await storageOctokit.rest.repos.createOrUpdateFileContents({
-        owner: this.owner,
+        owner,
         repo: this.repo,
         path,
         // Bit of a gotcha but we'll document the GitHub Storage layer separate from this plugin
@@ -315,11 +345,17 @@ export class GithubStorage {
 
     let dataContent, sha;
 
+    const owner = this.owner;
+
+    if (!owner) {
+      throw new Error("Unable to retrieve data: owner not found");
+    }
+
     try {
       const storageOctokit = await this.getStorageOctokit();
 
       const response = await storageOctokit.rest.repos.getContent({
-        owner: this.owner,
+        owner,
         repo: this.repo,
         path,
         ref: "storage", // we'll always use the storage branch (avoids false commit activity on default branch)
@@ -353,6 +389,30 @@ export class GithubStorage {
       ...parsedData,
       ...(withSha ? { sha } : {}),
     };
+  }
+
+  // Helper functions
+
+  getOwnerFromPayload(payload: Context["payload"]) {
+    if ("repository" in payload && payload.repository && !this.owner) {
+      this.owner = payload.repository.owner?.login;
+    }
+
+    if ("organization" in payload && payload.organization && !this.owner) {
+      this.owner = payload.organization.login;
+    }
+
+    if ("sender" in payload && payload.sender && !this.owner) {
+      this.owner = payload.sender.login;
+    }
+
+    if ("installation" in payload && payload.installation && !this.owner) {
+      this.installID = payload.installation.id;
+    }
+
+    if (!this.owner) {
+      throw new Error("Owner not found");
+    }
   }
 }
 
