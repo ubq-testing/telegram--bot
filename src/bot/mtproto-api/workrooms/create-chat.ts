@@ -57,7 +57,10 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
 
       if ("link" in inviteLink) {
         link = inviteLink.link;
-        await addCommentToIssue(context, `A new workroom has been created for this task. [Join chat](${link})`, owner, repo, payload.issue.number);
+        await addCommentToIssue({
+          ...context,
+          octokit: await context.adapters.github.getStorageOctokit(),
+        }, `A new workroom has been created for this task. [Join chat](${link})`, owner, repo, payload.issue.number);
       } else {
         throw new Error(logger.error(`Failed to create chat invite link for the workroom: ${chatName}`).logMessage.raw);
       }

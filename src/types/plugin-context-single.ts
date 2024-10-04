@@ -71,7 +71,6 @@ export class PluginContext {
       env: this.env,
       logger: new Logs("verbose"),
     } as Context;
-
     return {
       ...ctx,
       adapters: createAdapters(ctx),
