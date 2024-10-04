@@ -59,6 +59,8 @@ export class GithubStorage {
       return this.octokit;
     }
 
+    this.octokit = PluginContext.getInstance().getStorageApp()?.octokit;
+
     try {
       if (this.installID) {
         return await PluginContext.getInstance().getStorageApp()?.getInstallationOctokit(this.installID);

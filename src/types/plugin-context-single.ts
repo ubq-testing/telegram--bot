@@ -56,6 +56,10 @@ export class PluginContext {
     }
   }
 
+  getStdOctokit() {
+    return new Octokit({ auth: this.inputs.authToken });
+  }
+
   getContext(): Context {
     const octokit: Context["octokit"] = new Octokit({ auth: this.inputs.authToken });
 
@@ -71,7 +75,7 @@ export class PluginContext {
       env: this.env,
       logger: new Logs("verbose"),
     } as Context;
-    
+
     return {
       ...ctx,
       adapters: createAdapters(ctx),
