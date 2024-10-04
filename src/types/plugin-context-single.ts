@@ -6,6 +6,7 @@ import { Env, envValidator } from "./env";
 import { Context } from "./context";
 import { App } from "octokit";
 import { logger } from "../utils/logger";
+import { Octokit } from "@octokit/rest";
 
 /**
  * Singleton for the plugin context making accessing it throughout
@@ -56,7 +57,7 @@ export class PluginContext {
   }
 
   getContext(): Context {
-    const octokit: Context["octokit"] = this.getStorageApp()?.octokit;
+    const octokit: Context["octokit"] = this.getStorageApp()?.octokit ?? new Octokit({ auth: this.inputs.authToken });
 
     if (!octokit) {
       throw new Error("Octokit could not be initialized");
