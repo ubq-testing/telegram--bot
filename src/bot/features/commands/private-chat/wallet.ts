@@ -13,19 +13,19 @@ const feature = composer.chatType("private");
 feature.command("wallet", logHandle("command-wallet"), chatAction("typing"), async (ctx) => {
   const userId = ctx.from?.id;
   const walletAddress = ctx.message?.text?.split(" ")[1];
-
-  if (!walletAddress || walletAddress.length !== 42) {
-    await ctx.reply("Please provide a valid wallet address like this: /wallet <WalletAddress>");
-    return;
-  }
-
-  const user = await ctx.adapters.github.retrieveUserByTelegramId(userId);
-  if (!user) {
-    await ctx.reply("You are not registered. Please register first.");
-    return;
-  }
-
   try {
+
+    if (!walletAddress || walletAddress.trim().length !== 42) {
+      await ctx.reply("Please provide a valid wallet address like this: /wallet 0x...");
+      return;
+    }
+
+    const user = await ctx.adapters.github.retrieveUserByTelegramId(userId);
+    if (!user) {
+      await ctx.reply("You are not registered. Please register first.");
+      return;
+    }
+
     await ctx.adapters.github.handleUserBaseStorage(
       {
         ...user,
