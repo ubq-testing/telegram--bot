@@ -251,7 +251,7 @@ export class GithubStorage {
         path,
         // Bit of a gotcha but we'll document the GitHub Storage layer separate from this plugin
         branch: "storage",
-        message: `Chore: Updated ${type} data`,
+        message: `chore: updated ${type}`,
         content: Buffer.from(content).toString("base64"),
         sha,
       });
