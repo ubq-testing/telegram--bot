@@ -1,7 +1,7 @@
 import { Context, SupportedEventsU } from "../types";
 import { ProxyCallbacks } from "../types/proxy";
 import { bubbleUpErrorComment } from "../utils/errors";
-import { handleIssueCommentCreated } from "./private-notifications/issue-comment-created";
+import { notificationsRequiringComments } from "./private-notifications/issue-comment-created";
 
 /**
  * The `callbacks` object defines an array of callback functions for each supported event type.
@@ -11,7 +11,8 @@ import { handleIssueCommentCreated } from "./private-notifications/issue-comment
  * us to add more callbacks for a particular event without modifying the core logic.
  */
 const callbacks = {
-  "issue_comment.created": [handleIssueCommentCreated],
+  "issue_comment.created": [notificationsRequiringComments],
+  "issue_comment.edited": [notificationsRequiringComments],
 } as ProxyCallbacks;
 
 /**

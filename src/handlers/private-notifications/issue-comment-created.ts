@@ -5,12 +5,25 @@ import { CallbackResult } from "../../types/proxy";
 import { TelegramBotSingleton } from "../../types/telegram-bot-single";
 import { Logger, logger } from "../../utils/logger";
 
-export async function handleIssueCommentCreated(context: Context<"issue_comment.created", SupportedEvents["issue_comment.created"]>): Promise<CallbackResult> {
+
+const rewardCommentRegex = /href="https:\/\/[^/]+\/?\?claim=([A-Za-z0-9+/=]+)"[^>]*>\s*\[.*?\]\s*<\/a>\s*<\/h3>\s*<h6>\s*@([a-zA-Z0-9-_]+)\s*<\/h6>/g;
+// we'll have multiple permit comments to parse out here
+// the regex is capturing the claim url and the github username
+
+export async function notificationsRequiringComments(context: Context<"issue_comment.created" | "issue_comment.edited", SupportedEvents["issue_comment.created" | "issue_comment.edited"]>): Promise<CallbackResult> {
   const {
     adapters: { github },
     payload,
     logger,
   } = context;
+
+  // For now only payments are supported so this naive check will be improved
+  // to support multiple triggers in the future
+
+  // skip if not a bot comment or not a reward comment
+  if(payload.comment.user?.type !== "Bot" || !payload.comment.body.match(rewardCommentRegex)) {
+    return { status: 200, reason: "skipped" };
+  }
 
   const users = await github.retrieveStorageDataObject("userBase", false);
 
@@ -98,13 +111,10 @@ async function handlePaymentNotification(username: string, claimUrlBase64String:
 }
 
 function parsePaymentComment(comment: string) {
-  const regex = /href="https:\/\/[^/]+\/?\?claim=([A-Za-z0-9+/=]+)"[^>]*>\s*\[.*?\]\s*<\/a>\s*<\/h3>\s*<h6>\s*@([a-zA-Z0-9-_]+)\s*<\/h6>/g;
-  // we'll have multiple permit comments to parse out here
-  // the regex is capturing the claim url and the github username
 
   const claims: Record<string, string> = {};
 
-  for (const match of comment.matchAll(regex)) {
+  for (const match of comment.matchAll(rewardCommentRegex)) {
     const [, claim, username] = match;
     claims[username] = claim;
   }
