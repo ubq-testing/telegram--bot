@@ -1,7 +1,7 @@
 import { Context, SupportedEventsU } from "../types";
 import { ProxyCallbacks } from "../types/proxy";
 import { bubbleUpErrorComment } from "../utils/errors";
-import { notificationsRequiringComments } from "./private-notifications/issue-comment-created";
+import { notificationsRequiringComments } from "./private-notifications/comment-triggers";
 
 /**
  * The `callbacks` object defines an array of callback functions for each supported event type.

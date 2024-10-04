@@ -1,4 +1,3 @@
-import { Octokit } from "@octokit/rest";
 import { logger } from "../../utils/logger";
 import {
   Chat,
@@ -11,13 +10,15 @@ import {
   SessionStorage,
   Withsha,
 } from "../../types/github-storage";
+import { Context } from "../../types";
+import { PluginContext } from "../../types/plugin-context-single";
 
 /**
  * Uses GitHub as a storage layer, in particular, a JSON
  * based private repository.
  */
 export class GithubStorage {
-  octokit: Octokit;
+  octokit: Context["octokit"];
   logger = logger;
 
   repo = "ubiquibot-config";
@@ -26,8 +27,35 @@ export class GithubStorage {
   userStoragePath = "plugin-storage/telegram-bot/user-base.json";
   telegramSessionPath = "plugin-storage/telegram-bot/session-storage.json";
 
-  constructor(octokit: Octokit) {
+  constructor(octokit: Context["octokit"]) {
     this.octokit = octokit;
+  }
+
+  /**
+   * This is a requirement in order to fetch/push data to the
+   * partner's repository. It will return an octokit instance
+   * with the correct permissions.
+   *
+   * Storage is handled via a dedicated GitHub App with the
+   * necessary permissions to read/write to the repository.
+   * This way we'll be able to build a single storage location
+   * for partners, we'll be able to access data directly from
+   * a Telegram payload as otherwise we'd need a PAT.
+   *
+   */
+  async getStorageOctokit() {
+    try {
+      const installs = await this.octokit.request("GET /app/installations");
+      const thisInstall = installs.data.find((install) => install.account?.login === this.owner);
+
+      if (!thisInstall) {
+        throw new Error("Install not found");
+      }
+
+      return await PluginContext.getInstance().getStorageApp()?.getInstallationOctokit(thisInstall.id);
+    } catch (er) {
+      throw this.logger.error("Failed to get install octokit", { er });
+    }
   }
 
   // Granular Data Retrieval
@@ -231,21 +259,22 @@ export class GithubStorage {
 
     const content = JSON.stringify(data, null, 2);
 
-    if (!sha) {
-      const { data: shaData } = await this.octokit.repos.getContent({
-        owner: this.owner,
-        repo: this.repo,
-        path,
-        ref: "storage",
-      });
-
-      if ("sha" in shaData) {
-        sha = shaData.sha;
-      }
-    }
-
     try {
-      await this.octokit.repos.createOrUpdateFileContents({
+      const storageOctokit = await this.getStorageOctokit();
+      if (!sha) {
+        const { data: shaData } = await storageOctokit.rest.repos.getContent({
+          owner: this.owner,
+          repo: this.repo,
+          path,
+          ref: "storage",
+        });
+
+        if ("sha" in shaData) {
+          sha = shaData.sha;
+        }
+      }
+
+      await storageOctokit.rest.repos.createOrUpdateFileContents({
         owner: this.owner,
         repo: this.repo,
         path,
@@ -284,34 +313,45 @@ export class GithubStorage {
       throw new Error("Invalid storage type");
     }
 
-    const { data } = await this.octokit.repos.getContent({
-      owner: this.owner,
-      repo: this.repo,
-      path,
-      ref: "storage", // we'll always use the storage branch (avoids false commit activity on default branch)
-    });
+    let dataContent, sha;
 
-    let dataContent;
+    try {
+      const storageOctokit = await this.getStorageOctokit();
 
-    if ("content" in data) {
-      dataContent = data.content;
-    } else {
-      throw new Error("Failed to retrieve data content");
+      const response = await storageOctokit.rest.repos.getContent({
+        owner: this.owner,
+        repo: this.repo,
+        path,
+        ref: "storage", // we'll always use the storage branch (avoids false commit activity on default branch)
+      });
+
+      if (!response) {
+        throw new Error("Failed to retrieve data");
+      }
+
+      const data = response.data;
+
+      if ("content" in data) {
+        dataContent = Buffer.from(data.content, "base64").toString();
+        sha = data.sha;
+      } else {
+        throw new Error("Failed to retrieve data content");
+      }
+    } catch (er) {
+      throw this.logger.error("Failed to retrieve data", { er });
     }
-
-    const content = Buffer.from(dataContent, "base64").toString();
 
     let parsedData: RetrievalHelper<TType>;
 
     try {
-      parsedData = JSON.parse(content);
+      parsedData = JSON.parse(dataContent ?? "");
     } catch {
       throw new Error("Failed to parse JSON data");
     }
 
     return {
       ...parsedData,
-      ...(withSha ? { sha: data.sha } : {}),
+      ...(withSha ? { sha } : {}),
     };
   }
 }

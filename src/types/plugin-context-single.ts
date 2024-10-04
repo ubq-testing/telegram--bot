@@ -5,6 +5,8 @@ import { createAdapters } from "../adapters";
 import { PluginInputs } from "./plugin-inputs";
 import { Env, envValidator } from "./env";
 import { Context } from "./context";
+import { App } from "octokit";
+import { logger } from "../utils/logger";
 
 /**
  * Singleton for the plugin context making accessing it throughout
@@ -43,8 +45,29 @@ export class PluginContext {
     return this.inputs;
   }
 
+  getStorageApp() {
+    try {
+      return new App({
+        appId: this.env.STORAGE_APP_ID,
+        privateKey: this.env.STORAGE_APP_PRIVATE_KEY,
+      });
+    } catch (er) {
+      throw logger.error("Error initializing storage app", { er });
+    }
+  }
+
   getContext(): Context {
-    const octokit = new Octokit({ auth: this.inputs.authToken  });
+    let octokit: Octokit | InstanceType<typeof App<Octokit>>["octokit"];
+    if (!this.inputs.authToken) {
+      octokit = this.getStorageApp()?.octokit;
+    } else {
+      octokit = new Octokit({ auth: this.inputs.authToken });
+    }
+
+    if (!octokit) {
+      throw new Error("Octokit could not be initialized");
+    }
+
     return {
       eventName: this.inputs.eventName,
       payload: this.inputs.eventPayload,
