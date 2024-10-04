@@ -5,12 +5,13 @@ import { CallbackResult } from "../../types/proxy";
 import { TelegramBotSingleton } from "../../types/telegram-bot-single";
 import { Logger, logger } from "../../utils/logger";
 
-
 const rewardCommentRegex = /href="https:\/\/[^/]+\/?\?claim=([A-Za-z0-9+/=]+)"[^>]*>\s*\[.*?\]\s*<\/a>\s*<\/h3>\s*<h6>\s*@([a-zA-Z0-9-_]+)\s*<\/h6>/g;
 // we'll have multiple permit comments to parse out here
 // the regex is capturing the claim url and the github username
 
-export async function notificationsRequiringComments(context: Context<"issue_comment.created" | "issue_comment.edited", SupportedEvents["issue_comment.created" | "issue_comment.edited"]>): Promise<CallbackResult> {
+export async function notificationsRequiringComments(
+  context: Context<"issue_comment.created" | "issue_comment.edited", SupportedEvents["issue_comment.created" | "issue_comment.edited"]>
+): Promise<CallbackResult> {
   const {
     adapters: { github },
     payload,
@@ -21,7 +22,7 @@ export async function notificationsRequiringComments(context: Context<"issue_com
   // to support multiple triggers in the future
 
   // skip if not a bot comment or not a reward comment
-  if(payload.comment.user?.type !== "Bot" || !payload.comment.body.match(rewardCommentRegex)) {
+  if (payload.comment.user?.type !== "Bot" || !payload.comment.body.match(rewardCommentRegex)) {
     return { status: 200, reason: "skipped" };
   }
 
@@ -104,14 +105,12 @@ async function handlePaymentNotification(username: string, claimUrlBase64String:
 
   try {
     await bot?.api.sendMessage(telegramId, message, { parse_mode: "MarkdownV2" });
-
   } catch (er) {
     logger.error(`Error sending message to ${telegramId}`, { er });
   }
 }
 
 function parsePaymentComment(comment: string) {
-
   const claims: Record<string, string> = {};
 
   for (const match of comment.matchAll(rewardCommentRegex)) {
