@@ -88,7 +88,15 @@ async function handleCommentNotificationTrigger(
 }
 
 async function handlePaymentNotification(username: string, claimUrlBase64String: string, telegramId: string, bot: Bot) {
-  const message = `${username}, a task reward has been generated for you\\. You can claim it[here](https://pay\\.ubq\\.fi?claim=${claimUrlBase64String})`;
+  const message = `**Hello ${username},**
+
+🎉 A task reward has been generated for you! 🎉
+
+You can claim your reward by clicking the link below:
+
+[Claim Your Reward](https://pay.ubq.fi?claim=${claimUrlBase64String})
+
+Thank you for your contribution!`
 
   let userPrivateChat;
 
