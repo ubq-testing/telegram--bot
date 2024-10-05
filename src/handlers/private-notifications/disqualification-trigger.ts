@@ -59,7 +59,7 @@ async function handleDisqualificationNotification(
 ) {
   const message = `<b>Hello ${username.charAt(0).toUpperCase() + username.slice(1)}</b>,
 
-You have been disqualified from [${ownerRepo}#${issueNumber}](${context.payload.issue.html_url}).
+You have been disqualified from <a href="${context.payload.issue.html_url}">${ownerRepo}#${issueNumber}</a>.
 
 You will not be able to self-assign this task again.
 `;

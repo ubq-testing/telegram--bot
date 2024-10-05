@@ -62,7 +62,7 @@ async function handleReviewNotification(
   const prAuthor = context.payload.pull_request.user?.login;
   const message = `<b>Hello ${username.charAt(0).toUpperCase() + username.slice(1)}</b>,
 
-${prAuthor} has requested a review from you on [${ownerRepo}#${issueNumber}](${context.payload.pull_request.html_url}).`;
+${prAuthor} has requested a review from you on <a href="${context.payload.pull_request.html_url}">${ownerRepo}#${issueNumber}</a>.`;
 
   let userPrivateChat;
 

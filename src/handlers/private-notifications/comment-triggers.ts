@@ -111,11 +111,9 @@ async function handleReminderNotification(
   bot: Bot,
   context: Context<"issue_comment.created" | "issue_comment.edited", SupportedEvents["issue_comment.created" | "issue_comment.edited"]>
 ) {
-  const message = `**Hello ${username.charAt(0).toUpperCase() + username.slice(1)}**,
+  const message = `<b>Hello ${username.charAt(0).toUpperCase() + username.slice(1)}</b>,
 
-This task has been idle for a while, please provide an update on <b>${context.payload.repository.full_name}#${context.payload.issue.number}</b>.
-  
-Visit the task [here](${context.payload.issue.html_url}).`;
+This task has been idle for a while, please provide an update on <a href="${context.payload.issue.html_url}">${context.payload.repository.full_name}#${context.payload.issue.number}</a>.`;
 
   let userPrivateChat;
 
@@ -146,7 +144,7 @@ async function handlePaymentNotification(username: string, claimUrlBase64String:
 
 You can claim your reward by clicking the link below:
 
-[Claim Your Reward](https://pay.ubq.fi?claim=${claimUrlBase64String})
+<a href="https://pay.ubq.fi?claim=${claimUrlBase64String}">Claim Your Reward</a>
 
 Thank you for your contribution.`;
 
