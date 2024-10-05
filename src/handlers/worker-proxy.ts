@@ -2,6 +2,7 @@ import { Context, SupportedEventsU } from "../types";
 import { ProxyCallbacks } from "../types/proxy";
 import { bubbleUpErrorComment } from "../utils/errors";
 import { notificationsRequiringComments } from "./private-notifications/comment-triggers";
+import { disqualificationNotification } from "./private-notifications/disqualification-trigger";
 
 /**
  * The `callbacks` object defines an array of callback functions for each supported event type.
@@ -13,6 +14,7 @@ import { notificationsRequiringComments } from "./private-notifications/comment-
 const callbacks = {
   "issue_comment.created": [notificationsRequiringComments],
   "issue_comment.edited": [notificationsRequiringComments],
+  "issues.unassigned": [disqualificationNotification],
 } as ProxyCallbacks;
 
 /**

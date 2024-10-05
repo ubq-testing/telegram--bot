@@ -60,8 +60,8 @@ export const BOT_COMMANDS = [
     description: "Set the webhook URL",
     type: "chat",
     isAdmin: true,
-  }
-]
+  },
+];
 
 function getPrivateChatCommands(): BotCommand[] {
   return [

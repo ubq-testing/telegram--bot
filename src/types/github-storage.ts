@@ -2,6 +2,8 @@ export interface Withsha {
   sha?: string;
 }
 
+export type NotificationTriggers = "payment" | "review" | "disqualification" | "reminder";
+
 export type StorageUser = {
   telegramId: number;
   githubId: number;
@@ -21,7 +23,7 @@ export type StorageUser = {
    *
    * listeningTo: ["payment"]
    */
-  listeningTo: string[];
+  listeningTo: NotificationTriggers[];
   /**
    * Push a GitHub username to this array to apply the same
    * listeners that your own notifications use, allowing a user
