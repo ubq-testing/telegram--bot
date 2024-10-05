@@ -5,12 +5,12 @@ import { GrammyContext } from "./helpers/grammy-context";
 export const BOT_COMMANDS = [
   {
     command: "start",
-    description: "Start the bot",
+    description: "View the welcome message",
     type: "all_private_chats",
   },
   {
     command: "register",
-    description: "Pair your GitHub account.",
+    description: "Pair your GitHub account",
     type: "all_private_chats",
   },
   {
@@ -75,7 +75,7 @@ function getPrivateChatCommands(): BotCommand[] {
     },
     {
       command: "register",
-      description: "Pair your GitHub account.",
+      description: "Pair your GitHub account",
     },
     {
       command: "subscribe",
