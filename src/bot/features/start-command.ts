@@ -6,6 +6,8 @@ import { BOT_COMMANDS } from "../setcommands";
 const composer = new Composer<GrammyContext>();
 
 const feature = composer.chatType("private");
+const commands = BOT_COMMANDS.filter((command) => command.type === "all_private_chats");
+const commandList = commands.map((command) => `\`/${command.command}\` - ${command.description}`).join("\n");
 
 const welcomeParts = [
   "👋 Hello! I am the Ubiquity OS Beta Bot. I'm still in development, so thanks for your patience!",
@@ -16,14 +18,11 @@ const welcomeParts = [
   "3. 💼 Set your wallet address.",
   "4. 🚀 More features coming soon!",
   "",
+  "<b>Here are the commands you can use:</b>",
+  commandList,
 ];
 
 feature.command("start", logHandle("command-start"), (ctx) => {
-  const commands = BOT_COMMANDS.filter((command) => command.type === "all_private_chats");
-  const commandList = commands.map((command) => `\`/${command.command}\` - ${command.description}`).join("\n");
-  welcomeParts.push(`<b>Here are some commands you can use:</b>`);
-  welcomeParts.push(commandList);
-
   return ctx.reply(`${welcomeParts.join("\n")}`, { parse_mode: "HTML" });
 });
 
