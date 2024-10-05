@@ -12,6 +12,8 @@ import {
 } from "../../types/github-storage";
 import { Context } from "../../types";
 import { PluginContext } from "../../types/plugin-context-single";
+import { getPluginManifestDetails } from "./utils";
+import { RequestError } from "octokit";
 
 /**
  * Uses GitHub as a storage layer, in particular, a JSON
@@ -21,26 +23,79 @@ export class GithubStorage {
   octokit: Context["octokit"];
   logger = logger;
 
-  repo = "ubiquibot-config";
-  owner: string | undefined = undefined;
-  installID: number | null = null;
-  chatStoragePath = "plugin-storage/telegram-bot/chat-storage.json";
-  userStoragePath = "plugin-storage/telegram-bot/user-base.json";
-  telegramSessionPath = "plugin-storage/telegram-bot/session-storage.json";
+  storageRepo = "ubiquibot-config"; // always the same (until global storage is implemented)
+  storageBranch = "storage"; // always the same (until branch-per-partner is implemented)
+
+  payloadRepoOwner: string | undefined = undefined; // which partner this data belongs to
+  pluginRepo: string | undefined = undefined; // is the name of this plugin's repository i.e ubiquity-os-kernel-telegram
+
+  installID: number | null = null; // used to get the correct install octokit
+
+  // all need prefixed with their storage path
+  chatStoragePath = "chat-storage.json";
+  userStoragePath = "user-base.json";
+  telegramSessionPath = "session-storage.json";
+
+  // returns a standard octokit during setup
   isEnvSetup = false;
 
   constructor(ctx: Context, { storageOwner, isEnvSetup }: { storageOwner?: string; isEnvSetup?: boolean } = {}) {
     this.isEnvSetup = isEnvSetup ?? false;
     this.octokit = ctx.octokit;
-    this.owner = storageOwner;
+    this.payloadRepoOwner = storageOwner;
 
-    if (!this.owner) {
+    if (!this.payloadRepoOwner) {
       const { payload } = ctx;
 
       if (payload) {
         this.getOwnerFromPayload(payload);
       }
     }
+
+    /**
+     * The assumption here is that GitHub payloads will always have this info
+     * whereas Telegram payloads will not. We must centralize our Telegram storage
+     * regardless, so this makes sense but could be improved upon.
+     *
+     * td - validate no GitHub webhook payloads are missing this info
+     * (current used webhooks are safe)
+     */
+    if (!this.payloadRepoOwner) {
+      /**
+       * @DEV - Forks should update the manifest pointing to their forked repository
+       *
+       * in this case "ubiquity-os"
+       */
+      this.payloadRepoOwner = getPluginManifestDetails().name.split("/")[0];
+    }
+
+    /**
+     * This would centralize all of our storage to a single organization
+     * which is suitable as we are the only partner at the moment.
+     *
+     * this.payloadRepoOwner = getPluginManifestDetails().name.split("/")[0];
+     *
+     * This could also be used to centralize a storage location for
+     * partner's if we had a reference to other orgs that they own,
+     * via the config or storage layer.
+     *
+     * this.payloadRepoOwner = getPartnerStorageLocation(this.payloadRepoOwner);
+     */
+    this.pluginRepo = getPluginManifestDetails().name.split("/")[1];
+
+    this.formatStoragePaths();
+  }
+
+  /**
+   * Standardized storage paths for the partner's repository.
+   *
+   * https://github.com/ubiquity-os/plugin-template/issues/2#issuecomment-2395009642
+   * https://github.com/ubiquity-os-marketplace/ubiquity-os-kernel-telegram/pull/3#issuecomment-2394941038
+   */
+  formatStoragePaths() {
+    this.chatStoragePath = `plugin-store/${this.payloadRepoOwner}/${this.pluginRepo}/${this.chatStoragePath}`;
+    this.userStoragePath = `plugin-store/${this.payloadRepoOwner}/${this.pluginRepo}/${this.userStoragePath}`;
+    this.telegramSessionPath = `plugin-store/${this.payloadRepoOwner}/${this.pluginRepo}/${this.telegramSessionPath}`;
   }
 
   /**
@@ -50,12 +105,10 @@ export class GithubStorage {
    *
    * Storage is handled via a dedicated GitHub App with the
    * necessary permissions to read/write to the repository.
-   * This way we'll be able to build a single storage location
-   * for partners, we'll be able to access data directly from
-   * a Telegram payload as otherwise we'd need a PAT.
    */
   async getStorageOctokit() {
     if (this.isEnvSetup) {
+      // setup pushes secrets to ubiquity-os-kernel-telegram, doesn't need the app instance
       return this.octokit;
     }
 
@@ -66,12 +119,12 @@ export class GithubStorage {
         return await PluginContext.getInstance().getStorageApp()?.getInstallationOctokit(this.installID);
       }
 
-      if (!this.owner) {
+      if (!this.payloadRepoOwner) {
         throw new Error("Unable to initialize storage octokit: owner not found");
       }
 
       const installs = await this.octokit.request("GET /app/installations");
-      const thisInstall = installs.data.find((install) => install.account?.login === this.owner);
+      const thisInstall = installs.data.find((install) => install.account?.login === this.payloadRepoOwner);
 
       if (!thisInstall) {
         throw new Error("Unable to initialize storage octokit: installation not found");
@@ -284,7 +337,7 @@ export class GithubStorage {
 
     const content = JSON.stringify(data, null, 2);
 
-    const owner = this.owner;
+    const owner = this.payloadRepoOwner;
 
     if (!owner) {
       throw new Error("Unable to store data: owner not found");
@@ -295,9 +348,9 @@ export class GithubStorage {
       if (!sha) {
         const { data: shaData } = await storageOctokit.rest.repos.getContent({
           owner,
-          repo: this.repo,
+          repo: this.storageRepo,
           path,
-          ref: "storage",
+          ref: this.storageBranch,
         });
 
         if ("sha" in shaData) {
@@ -307,11 +360,10 @@ export class GithubStorage {
 
       await storageOctokit.rest.repos.createOrUpdateFileContents({
         owner,
-        repo: this.repo,
+        repo: this.storageRepo,
         path,
-        // Bit of a gotcha but we'll document the GitHub Storage layer separate from this plugin
-        branch: "storage",
-        message: `chore: updated ${type}`,
+        branch: this.storageBranch,
+        message: `chore: updated ${type.replace(/([A-Z])/g, " $1").toLowerCase()}`,
         content: Buffer.from(content).toString("base64"),
         sha,
       });
@@ -330,88 +382,133 @@ export class GithubStorage {
    * Fitted with a helper for returning the correct storage type depending on the param.
    */
   async retrieveStorageDataObject<TType extends StorageTypes = StorageTypes>(type: TType, withSha?: boolean): Promise<RetrievalHelper<TType>> {
-    let path;
+    const storagePaths = {
+      allChats: this.chatStoragePath,
+      singleChat: this.chatStoragePath,
+      userBase: this.userStoragePath,
+      session: this.telegramSessionPath,
+    };
 
-    if (type === "allChats" || type === "singleChat") {
-      path = this.chatStoragePath;
-    } else if (type === "userBase") {
-      path = this.userStoragePath;
-    } else if (type === "session") {
-      path = this.telegramSessionPath;
+    const path = storagePaths[type];
+    if (!path) {
+      throw logger.error("Invalid storage type");
     }
 
-    if (!path) {
-      throw new Error("Invalid storage type");
+    if (!this.payloadRepoOwner) {
+      throw logger.error("Unable to retrieve data: owner not found");
+    }
+
+    let storageOctokit;
+    try {
+      storageOctokit = await this.getStorageOctokit();
+    } catch (er) {
+      throw logger.error("Failed to retrieve storage octokit", { er });
     }
 
     let dataContent, sha;
-
-    const owner = this.owner;
-
-    if (!owner) {
-      throw new Error("Unable to retrieve data: owner not found");
-    }
-
     try {
-      const storageOctokit = await this.getStorageOctokit();
-
-      const response = await storageOctokit.rest.repos.getContent({
-        owner,
-        repo: this.repo,
+      const { data } = await storageOctokit.rest.repos.getContent({
+        owner: this.payloadRepoOwner,
+        repo: this.storageRepo,
         path,
-        ref: "storage", // we'll always use the storage branch (avoids false commit activity on default branch)
+        ref: this.storageBranch,
       });
-
-      if (!response) {
-        throw new Error("Failed to retrieve data");
-      }
-
-      const data = response.data;
 
       if ("content" in data) {
         dataContent = Buffer.from(data.content, "base64").toString();
         sha = data.sha;
       } else {
-        throw new Error("Failed to retrieve data content");
+        throw logger.error("Data content not found");
       }
     } catch (er) {
-      throw this.logger.error("Failed to retrieve data", { er });
+      if (er instanceof RequestError && er.status === 404) {
+        return this.handleMissingStorageBranchOrFile<TType>(storageOctokit, this.payloadRepoOwner, path, type, withSha);
+      }
+      throw logger.error("Failed to retrieve data", { er });
     }
 
-    let parsedData: RetrievalHelper<TType>;
-
     try {
-      parsedData = JSON.parse(dataContent ?? "");
+      const parsedData = JSON.parse(dataContent || "");
+      return { ...parsedData, ...(withSha ? { sha } : {}) };
     } catch {
       throw new Error("Failed to parse JSON data");
     }
+  }
 
-    return {
-      ...parsedData,
-      ...(withSha ? { sha } : {}),
-    };
+  async handleMissingStorageBranchOrFile<TType extends StorageTypes>(
+    storageOctokit: Context["octokit"],
+    owner: string,
+    path: string,
+    type: StorageTypes,
+    withSha?: boolean
+  ) {
+    try {
+      // Check if the branch exists
+      try {
+        await storageOctokit.rest.repos.getBranch({
+          owner,
+          repo: this.storageRepo,
+          branch: this.storageBranch,
+        });
+      } catch (branchError) {
+        if (branchError instanceof RequestError) {
+          const { status } = branchError;
+
+          if (status === 404) {
+            // Branch doesn't exist, create the branch
+            const { data: defaultBranchData } = await storageOctokit.rest.repos.get({
+              owner,
+              repo: this.storageRepo,
+            });
+
+            await storageOctokit.rest.git.createRef({
+              owner,
+              repo: this.storageRepo,
+              ref: `refs/heads/${this.storageBranch}`,
+              sha: defaultBranchData.default_branch,
+            });
+          } else {
+            throw branchError;
+          }
+        }
+      }
+
+      // Create or update the file
+      await storageOctokit.rest.repos.createOrUpdateFileContents({
+        owner,
+        repo: this.storageRepo,
+        path,
+        branch: this.storageBranch,
+        message: `chore: create ${type.replace(/([A-Z])/g, " $1").toLowerCase()}`,
+        content: Buffer.from("{\n}").toString("base64"),
+      });
+
+      return (await this.retrieveStorageDataObject(type, withSha)) as RetrievalHelper<TType>;
+    } catch (err) {
+      throw logger.error("Failed to handle missing storage branch or file", { err });
+    }
   }
 
   // Helper functions
 
   getOwnerFromPayload(payload: Context["payload"]) {
-    if ("repository" in payload && payload.repository && !this.owner) {
-      this.owner = payload.repository.owner?.login;
+    if ("repository" in payload && payload.repository && !this.payloadRepoOwner) {
+      this.payloadRepoOwner = payload.repository.owner?.login;
     }
 
-    if ("organization" in payload && payload.organization && !this.owner) {
-      this.owner = payload.organization.login;
+    if ("organization" in payload && payload.organization && !this.payloadRepoOwner) {
+      this.payloadRepoOwner = payload.organization.login;
     }
 
-    if ("sender" in payload && payload.sender && !this.owner) {
-      this.owner = payload.sender.login;
+    if ("sender" in payload && payload.sender && !this.payloadRepoOwner) {
+      this.payloadRepoOwner = payload.sender.login;
     }
 
-    if ("installation" in payload && payload.installation && !this.owner) {
+    if ("installation" in payload && payload.installation && !this.payloadRepoOwner) {
       this.installID = payload.installation.id;
     }
 
-    if (!this.owner) {
+    if (!this.payloadRepoOwner) {
       throw new Error("Owner not found");
     }
   }
