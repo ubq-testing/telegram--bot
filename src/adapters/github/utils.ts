@@ -1,6 +1,6 @@
 import manifest from "../../../manifest.json";
 type Manifest = typeof manifest;
 
-export function getPluginManifestDetails() {
-  return manifest as Manifest;
+export function getPluginManifestDetails(): Manifest {
+    return manifest;
 }

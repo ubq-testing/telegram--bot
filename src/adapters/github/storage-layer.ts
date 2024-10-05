@@ -14,7 +14,6 @@ import { Context } from "../../types";
 import { PluginContext } from "../../types/plugin-context-single";
 import { getPluginManifestDetails } from "./utils";
 import { RequestError } from "octokit";
-import { LogReturn } from "@ubiquity-dao/ubiquibot-logger";
 
 /**
  * Uses GitHub as a storage layer, in particular, a JSON
@@ -25,7 +24,7 @@ export class GithubStorage {
   logger = logger;
 
   storageRepo = "ubiquibot-config"; // always the same (until global storage is implemented)
-  storageBranch = "storage-test-2"; // always the same (until branch-per-partner is implemented)
+  storageBranch = "storage"; // always the same (until branch-per-partner is implemented)
 
   payloadRepoOwner: string | undefined = undefined; // which partner this data belongs to
   pluginRepo: string | undefined = undefined; // is the name of this plugin's repository i.e ubiquity-os-kernel-telegram
@@ -92,6 +91,11 @@ export class GithubStorage {
    *
    * https://github.com/ubiquity-os/plugin-template/issues/2#issuecomment-2395009642
    * https://github.com/ubiquity-os-marketplace/ubiquity-os-kernel-telegram/pull/3#issuecomment-2394941038
+   *
+   * e.g:
+   * - ubiquibot-config/plugin-store/ubiquity-os/ubiquity-os-kernel-telegram/chat-storage.json
+   * - ubiquibot-config/plugin-store/ubiquity-os/ubiquity-os-kernel-telegram/user-base.json
+   * - ubiquibot-config/plugin-store/ubiquity-os/ubiquity-os-kernel-telegram/session-storage.json
    */
   formatStoragePaths() {
     this.chatStoragePath = `plugin-store/${this.payloadRepoOwner}/${this.pluginRepo}/${this.chatStoragePath}`;
@@ -391,22 +395,18 @@ export class GithubStorage {
     };
 
     const path = storagePaths[type];
-    if (!path) {
-      throw logger.error("Invalid storage type");
-    }
 
     if (!this.payloadRepoOwner) {
       throw logger.error("Unable to retrieve data: owner not found");
     }
 
-    let storageOctokit;
+    let storageOctokit, dataContent, sha;
     try {
       storageOctokit = await this.getStorageOctokit();
     } catch (er) {
       throw logger.error("Failed to retrieve storage octokit", { er });
     }
 
-    let dataContent, sha;
     try {
       const { data } = await storageOctokit.rest.repos.getContent({
         owner: this.payloadRepoOwner,
@@ -422,15 +422,18 @@ export class GithubStorage {
         throw logger.error("Data content not found");
       }
     } catch (er) {
-      if (er instanceof RequestError || er instanceof Error) {
-        if (er.message.includes("Not Found") || er.message.includes(`No commit found for the ref ${this.storageBranch}`)) {
-          return this.handleMissingStorageBranchOrFile<TType>(storageOctokit, this.payloadRepoOwner, path, type, withSha);
-        }
+      if (
+        (er instanceof RequestError || er instanceof Error) &&
+        (er.message.toLowerCase().includes("not found") || er.message.includes(`No commit found for the ref ${this.storageBranch}`))
+      ) {
+        return this.handleMissingStorageBranchOrFile<TType>(storageOctokit, this.payloadRepoOwner, path, type, withSha);
+      } else {
+        throw logger.error("Failed to retrieve storage data object", { er });
       }
     }
 
     try {
-      const parsedData = JSON.parse(dataContent || "");
+      const parsedData = JSON.parse(dataContent ?? "");
       return { ...parsedData, ...(withSha ? { sha } : {}) };
     } catch {
       throw new Error("Failed to parse JSON data");
@@ -444,20 +447,18 @@ export class GithubStorage {
     type: StorageTypes,
     withSha?: boolean
   ) {
-
     let mostRecentDefaultHeadCommitSha;
 
     try {
       const { data: defaultBranchData } = await storageOctokit.rest.repos.getCommit({
         owner,
         repo: this.storageRepo,
-        ref: "heads/main",
+        ref: "heads/main", // ubiquibot-config uses main as default
       });
       mostRecentDefaultHeadCommitSha = defaultBranchData.sha;
     } catch (er) {
       throw logger.error("Failed to get default branch commit sha", { er });
     }
-
 
     // Check if the branch exists
     try {
