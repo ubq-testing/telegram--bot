@@ -14,6 +14,7 @@ import { Context } from "../../types";
 import { PluginContext } from "../../types/plugin-context-single";
 import { getPluginManifestDetails } from "./utils";
 import { RequestError } from "octokit";
+import { LogReturn } from "@ubiquity-dao/ubiquibot-logger";
 
 /**
  * Uses GitHub as a storage layer, in particular, a JSON
@@ -24,7 +25,7 @@ export class GithubStorage {
   logger = logger;
 
   storageRepo = "ubiquibot-config"; // always the same (until global storage is implemented)
-  storageBranch = "storage"; // always the same (until branch-per-partner is implemented)
+  storageBranch = "storage-test-2"; // always the same (until branch-per-partner is implemented)
 
   payloadRepoOwner: string | undefined = undefined; // which partner this data belongs to
   pluginRepo: string | undefined = undefined; // is the name of this plugin's repository i.e ubiquity-os-kernel-telegram
@@ -421,10 +422,11 @@ export class GithubStorage {
         throw logger.error("Data content not found");
       }
     } catch (er) {
-      if (er instanceof RequestError && er.status === 404) {
-        return this.handleMissingStorageBranchOrFile<TType>(storageOctokit, this.payloadRepoOwner, path, type, withSha);
+      if (er instanceof RequestError || er instanceof Error) {
+        if (er.message.includes("Not Found") || er.message.includes(`No commit found for the ref ${this.storageBranch}`)) {
+          return this.handleMissingStorageBranchOrFile<TType>(storageOctokit, this.payloadRepoOwner, path, type, withSha);
+        }
       }
-      throw logger.error("Failed to retrieve data", { er });
     }
 
     try {
@@ -442,37 +444,53 @@ export class GithubStorage {
     type: StorageTypes,
     withSha?: boolean
   ) {
+
+    let mostRecentDefaultHeadCommitSha;
+
     try {
-      // Check if the branch exists
-      try {
-        await storageOctokit.rest.repos.getBranch({
-          owner,
-          repo: this.storageRepo,
-          branch: this.storageBranch,
-        });
-      } catch (branchError) {
-        if (branchError instanceof RequestError) {
-          const { status } = branchError;
+      const { data: defaultBranchData } = await storageOctokit.rest.repos.getCommit({
+        owner,
+        repo: this.storageRepo,
+        ref: "heads/main",
+      });
+      mostRecentDefaultHeadCommitSha = defaultBranchData.sha;
+    } catch (er) {
+      throw logger.error("Failed to get default branch commit sha", { er });
+    }
 
-          if (status === 404) {
-            // Branch doesn't exist, create the branch
-            const { data: defaultBranchData } = await storageOctokit.rest.repos.get({
-              owner,
-              repo: this.storageRepo,
-            });
 
+    // Check if the branch exists
+    try {
+      await storageOctokit.rest.repos.getBranch({
+        owner,
+        repo: this.storageRepo,
+        branch: this.storageBranch,
+      });
+    } catch (branchError) {
+      if (branchError instanceof RequestError || branchError instanceof Error) {
+        const { message } = branchError;
+        if (message.toLowerCase().includes(`branch not found`)) {
+          // Branch doesn't exist, create the branch
+
+          try {
             await storageOctokit.rest.git.createRef({
               owner,
               repo: this.storageRepo,
               ref: `refs/heads/${this.storageBranch}`,
-              sha: defaultBranchData.default_branch,
+              sha: mostRecentDefaultHeadCommitSha,
             });
-          } else {
-            throw branchError;
+          } catch (err) {
+            throw logger.error("Failed to create branch", { err });
           }
+        } else {
+          throw logger.error("Failed to handle missing storage branch or file", { branchError });
         }
+      } else {
+        throw logger.error("Failed to handle missing storage branch or file", { branchError });
       }
+    }
 
+    try {
       // Create or update the file
       await storageOctokit.rest.repos.createOrUpdateFileContents({
         owner,
@@ -481,11 +499,12 @@ export class GithubStorage {
         branch: this.storageBranch,
         message: `chore: create ${type.replace(/([A-Z])/g, " $1").toLowerCase()}`,
         content: Buffer.from("{\n}").toString("base64"),
+        sha: mostRecentDefaultHeadCommitSha,
       });
 
       return (await this.retrieveStorageDataObject(type, withSha)) as RetrievalHelper<TType>;
     } catch (err) {
-      throw logger.error("Failed to handle missing storage branch or file", { err });
+      throw logger.error("Failed to create new storage file", { err });
     }
   }
 
