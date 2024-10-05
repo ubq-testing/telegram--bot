@@ -60,7 +60,7 @@ async function handleReviewNotification(
   context: Context<"pull_request.review_requested", SupportedEvents["pull_request.review_requested"]>
 ) {
   const prAuthor = context.payload.pull_request.user?.login;
-  const message = `**Hello ${username.charAt(0).toUpperCase() + username.slice(1)}**,
+  const message = `<b>Hello ${username.charAt(0).toUpperCase() + username.slice(1)}</b>,
 
 ${prAuthor} has requested a review from you on [${ownerRepo}#${issueNumber}](${context.payload.pull_request.html_url}).`;
 
@@ -89,7 +89,7 @@ ${prAuthor} has requested a review from you on [${ownerRepo}#${issueNumber}](${c
   }
 
   try {
-    await bot?.api.sendMessage(telegramId, message, { parse_mode: "Markdown" });
+    await bot?.api.sendMessage(telegramId, message, { parse_mode: "HTML" });
   } catch (er) {
     logger.error(`Error sending message to ${telegramId} `, { er });
   }

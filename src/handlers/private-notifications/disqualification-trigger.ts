@@ -57,7 +57,7 @@ async function handleDisqualificationNotification(
   issueNumber: number,
   context: Context<"issues.unassigned", SupportedEvents["issues.unassigned"]>
 ) {
-  const message = `**Hello ${username.charAt(0).toUpperCase() + username.slice(1)}**,
+  const message = `<b>Hello ${username.charAt(0).toUpperCase() + username.slice(1)}</b>,
 
 You have been disqualified from [${ownerRepo}#${issueNumber}](${context.payload.issue.html_url}).
 
@@ -89,7 +89,7 @@ You will not be able to self-assign this task again.
   }
 
   try {
-    await bot?.api.sendMessage(telegramId, message, { parse_mode: "Markdown" });
+    await bot?.api.sendMessage(telegramId, message, { parse_mode: "HTML" });
   } catch (er) {
     logger.error(`Error sending message to ${telegramId}`, { er });
   }

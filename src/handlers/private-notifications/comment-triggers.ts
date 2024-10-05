@@ -113,7 +113,7 @@ async function handleReminderNotification(
 ) {
   const message = `**Hello ${username.charAt(0).toUpperCase() + username.slice(1)}**,
 
-This task has been idle for a while, please provide an update on ${context.payload.repository.full_name}#${context.payload.issue.number}.
+This task has been idle for a while, please provide an update on <b>${context.payload.repository.full_name}#${context.payload.issue.number}</b>.
   
 Visit the task [here](${context.payload.issue.html_url}).`;
 
@@ -131,7 +131,7 @@ Visit the task [here](${context.payload.issue.html_url}).`;
   }
 
   try {
-    await bot?.api.sendMessage(telegramId, message, { parse_mode: "Markdown" });
+    await bot?.api.sendMessage(telegramId, message, { parse_mode: "HTML" });
   } catch (er) {
     logger.error(`Error sending message to ${telegramId}`, { er });
   }
@@ -140,7 +140,7 @@ Visit the task [here](${context.payload.issue.html_url}).`;
 }
 
 async function handlePaymentNotification(username: string, claimUrlBase64String: string, telegramId: string, bot: Bot) {
-  const message = `**Hello ${username.charAt(0).toUpperCase() + username.slice(1)}**,
+  const message = `<b>Hello ${username.charAt(0).toUpperCase() + username.slice(1)}</b>,
 
 🎉 A task reward has been generated for you 🎉
 
@@ -164,7 +164,7 @@ Thank you for your contribution.`;
   }
 
   try {
-    await bot?.api.sendMessage(telegramId, message, { parse_mode: "Markdown" });
+    await bot?.api.sendMessage(telegramId, message, { parse_mode: "HTML" });
   } catch (er) {
     logger.error(`Error sending message to ${telegramId}`, { er });
   }
