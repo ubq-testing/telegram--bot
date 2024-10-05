@@ -2,7 +2,7 @@ import { chatAction } from "@grammyjs/auto-chat-action";
 import { Composer } from "grammy";
 import { GrammyContext } from "../../../helpers/grammy-context";
 import { logHandle } from "../../../helpers/logging";
-import { notifyTriggers } from "../../../../constants";
+import { NotificationTriggers, notifyTriggers } from "../../../../constants";
 
 const composer = new Composer<GrammyContext>();
 
@@ -43,7 +43,7 @@ feature.callbackQuery(/^notifySubscribe:(\d+)/, logHandle("callback-notifySubscr
 
     const selected = ctx.match[1];
 
-    const trigger = Object.keys(notifyTriggers).find((a, index) => index === parseInt(selected));
+    const trigger = Object.keys(notifyTriggers).find((a, index) => index === parseInt(selected)) as NotificationTriggers;
 
     if (!trigger) {
       await ctx.reply("Invalid trigger selected.");

@@ -5,6 +5,7 @@ import { CallbackResult } from "../../types/proxy";
 import { TelegramBotSingleton } from "../../types/telegram-bot-single";
 import { Logger, logger } from "../../utils/logger";
 
+const reminderCommentRegex = /@(\w+), this task has been idle for a while. Please provide an update./gi;
 const rewardCommentRegex = /href="https:\/\/[^/]+\/?\?claim=([A-Za-z0-9+/=]+)"[^>]*>\s*\[.*?\]\s*<\/a>\s*<\/h3>\s*<h6>\s*@([a-zA-Z0-9-_]+)\s*<\/h6>/g;
 // we'll have multiple permit comments to parse out here
 // the regex is capturing the claim url and the github username
@@ -22,7 +23,7 @@ export async function notificationsRequiringComments(
   // to support multiple triggers in the future
 
   // skip if not a bot comment or not a reward comment
-  if (payload.comment.user?.type !== "Bot" || !payload.comment.body.match(rewardCommentRegex)) {
+  if (payload.comment.user?.type !== "Bot" || !payload.comment.body.match(rewardCommentRegex) || !payload.comment.body.match(reminderCommentRegex)) {
     return { status: 200, reason: "skipped" };
   }
 
@@ -34,6 +35,8 @@ export async function notificationsRequiringComments(
   }
 
   const usernameToClaimUrls: Record<string, string> = parsePaymentComment(payload.comment.body);
+  const reminderUsernameMatch = payload.comment.body.match(reminderCommentRegex);
+  const reminderUsername = reminderUsernameMatch ? reminderUsernameMatch[0].substring(1).split(",")[0] : "";
 
   let bot;
   try {
@@ -53,10 +56,10 @@ export async function notificationsRequiringComments(
 
     if (user.listeningTo.length === 1) {
       const trigger = user.listeningTo[0];
-      await handleCommentNotificationTrigger(trigger, user, usernameToClaimUrls, telegramId, bot, logger);
+      await handleCommentNotificationTrigger({ trigger, user, usernameToClaimUrls, telegramId, bot, logger, reminderUsername, context });
     } else {
       for (const trigger of user.listeningTo) {
-        await handleCommentNotificationTrigger(trigger, user, usernameToClaimUrls, telegramId, bot, logger);
+        await handleCommentNotificationTrigger({ trigger, user, usernameToClaimUrls, telegramId, bot, logger, reminderUsername, context });
       }
     }
   }
@@ -64,20 +67,35 @@ export async function notificationsRequiringComments(
   return { status: 200, reason: "success" };
 }
 
-async function handleCommentNotificationTrigger(
-  trigger: string,
-  user: StorageUser,
-  usernameToClaimUrls: Record<string, string>,
-  telegramId: string,
-  bot: Bot,
-  logger: Logger
-) {
+async function handleCommentNotificationTrigger({
+  trigger,
+  user,
+  usernameToClaimUrls,
+  telegramId,
+  bot,
+  logger,
+  reminderUsername,
+  context,
+}: {
+  trigger: string;
+  user: StorageUser;
+  usernameToClaimUrls: Record<string, string>;
+  telegramId: string;
+  bot: Bot;
+  logger: Logger;
+  reminderUsername: string;
+  context: Context<"issue_comment.created" | "issue_comment.edited", SupportedEvents["issue_comment.created" | "issue_comment.edited"]>;
+}) {
   try {
     if (trigger === "payment") {
       for (const [username, claimUrl] of Object.entries(usernameToClaimUrls)) {
-        if (user.githubUsername === username) {
+        if (user.githubUsername.toLowerCase() === username.toLowerCase()) {
           await handlePaymentNotification(username, claimUrl, telegramId, bot);
         }
+      }
+    } else if (trigger === "reminder") {
+      if (user.githubUsername.toLowerCase() === reminderUsername.toLowerCase()) {
+        await handleReminderNotification(reminderUsername, telegramId, bot, context);
       }
     } else {
       logger.error(`Trigger ${trigger} not implemented yet.`);
@@ -85,6 +103,40 @@ async function handleCommentNotificationTrigger(
   } catch (er) {
     logger.error(`Error sending message to ${telegramId}`, { er });
   }
+}
+
+async function handleReminderNotification(
+  username: string,
+  telegramId: string,
+  bot: Bot,
+  context: Context<"issue_comment.created" | "issue_comment.edited", SupportedEvents["issue_comment.created" | "issue_comment.edited"]>
+) {
+  const message = `**Hello ${username.charAt(0).toUpperCase() + username.slice(1)}**,
+
+This task has been idle for a while, please provide an update on ${context.payload.repository.full_name}#${context.payload.issue.number}.
+  
+Visit the task [here](${context.payload.issue.html_url}).`;
+
+  let userPrivateChat;
+
+  try {
+    userPrivateChat = await bot?.api.getChat(telegramId);
+  } catch (er) {
+    logger.error(`Error getting chat for ${telegramId}`, { er });
+  }
+
+  if (!userPrivateChat) {
+    logger.error(`This user has not started a chat with the bot yet`, { telegramId });
+    return;
+  }
+
+  try {
+    await bot?.api.sendMessage(telegramId, message, { parse_mode: "Markdown" });
+  } catch (er) {
+    logger.error(`Error sending message to ${telegramId}`, { er });
+  }
+
+  return { status: 200, reason: "success" };
 }
 
 async function handlePaymentNotification(username: string, claimUrlBase64String: string, telegramId: string, bot: Bot) {

@@ -1,8 +1,8 @@
+import { NotificationTriggers } from "../constants";
+
 export interface Withsha {
   sha?: string;
 }
-
-export type NotificationTriggers = "payment" | "review" | "disqualification" | "reminder";
 
 export type StorageUser = {
   telegramId: number;

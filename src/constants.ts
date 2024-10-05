@@ -1,6 +1,8 @@
 import { SupportedEventsU } from "./types";
 
-export const notifyTriggers: Record<string, SupportedEventsU> = {
+export type NotificationTriggers = "payment" | "review" | "disqualification" | "reminder";
+
+export const notifyTriggers: Record<NotificationTriggers, SupportedEventsU> = {
   payment: "issue_comment.created",
   reminder: "issue_comment.created",
   disqualification: "issues.unassigned",
