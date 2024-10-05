@@ -3,7 +3,9 @@ import { CallbackResult } from "../../types/proxy";
 import { TelegramBotSingleton } from "../../types/telegram-bot-single";
 import { logger } from "../../utils/logger";
 
-export async function disqualificationNotification(context: Context<"issues.unassigned", SupportedEvents["issues.unassigned"]>): Promise<CallbackResult> {
+export async function reviewNotification(
+  context: Context<"pull_request.review_requested", SupportedEvents["pull_request.review_requested"]>
+): Promise<CallbackResult> {
   const {
     adapters: { github },
     payload,
@@ -17,32 +19,32 @@ export async function disqualificationNotification(context: Context<"issues.unas
     return { status: 500, reason: "No users found in the database." };
   }
 
-  const unassignedUser = payload.assignee?.login;
+  const requestedReviewer = payload.requested_reviewer?.login;
 
-  if (!unassignedUser) {
+  if (!requestedReviewer) {
     throw new Error("No user found in the payload");
   }
 
-  const dbUser = Object.values(users).find((user) => user.githubUsername.toLowerCase() === unassignedUser.toLowerCase());
+  const dbUser = Object.values(users).find((user) => user.githubUsername.toLowerCase() === requestedReviewer.toLowerCase());
 
   if (!dbUser) {
     throw new Error("User not found in the database");
   }
 
   const ownerRepo = payload.repository.full_name;
-  const issueNumber = payload.issue.number;
+  const issueNumber = payload.pull_request.number;
 
   if (!dbUser.listeningTo.length) {
     return { status: 200, reason: "skipped" };
   }
 
-  // skip if they've unassigned themselves
-  if (payload.sender.login === unassignedUser) {
+  // skip if they've requested review from themselves
+  if (payload.sender.login === requestedReviewer) {
     return { status: 200, reason: "skipped" };
   }
 
-  if (dbUser.listeningTo.includes("disqualification")) {
-    await handleDisqualificationNotification(dbUser.githubUsername, dbUser.telegramId, ownerRepo, issueNumber, context);
+  if (dbUser.listeningTo.includes("review")) {
+    await handleReviewNotification(dbUser.githubUsername, dbUser.telegramId, ownerRepo, issueNumber, context);
   } else {
     return { status: 200, reason: "skipped" };
   }
@@ -50,19 +52,17 @@ export async function disqualificationNotification(context: Context<"issues.unas
   return { status: 200, reason: "success" };
 }
 
-async function handleDisqualificationNotification(
+async function handleReviewNotification(
   username: string,
   telegramId: number,
   ownerRepo: string,
   issueNumber: number,
-  context: Context<"issues.unassigned", SupportedEvents["issues.unassigned"]>
+  context: Context<"pull_request.review_requested", SupportedEvents["pull_request.review_requested"]>
 ) {
+  const prAuthor = context.payload.pull_request.user?.login;
   const message = `**Hello ${username.charAt(0).toUpperCase() + username.slice(1)}**,
 
-You have been disqualified from [${ownerRepo}#${issueNumber}](${context.payload.issue.html_url}).
-
-You will not be able to self-assign this task again.
-`;
+${prAuthor} has requested a review from you on [${ownerRepo}#${issueNumber}](${context.payload.pull_request.html_url}).`;
 
   let userPrivateChat;
 
@@ -91,6 +91,6 @@ You will not be able to self-assign this task again.
   try {
     await bot?.api.sendMessage(telegramId, message, { parse_mode: "Markdown" });
   } catch (er) {
-    logger.error(`Error sending message to ${telegramId}`, { er });
+    logger.error(`Error sending message to ${telegramId} `, { er });
   }
 }
