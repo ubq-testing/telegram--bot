@@ -88,15 +88,15 @@ async function handleCommentNotificationTrigger(
 }
 
 async function handlePaymentNotification(username: string, claimUrlBase64String: string, telegramId: string, bot: Bot) {
-  const message = `**Hello ${username},**
+  const message = `**Hello ${username.charAt(0).toUpperCase() + username.slice(1)}**,
 
-🎉 A task reward has been generated for you! 🎉
+🎉 A task reward has been generated for you 🎉
 
 You can claim your reward by clicking the link below:
 
 [Claim Your Reward](https://pay.ubq.fi?claim=${claimUrlBase64String})
 
-Thank you for your contribution!`;
+Thank you for your contribution.`;
 
   let userPrivateChat;
 
@@ -112,7 +112,7 @@ Thank you for your contribution!`;
   }
 
   try {
-    await bot?.api.sendMessage(telegramId, message, { parse_mode: "MarkdownV2" });
+    await bot?.api.sendMessage(telegramId, message, { parse_mode: "Markdown" });
   } catch (er) {
     logger.error(`Error sending message to ${telegramId}`, { er });
   }
