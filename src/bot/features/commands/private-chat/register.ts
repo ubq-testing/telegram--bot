@@ -67,12 +67,9 @@ feature.command("register", logHandle("command-register"), chatAction("typing"),
     return;
   }
 
-  await ctx.reply(
-    `Successfully paired your GitHub account.\n\n${parts.join("\n")}\n\nYou can now use the <b>/subscribe</b> command to subscribe to notifications.`,
-    {
-      parse_mode: "HTML",
-    }
-  );
+  const commands = ["`/wallet` - Set your wallet address", "`/subscribe` - Subscribe to notifications", "`/unsubscribe` - Unsubscribe from notifications"];
+
+  await ctx.reply(`Successfully paired your GitHub account.\n\n${parts.join("\n")}\n\nYou can now use the following commands:\n\n${commands.join("\n")}`);
 });
 
 export { composer as registerFeature };

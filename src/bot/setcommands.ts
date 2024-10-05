@@ -2,6 +2,67 @@ import type { BotCommand } from "@grammyjs/types";
 import type { CommandContext } from "grammy";
 import { GrammyContext } from "./helpers/grammy-context";
 
+export const BOT_COMMANDS = [
+  {
+    command: "start",
+    description: "Start the bot",
+    type: "all_private_chats",
+  },
+  {
+    command: "register",
+    description: "Pair your GitHub account.",
+    type: "all_private_chats",
+  },
+  {
+    command: "subscribe",
+    description: "Subscribe to notifications",
+    type: "all_private_chats",
+  },
+  {
+    command: "unsubscribe",
+    description: "Unsubscribe from selected notifications",
+    type: "all_private_chats",
+  },
+  {
+    command: "wallet",
+    description: "Register your wallet address",
+    type: "all_private_chats",
+  },
+  {
+    command: "myid",
+    description: "Get your user ID",
+    type: "all_private_chats",
+  },
+  {
+    command: "botid",
+    description: "Get the bot's ID",
+    type: "all_private_chats",
+  },
+  {
+    command: "chatid",
+    description: "Get the chat ID",
+    type: "all_private_chats",
+  },
+  {
+    command: "ban",
+    description: "Ban a user",
+    type: "all_group_chats",
+    isAdmin: true,
+  },
+  {
+    command: "setcommands",
+    description: "Set the bot's commands",
+    type: "chat",
+    isAdmin: true,
+  },
+  {
+    command: "setwebhook",
+    description: "Set the webhook URL",
+    type: "chat",
+    isAdmin: true,
+  }
+]
+
 function getPrivateChatCommands(): BotCommand[] {
   return [
     {
@@ -14,7 +75,7 @@ function getPrivateChatCommands(): BotCommand[] {
     },
     {
       command: "register",
-      description: "Pair your GitHub account for use with private notifications and more",
+      description: "Pair your GitHub account.",
     },
     {
       command: "subscribe",
@@ -45,7 +106,12 @@ function getPrivateChatAdminCommands(): BotCommand[] {
 }
 
 function getGroupChatCommands(): BotCommand[] {
-  return [];
+  return [
+    {
+      command: "ban",
+      description: "Ban a user",
+    },
+  ];
 }
 
 export async function setCommandsHandler(ctx: CommandContext<GrammyContext>) {

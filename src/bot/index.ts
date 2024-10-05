@@ -14,7 +14,7 @@ import { Logger } from "../utils/logger";
 import { createContextConstructor, GrammyContext, SessionData } from "./helpers/grammy-context";
 import { errorHandler } from "./handlers/error";
 import { session } from "./middlewares/session";
-import { welcomeFeature } from "./features/welcome";
+import { welcomeFeature } from "./features/start-command";
 import { unhandledFeature } from "./features/helpers/unhandled";
 import { registerFeature } from "./features/commands/private-chat/register";
 import { notifySubscribeFeature } from "./features/commands/private-chat/notify-subscribe";
