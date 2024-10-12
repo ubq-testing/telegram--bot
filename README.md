@@ -1,91 +1,216 @@
-# `@ubiquibot/plugin-template`
+# `@ubiquity-os/kernel-telegram`
 
-## Prerequisites
+A Telegram bridge for Ubiquity OS, uniquely combining Cloudflare Workers and GitHub Actions to deliver seamless integration with both Telegram and GitHub. This hybrid plugin is the first of its kind to support both worker and workflow functionality, running across Cloudflare V8 and Node.js environments for enhanced flexibility and performance across multiple runtimes.
 
-- A good understanding of how the [kernel](https://github.com/ubiquity/ubiquibot-kernel) works and how to interact with it.
-- A basic understanding of the Ubiquibot configuration and how to define your plugin's settings.
+## Table of Contents
+
+- [High-Level Overview](#high-level-overview)
+  - [Architecture Breakdown](#architecture-breakdown)
+    - [Telegram Bridge Components](#telegram-bridge-components)
+    - [Ubiquity OS Plugin](#ubiquity-os-plugin)
+    - [Worker Instance](#worker-instance)
+    - [Workflow Instance](#workflow-instance)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+    - [Environment Variables](#environment-variables)
+    - [Supabase Configuration](#supabase-configuration)
+    - [Telegram Configuration](#telegram-configuration)
+    - [GitHub Configuration](#github-configuration)
+  - [Usage](#usage)
+  - [Commands](#commands)
+- [Repository Structure](#repository-structure)
+- [Considerations](#considerations)
+
+## High-Level Overview
+
+This bot operates in two parts:
+
+- **Bot API**: Hosted on Cloudflare Workers, interacts with the Telegram Bot API.
+- **Client API**: Runs in a Node.js environment (GitHub Actions) and interacts with the MTProto API via a Telegram User account.
+
+### Architecture Breakdown
+
+#### Telegram Bridge Components
+
+- **Worker Instance**: Runs Bot API methods on Cloudflare Workers. Handles bot commands, events, and chat interactions using a Telegram Bot created via BotFather.
+- **Client Instance**: Runs Client API methods on GitHub Actions, responsible for features unavailable to the bot, like creating groups or sending messages as a user.
+
+#### Ubiquity OS Plugin
+
+- **Worker Plugin**: This is a worker plugin with workflow capabilities, allowing it to run on both Cloudflare Workers and GitHub Actions.
+- **Actions as a Feature**: With a dual-scoped configuration we target both the Worker and Workflow instances, enabling seamless integration with Ubiquity OS.
+- **Hybrid Architecture**: Combines the best of both worlds, leveraging Cloudflare Workers for speed and GitHub Actions for long-running features or those that require a Node.js environment.
+- **Bridges the Gap**: Connects our GitHub events to our Telegram bot instantaneously, enabling real-time interactions and seamless integration.
+
+### Worker Instance
+
+1. **Hono App**: Handles webhook payloads from Telegram, manages bot commands and event reactions.
+2. **GrammyJS**: Utilizes GrammyJS for interacting with the Telegram Bot API, responsible for sending/editing messages, handling commands, and more. Learn more [here](https://grammy.dev).
+
+### Workflow Instance
+
+1. **NodeJS Server**: Handles tasks beyond the bot’s capabilities, such as managing Telegram groups or sending direct messages.
+2. **GramJS**: Built on top of [Telethon](https://docs.telethon.dev/en/stable/), interacts with the MTProto API for more advanced Telegram functionalities. Learn more [here](https://gram.js.org/beta/).
 
 ## Getting Started
 
-1. Create a new repository using this template.
-2. Clone the repository to your local machine.
-3. Install the dependencies preferably using `yarn` or `bun`.
+### Prerequisites
 
-## Creating a new plugin
+- Personal Telegram account
+- Telegram Bot Token (via BotFather)
+- Ubiquity OS Kernel
 
-- If your plugin is to be used as a slash command which should have faster response times as opposed to longer running GitHub action tasks, you should use the `worker` type.
+### Installation
 
-1. Ensure you understand and have setup the [kernel](https://github.com/ubiquity/ubiquibot-kernel).
-2. Update [compute.yml](./.github/workflows/compute.yml) with your plugin's name and update the `id`.
-3. Update [context.ts](./src/types/context.ts) with the events that your plugin will fire on.
-4. Update [manifest.json](./manifest.json) with a proper description of your plugin.
-5. Update [plugin-inputs.ts](./src/types/plugin-inputs.ts) to match the `with:` settings in your org or repo level configuration.
+#### Environment Variables
 
-- Your plugin config should look similar to this:
+The `TELEGRAM_BOT_ENV` is a single JSON object that encapsulates all necessary environment variables for the bot's operation. It consists of three key sections: `botSettings`, `mtProtoSettings`, and `storageSettings`.
 
-```yml
+You can set up your environment variables by using the provided utility script:
+
+- Run `yarn setup-env`, which prompts you to enter each value via the CLI. The values will be serialized and stored both locally and in your repository secrets.
+
+- **GITHUB_PAT_TOKEN**: Create a classic personal access token (PAT) with the `repo` scope. Set the expiry to 24 hours. This token will be used to generate repository secrets for the environment variables and will be removed from `.env` after the secrets are saved.
+- **Account Permission**: The account in which the PAT is associated with _must_ be an `admin` of the repository to be able to save secrets this way. Visit your repository settings `telegram-bridge` > `Collaborators & teams` to add the account as an admin first if needed.
+
+The environment variables are stored in the following locations:
+
+- `.env` file: Required to run the `yarn sms-auth` command.
+- `.dev.vars` file: For the Cloudflare Worker instance.
+- **GitHub Secrets**: Used by the GitHub Actions workflow.
+
+##### Environment Variable Sections:
+
+1. **botSettings**: Contains bot-specific settings like `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_WEBHOOK_SECRET`, etc.
+2. **mtProtoSettings**: Contains settings for the MTProto API like `TELEGRAM_APP_ID`, `TELEGRAM_API_HASH`, etc.
+3. **storageSettings**: Contains settings for the Supabase database like `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, etc.
+
+```typescript
+interface TELEGRAM_BOT_ENV {
+  botSettings: {
+    TELEGRAM_BOT_TOKEN: string; // Telegram Bot Token from BotFather
+    TELEGRAM_BOT_WEBHOOK: string; // Cloudflare Worker URL
+    TELEGRAM_BOT_WEBHOOK_SECRET: string; // Cloudflare Worker Secret
+    TELEGRAM_BOT_ADMINS: number[]; // Telegram User IDs
+  };
+  mtProtoSettings: {
+    TELEGRAM_APP_ID: number; // Telegram App ID
+    TELEGRAM_API_HASH: string; // Telegram API Hash
+  };
+  storageSettings: {
+    SUPABASE_URL: string; // Supabase URL
+    SUPABASE_SERVICE_KEY: string; // Supabase Service Key
+  };
+}
+```
+
+#### Telegram Configuration
+
+1. Create a new bot using [BotFather](https://t.me/BotFather).
+2. Add your `TELEGRAM_BOT_TOKEN`, `TELEGRAM_APP_ID`, `TELEGRAM_API_HASH`, and `TELEGRAM_BOT_ADMINS` to the environment variables.
+3. Use [Smee.io](https://smee.io/new) to create a webhook and add the URL as `TELEGRAM_BOT_WEBHOOK`.
+4. Generate a secret for `TELEGRAM_BOT_WEBHOOK_SECRET` to verify webhook requests.
+
+#### GitHub Configuration
+
+1. Ensure your Ubiquity OS Kernel is set up.
+2. Configure the plugin in your private organization’s repository:
+
+These URLs **do not** contain url paths, only the domain. This is because as standard, the main entry (`/`) is used for github events and the `/telegram` path is used for Telegram events which is set via the bot's `/setwebhook` command or by worker environment variable.
+
+```yaml
 plugins:
-  - name: hello-world
-    id: hello-world
-    uses:
-      - plugin: http://localhost:4000
+  - uses:
+      - plugin: https://cloudflare-worker-url.dev
         with:
-          # Define configurable items here and the kernel will pass these to the plugin.
-          configurableResponse: "Hello, is it me you are looking for?"
+          botId: 00000000
+  - uses:
+      - plugin: http://localhost:3000
+        with:
+          botId: 00000000
 ```
 
-###### At this stage, your plugin will fire on your defined events with the required settings passed in from the kernel. You can now start writing your plugin's logic.
+#### Supabase Configuration
 
-6. Start building your plugin by adding your logic to the [plugin.ts](./src/plugin.ts) file.
+1. Create or use an existing Supabase project.
+2. Run the migration or copypaste the SQL migration file from `./supabase/migrations` in the Supabase dashboard.
+3. Add your `SUPABASE_URL` and `SUPABASE_SERVICE_KEY` to your environment variables.
 
-## Testing a plugin
+##### Supabase Commands
 
-### Worker Plugins
-
-- `yarn/bun worker` - to run the worker locally.
-- To trigger the worker, `POST` requests to http://localhost:4000/ with an event payload similar to:
-
-```ts
-await fetch("http://localhost:4000/", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    stateId: "",
-    eventName: "",
-    eventPayload: "",
-    settings: "",
-    ref: "",
-    authToken: "",
-  }),
-});
+- To start the Supabase database locally, run the following command:
+```bash
+yarn supabase start
 ```
 
-A full example can be found [here](https://github.com/ubiquibot/assistive-pricing/blob/623ea3f950f04842f2d003bda3fc7b7684e41378/tests/http/request.http).
+- To reset the Supabase database, run the following command:
+```bash
+yarn supabase db reset
+```
 
-#### Deploying the Worker
-For testing purposes, the worker can be deployed through the Worker Deploy and Worker Delete workflows. It requires to 
-create a personal [Cloudflare Account](https://www.cloudflare.com/), and fill the `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` within your 
-GitHub Action Secrets.
+- To stop the Supabase database, run the following command:
+```bash
+yarn supabase stop
+```
 
-### Action Plugins
+For more detailed information, refer to the official [Supabase documentation](https://supabase.com/docs).
 
-- Ensure the kernel is running and listening for events.
-- Fire an event in/to the repo where the kernel is installed. This can be done in a number of ways, the easiest being via the GitHub UI or using the GitHub API, such as posting a comment, opening an issue, etc in the org/repo where the kernel is installed.
-- The kernel will process the event and dispatch it using the settings defined in your `.ubiquibot-config.yml`.
-- The `compute.yml` workflow will run and execute your plugin's logic.
-- You can view the logs in the Actions tab of your repo.
+## Testing Locally
 
-[Nektos Act](https://github.com/nektos/act) - a tool for running GitHub Actions locally.
+1. Spin up a Supabase instance and run the migration/copypaste the SQL file into the SQL editor.
+2. Run `yarn setup-env` to set up your environment variables. `WEBHOOK_URL` should be set to your local Smee URL initially with no path.
+3. Run `yarn sms-auth` to authenticate your personal Telegram account with MTProto. This will store your session in Supabase.
+4. Run `yarn worker` to start the Cloudflare Worker instance.
+5. Run `smee -u https://smee.io/your-webhook-url -P "/telegram"` to receive Telegram webhook payloads locally.
+6. Define the plugin twice in your `ubiquibot-config.yml` file, one pointing at the Cloudflare Worker instance or localhost and the other at the GitHub Actions workflow.
+7. Interact with the bot in Telegram chats or trigger GitHub webhooks as defined in `manifest.json`.
+8. Run `yarn deploy` to deploy the Cloudflare Worker instance.
+9. Paste or push your CF secrets but this time replace the `WEBHOOK_URL` with the Cloudflare Worker URL.
+10. Once deployed, use `/setwebhook` to set the bot's webhook URL to the Cloudflare Worker instance. It may take a minute or two to propagate.
+11. If you need to revert back to your Smee URL, then simply ping your local worker and it will reset the webhook URL (example below).
 
-## More information
+```bash
+curl -X POST http://localhost:3000/telegram -H "Content-Type: application/json" -d '{"message": ""}'
+```
 
-- [Full Ubiquibot Configuration](https://github.com/ubiquity/ubiquibot/blob/0fde7551585499b1e0618ec8ea5e826f11271c9c/src/types/configuration-types.ts#L62) - helpful for defining your plugin's settings as they are strongly typed and will be validated by the kernel.
-- [Ubiquibot V1](https://github.com/ubiquity/ubiquibot) - helpful for porting V1 functionality to V2, helper/utility functions, types, etc. Everything is based on the V1 codebase but with a more modular approach. When using V1 code, keep in mind that most all code will need refactored to work with the new V2 architecture.
+### Commands
 
-## Examples
+- **/myid**: Get your Telegram User ID.
+- **/botid**: Get the bot's Telegram User ID.
+- **/chatid**: Get the chat ID.
+- **/setwebhook**: Set the bot's webhook url.
+- **/setcommands**: Set the bot's commands.
 
-- [Start/Stop Slash Command](https://github.com/ubq-testing/start-stop-module) - simple
-- [Assistive Pricing Plugin](https://github.com/ubiquibot/assistive-pricing) - complex
-- [Conversation Rewards](https://github.com/ubiquibot/conversation-rewards) - really complex
+## Repository Structure
+
+```plaintext
+.
+├── .github/                    # GitHub Actions workflows (CI/CD, not for workflow-function logic)
+├── manifest.json               # Plugin manifest for Ubiquity OS Kernel
+├── supabase/                   # SQL migration files for Supabase schema
+├── src/                        # Source code
+│   ├── adapters/               # Storage adapters (e.g., Supabase integrations)
+│   ├── bot/                    # Core Telegram bot functionality (Worker and Workflow)
+│   │   ├── features/           # Bot features, including commands and event handlers
+│   │   ├── filters/            # Grammy filters (e.g., isAdmin, isPrivateChat)
+│   │   ├── handlers/           # Stateful command handlers based on chat types or user privileges
+│   │   ├── helpers/            # Utility functions like logging and custom Grammy contexts
+│   │   ├── middlewares/        # Middleware functions (e.g., rate limiting, session management)
+│   │   ├── mtproto-api/        # MTProto API client for advanced Telegram features
+│   │   │   ├── bot/            # MTProto API session management, 2FA auth scripts, Telegram client setup
+│   │   │   ├── workrooms/      # A collection of Workflow-functions leveraging MTProto API
+│   │   ├── index/              # Bot initialization, where commands and features are registered
+│   ├── handlers/               # General plugin handlers (e.g., GitHub API functions, webhook processing)
+│   ├── server/                 # Hono app for managing Cloudflare Worker instance of the bot
+│   ├── types/                  # Typebox schemas, TypeScript types, Singleton classes
+│   ├── utils/                  # General utility functions and helpers
+│   ├── worker.ts               # Main entry point, routes events (GitHub or Telegram) to appropriate handlers
+│   ├── plugin.ts               # GitHub event handler, forwards events to `workflow-entry.ts` or processes them
+│   ├── workflow-entry.ts       # Handles forwarded GitHub events, MTProto API interactions, and workflow logic
+```
+
+## Considerations
+
+- The `WEBHOOK_URL` is set on each call essentially, so the worker should always have it's own URL set as the webhook environment variable. Your local worker preferably retains the Smee URL env var which allows you to switch between the two easily.
+- If you have to ping and reset the webhook URL, you will see an `unauthorized` error in the worker logs. This is expected and you can verify a successful reset by using a command like `/myid`.

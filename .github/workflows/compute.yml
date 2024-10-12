@@ -1,4 +1,4 @@
-name: "the name of the plugin"
+name: "Workflow Functions"
 
 on:
   workflow_dispatch:
@@ -18,12 +18,11 @@ on:
 
 jobs:
   compute:
-    name: "plugin name"
+    name: "Kernel-Telegram"
     runs-on: ubuntu-latest
     permissions: write-all
     env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      TELEGRAM_BOT_ENV: ${{ secrets.TELEGRAM_BOT_ENV }}
 
     steps:
       - uses: actions/checkout@v4
@@ -36,9 +35,11 @@ jobs:
       - name: install dependencies
         run: yarn
 
+      - run: ${{ toJSON(inputs) }}
+        shell: cat {0}
+
       - name: execute directive
-        run: npx tsx ./src/main.ts
-        id: plugin-name
+        run: npx tsx ./src/workflow-entry.ts
+        id: Kernel-Telegram
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          TELEGRAM_BOT_ENV: ${{ secrets.TELEGRAM_BOT_ENV }}

@@ -11,19 +11,14 @@ export interface PluginInputs<T extends SupportedEventsU = SupportedEventsU, TU 
   ref: string;
 }
 
-/**
- * This should contain the properties of the bot config
- * that are required for the plugin to function.
- *
- * The kernel will extract those and pass them to the plugin,
- * which are built into the context object from setup().
- */
-export const pluginSettingsSchema = T.Object(
-  {
-    configurableResponse: T.String(),
-  },
-  { default: { configurableResponse: "Hello, world!" } }
-);
+export const pluginSettingsSchema = T.Object({
+  /**
+   * The bot ID, NOT the ID of the personal account.
+   */
+  botId: T.Transform(T.Unknown())
+    .Decode((value) => Number(value))
+    .Encode((value) => value.toString()),
+});
 
 export const pluginSettingsValidator = new StandardValidator(pluginSettingsSchema);
 
