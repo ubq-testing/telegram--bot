@@ -9,15 +9,18 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
   const chatName = "@" + payload.repository.full_name + "#" + payload.issue.number;
 
   if (chatName.includes("devpool-directory")) {
+    logger.info("Skipping chat creation (reason: devpool-directory is ignored).");
     return { status: 200, reason: "skipped" };
   }
 
   const labelName = payload.label?.name.toLowerCase();
 
   if (!labelName?.toLowerCase().includes("price")) {
+    logger.info("Skipping chat creation (reason: no price label has been set).");
     return { status: 200, reason: "skipped" };
   }
 
+  logger.info("Will attempt to create a new chat room...", { labelName });
   const mtProto = new MtProto(context);
   await mtProto.initialize();
   let chatId: number;
@@ -57,7 +60,14 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
 
       if ("link" in inviteLink) {
         link = inviteLink.link;
-        await addCommentToIssue(context, `A new workroom has been created for this task. [Join chat](${link})`, owner, repo, payload.issue.number);
+
+        await addCommentToIssue(
+          context,
+          logger.ok(`A new workroom has been created for this task. [Join chat](${link})`).logMessage.raw,
+          owner,
+          repo,
+          payload.issue.number
+        );
       } else {
         throw new Error(logger.error(`Failed to create chat invite link for the workroom: ${chatName}`).logMessage.raw);
       }
