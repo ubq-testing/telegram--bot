@@ -20,7 +20,7 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
     return { status: 200, reason: "skipped" };
   }
 
-  logger.info("Will attempt to create a new chat room...", { labelName });
+  logger.info(`Will attempt to create a new chat room '${chatName}'...`, { labelName });
   const mtProto = new MtProto(context);
   await mtProto.initialize();
   let chatId: number;
