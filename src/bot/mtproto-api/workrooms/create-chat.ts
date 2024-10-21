@@ -4,7 +4,7 @@ import { addCommentToIssue } from "../../../utils/add-comment-to-issues";
 import { MtProto } from "../bot/mtproto";
 import bigInt from "big-integer";
 
-export async function createChat(context: Context<"issues.labeled", SupportedEvents["issues.labeled"]>): Promise<CallbackResult> {
+export async function createChat(context: Context<"issues.assigned", SupportedEvents["issues.assigned"]>): Promise<CallbackResult> {
   const { payload, config, logger } = context;
   const chatName = "@" + payload.repository.full_name + "#" + payload.issue.number;
 
@@ -13,14 +13,14 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
     return { status: 200, reason: "skipped" };
   }
 
-  const labelName = payload.label?.name.toLowerCase();
+  const chatExists = await context.adapters.supabase.chats.getChatByTaskNodeId(payload.issue.node_id);
 
-  if (!labelName?.toLowerCase().includes("price")) {
-    logger.info("Skipping chat creation (reason: no price label has been set).");
-    return { status: 200, reason: "skipped" };
+  if (chatExists) {
+    logger.info("Chat already exists for this issue.");
+    return { status: 200, reason: "chat_exists" };
   }
 
-  logger.info(`Will attempt to create a new chat room '${chatName}'...`, { labelName });
+  logger.info(`Will attempt to create a new chat room '${chatName}'...`);
   const mtProto = new MtProto(context);
   await mtProto.initialize();
   let chatId: number;
