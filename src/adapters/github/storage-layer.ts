@@ -1,25 +1,16 @@
 import { logger } from "../../utils/logger";
-import {
-  Chat,
-  ChatAction,
-  ChatStorage,
-  HandleChatParams,
-  RetrievalHelper,
-  StorageTypes,
-  UserBaseStorage,
-  SessionStorage,
-  Withsha,
-} from "../../types/github-storage";
+import { Chat, ChatAction, ChatStorage, HandleChatParams, RetrievalHelper, StorageTypes, UserBaseStorage, SessionStorage, Withsha } from "../../types/storage";
 import { Context } from "../../types";
 import { PluginContext } from "../../types/plugin-context-single";
 import { getPluginManifestDetails } from "./utils";
 import { RequestError } from "octokit";
+import { Storage } from "../supabase/supabase";
 
 /**
  * Uses GitHub as a storage layer, in particular, a JSON
  * based private repository.
  */
-export class GithubStorage {
+export class GithubStorage implements Storage {
   octokit: Context["octokit"];
   logger = logger;
 
@@ -117,11 +108,11 @@ export class GithubStorage {
       return this.octokit;
     }
 
-    this.octokit = PluginContext.getInstance().getStorageApp()?.octokit;
-
     try {
+      this.octokit = PluginContext.getInstance().getAppOctokit();
+
       if (this.installID) {
-        return await PluginContext.getInstance().getStorageApp()?.getInstallationOctokit(this.installID);
+        return await PluginContext.getInstance().getApp()?.getInstallationOctokit(this.installID);
       }
 
       if (!this.payloadRepoOwner) {
@@ -135,7 +126,7 @@ export class GithubStorage {
         throw new Error("Unable to initialize storage octokit: installation not found");
       }
 
-      return await PluginContext.getInstance().getStorageApp()?.getInstallationOctokit(thisInstall.id);
+      return await PluginContext.getInstance().getApp()?.getInstallationOctokit(thisInstall.id);
     } catch (er) {
       throw this.logger.error("Failed to get install octokit", { er });
     }
@@ -167,7 +158,7 @@ export class GithubStorage {
     }
   }
 
-  async retrieveUserByTelegramId(telegramId: number, dbObj?: UserBaseStorage): Promise<UserBaseStorage[string] | undefined> {
+  async retrieveUserByTelegramId(telegramId: number, dbObj?: UserBaseStorage): Promise<UserBaseStorage | undefined> {
     const dbObject = dbObj ?? (await this.retrieveStorageDataObject("userBase"));
 
     const user = dbObject[telegramId];
@@ -180,7 +171,7 @@ export class GithubStorage {
     }
   }
 
-  async retrieveUserByGithubId(githubId: number, dbObj?: UserBaseStorage): Promise<UserBaseStorage[string] | undefined> {
+  async retrieveUserByGithubId(githubId: number | null | undefined, dbObj?: UserBaseStorage): Promise<UserBaseStorage | undefined> {
     const dbObject = dbObj ?? (await this.retrieveStorageDataObject("userBase"));
 
     const user = Object.values(dbObject).find((user) => user.githubId === githubId);
@@ -222,6 +213,12 @@ export class GithubStorage {
     });
 
     return await this.storeData(dbObject);
+  }
+
+  async getAllUsers() {
+    const dbObject = await this.retrieveStorageDataObject("userBase");
+
+    return Object.values(dbObject);
   }
 
   // Storage handlers
@@ -290,17 +287,15 @@ export class GithubStorage {
    * them may choose to listen into other users, but cannot enable notifications for
    * another user.
    */
-  async handleUserBaseStorage<TType extends "create" | "delete" | "update">(user: UserBaseStorage[string], action: TType) {
+  async handleUserBaseStorage<TType extends "create" | "delete" | "update">(user: UserBaseStorage, action: TType) {
     const dbObject = await this.retrieveStorageDataObject("userBase");
 
-    const existingUser = dbObject[user.telegramId];
-
-    if ((action === "create" && existingUser) || (action === "delete" && !existingUser)) {
+    if ((action === "create" && user) || (action === "delete" && !user)) {
       throw new Error("User already exists or does not exist");
     }
 
     if (action === "create" || action === "update") {
-      dbObject[user.telegramId] = user;
+      dbObject[user.telegram_id] = user;
     } else {
       delete dbObject[user.telegramId];
     }
@@ -573,7 +568,7 @@ function isUserBaseStorage(data: unknown): data is UserBaseStorage {
   const firstItem = Object.values(data)[0];
   if (typeof firstItem !== "object" || !firstItem) return false;
   const keys = Object.keys(firstItem);
-  return keys.includes("telegramId") && keys.includes("githubId") && keys.includes("listeningTo") && keys.includes("additionalUserListeners");
+  return keys.includes("telegramId") && keys.includes("githubId") && keys.includes("listeningTo") && keys.includes("additional_user_listeners");
 }
 
 function isSingleChatStorage(data: unknown): data is Chat {
