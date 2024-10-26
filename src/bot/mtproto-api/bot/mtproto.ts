@@ -1,8 +1,9 @@
 import dotenv from "dotenv";
 import { BaseMtProto } from "./scripts/sms-auth/base-mtproto";
-import { GithubSession } from "./session";
 import { Context } from "../../../types";
 import { GithubStorage } from "../../../adapters/github/storage-layer";
+import { SuperbaseStorage } from "../../../adapters/supabase/supabase";
+import { SessionManager, SessionManagerFactory } from "./session/session-manager";
 dotenv.config();
 
 /**
@@ -14,15 +15,17 @@ dotenv.config();
  */
 export class MtProto extends BaseMtProto {
   private _context: Context;
-  _session: GithubSession;
-  githubStorage: GithubStorage;
+  _session: SessionManager;
+  storage: GithubStorage | SuperbaseStorage;
 
   constructor(context: Context) {
     super();
-
+    const {
+      config: { shouldUseGithubStorage },
+    } = context;
     this._context = context;
-    this.githubStorage = context.adapters.github;
-    this._session = new GithubSession(this.githubStorage, context);
+    this._session = SessionManagerFactory.createSessionManager(shouldUseGithubStorage, context);
+    this.storage = this._session.storage;
   }
 
   async initialize() {
