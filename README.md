@@ -128,6 +128,34 @@ plugins:
           botId: 00000000
 ```
 
+#### Supabase Configuration
+
+1. Create or use an existing Supabase project.
+2. Run the migration or copypaste the SQL migration file from `./supabase/migrations` in the Supabase dashboard.
+3. Add your `SUPABASE_URL` and `SUPABASE_SERVICE_KEY` to your environment variables.
+
+##### Supabase Commands
+
+- To start the Supabase database locally, run the following command:
+
+```bash
+yarn supabase start
+```
+
+- To reset the Supabase database, run the following command:
+
+```bash
+yarn supabase db reset
+```
+
+- To stop the Supabase database, run the following command:
+
+```bash
+yarn supabase stop
+```
+
+For more detailed information, refer to the official [Supabase documentation](https://supabase.com/docs).
+
 ## Testing Locally
 
 1. Run `yarn setup-env` to set up your environment variables. `WEBHOOK_URL` should be set to your local Smee URL initially with no path.

@@ -4,20 +4,23 @@ import { addCommentToIssue } from "../../../utils/add-comment-to-issues";
 import { MtProto } from "../bot/mtproto";
 import bigInt from "big-integer";
 
-export async function createChat(context: Context<"issues.labeled", SupportedEvents["issues.labeled"]>): Promise<CallbackResult> {
+export async function createChat(context: Context<"issues.assigned", SupportedEvents["issues.assigned"]>): Promise<CallbackResult> {
   const { payload, config, logger } = context;
   const chatName = "@" + payload.repository.full_name + "#" + payload.issue.number;
 
   if (chatName.includes("devpool-directory")) {
+    logger.info("Skipping chat creation (reason: devpool-directory is ignored).");
     return { status: 200, reason: "skipped" };
   }
 
-  const labelName = payload.label?.name.toLowerCase();
+  const chatExists = await context.adapters.supabase.chats.getChatByTaskNodeId(payload.issue.node_id);
 
-  if (!labelName?.toLowerCase().includes("price")) {
-    return { status: 200, reason: "skipped" };
+  if (chatExists) {
+    logger.info("Chat already exists for this issue.");
+    return { status: 200, reason: "chat_exists" };
   }
 
+  logger.info(`Will attempt to create a new chat room '${chatName}'...`);
   const mtProto = new MtProto(context);
   await mtProto.initialize();
   let chatId: number;
@@ -57,7 +60,14 @@ export async function createChat(context: Context<"issues.labeled", SupportedEve
 
       if ("link" in inviteLink) {
         link = inviteLink.link;
-        await addCommentToIssue(context, `A new workroom has been created for this task. [Join chat](${link})`, owner, repo, payload.issue.number);
+
+        await addCommentToIssue(
+          context,
+          logger.ok(`A new workroom has been created for this task. [Join chat](${link})`).logMessage.raw,
+          owner,
+          repo,
+          payload.issue.number
+        );
       } else {
         throw new Error(logger.error(`Failed to create chat invite link for the workroom: ${chatName}`).logMessage.raw);
       }

@@ -11,9 +11,9 @@ import { handleCallback } from "./worker-proxy";
  * see the README for more information on how to set this up.
  */
 export const workflowCallbacks = {
-  "issues.labeled": [createChat],
   "issues.closed": [closeChat],
   "issues.reopened": [reopenChat],
+  "issues.assigned": [createChat],
 } as ProxyCallbacks;
 
 export function proxyWorkflowCallbacks(context: Context): ProxyCallbacks {
