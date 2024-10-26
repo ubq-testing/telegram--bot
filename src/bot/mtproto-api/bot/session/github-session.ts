@@ -1,20 +1,24 @@
 import { StringSession } from "telegram/sessions";
-import { Context } from "../../../types";
-import { GithubStorage } from "../../../adapters/github/storage-layer";
+import { Context } from "../../../../types";
+import { GithubStorage } from "../../../../adapters/github/storage-layer";
+import { SessionManager } from "./session-manager";
 
 /**
  * This class extends the StringSession class from the Telegram library.
  *
  * It adds the ability to save and load the session data from GitHub storage.
  */
-export class GithubSession extends StringSession {
-  github: GithubStorage;
+export class GitHubSession extends StringSession implements SessionManager {
+  storage: GithubStorage;
   context: Context;
   session?: string;
 
-  constructor(github: GithubStorage, context: Context, session?: string) {
+  constructor(context: Context, session?: string) {
     super(session);
-    this.github = github;
+    const {
+      config: { storageOwner },
+    } = context;
+    this.storage = new GithubStorage(context, { storageOwner, isEnvSetup: false });
     this.context = context;
     this.session = session;
   }
@@ -23,21 +27,21 @@ export class GithubSession extends StringSession {
     if (!this.session) {
       throw new Error("No session found. Please run the SMS Login script first.");
     }
-    await this.github.handleSession(this.session, "create");
+    await this.storage.handleSession(this.session, "create");
   }
 
   async loadSession() {
-    const session = await this.github.retrieveSession();
+    const session = await this.storage.retrieveSession();
 
     if (session) {
-      return new GithubSession(this.github, this.context, session);
+      return new GitHubSession(this.context, session);
     } else {
       throw new Error("No session found. Please run the SMS Login script first.");
     }
   }
 
   async getSession(): Promise<string> {
-    const session = await this.github.retrieveSession();
+    const session = await this.storage.retrieveSession();
 
     if (session) {
       return session;
@@ -50,6 +54,6 @@ export class GithubSession extends StringSession {
     if (!this.session) {
       throw new Error("No session found. Please run the SMS Login script first.");
     }
-    await this.github.handleSession(this.session, "delete");
+    await this.storage.handleSession(this.session, "delete");
   }
 }
