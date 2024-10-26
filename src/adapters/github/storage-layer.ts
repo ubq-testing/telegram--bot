@@ -1,15 +1,75 @@
+/**
+ * @DEV - This is disabled and while I plan to implement some sort of toggle
+ *        for this, it's not a priority for this PR and will be completed in:
+ *
+ *      - https://github.com/ubiquity-os-marketplace/ubiquity-os-kernel-telegram/issues/14
+ *
+ *
+ *
+ *
+ */
+import { Context } from "../../types";
+import { Chat, ChatAction, HandleChatParams, RetrievalHelper, StorageTypes, UserBaseStorage } from "../../types/storage";
+import { Storage } from "../supabase/supabase";
+
+export class GithubStorage implements Storage {
+  constructor(ctx: Context, { storageOwner, isEnvSetup }: { storageOwner?: string; isEnvSetup?: boolean } = {}) {}
+  userSnapshot(chatId: number, userIds: number[]): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  updateChatStatus(status: "open" | "closed" | "reopened", taskNodeId?: string, chatId?: number): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  saveChat(chatId: number, chatName: string, taskNodeId: string): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  retrieveChatByChatId(chatId: number): Promise<Chat | undefined> {
+    throw new Error("Method not implemented.");
+  }
+  retrieveChatByTaskNodeId(taskNodeId: string): Promise<Chat | undefined> {
+    throw new Error("Method not implemented.");
+  }
+  retrieveUserByTelegramId(telegramId: number, dbObj?: UserBaseStorage): Promise<UserBaseStorage | undefined> {
+    throw new Error("Method not implemented.");
+  }
+  retrieveUserByGithubId(githubId: number | null | undefined, dbObj?: UserBaseStorage): Promise<UserBaseStorage | undefined> {
+    throw new Error("Method not implemented.");
+  }
+  retrieveSession(): Promise<string | null> {
+    throw new Error("Method not implemented.");
+  }
+  handleChat<TAction extends ChatAction>(params: HandleChatParams<TAction>): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  handleSession<TAction extends "create" | "delete">(session: string, action: TAction): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  handleUserBaseStorage<TType extends "create" | "delete" | "update">(user: UserBaseStorage, action: TType): Promise<boolean> {
+    throw new Error("Method not implemented.");
+  }
+  storeData<TType extends StorageTypes>(data: RetrievalHelper<TType> | null, idToDelete?: number): Promise<boolean> {
+    throw new Error("Method not implemented.");
+  }
+  getAllUsers(): Promise<UserBaseStorage[]> {
+    throw new Error("Method not implemented.");
+  }
+  getChatUsers(chatId: number): Promise<number[]> {
+    throw new Error("Method not implemented.");
+  }
+}
+
+/**
+ * 
 import { logger } from "../../utils/logger";
 import { Chat, ChatAction, ChatStorage, HandleChatParams, RetrievalHelper, StorageTypes, UserBaseStorage, SessionStorage, Withsha } from "../../types/storage";
-import { Context } from "../../types";
 import { PluginContext } from "../../types/plugin-context-single";
 import { getPluginManifestDetails } from "./utils";
 import { RequestError } from "octokit";
 import { Storage } from "../supabase/supabase";
 
-/**
  * Uses GitHub as a storage layer, in particular, a JSON
  * based private repository.
- */
+ 
 export class GithubStorage implements Storage {
   octokit: Context["octokit"];
   logger = logger;
@@ -50,13 +110,13 @@ export class GithubStorage implements Storage {
      *
      * td - validate no GitHub webhook payloads are missing this info
      * (current used webhooks are safe)
-     */
+     
     if (!this.payloadRepoOwner) {
       /**
        * @DEV - Forks should update the manifest pointing to their forked repository
        *
        * in this case "ubiquity-os"
-       */
+       
       this.payloadRepoOwner = getPluginManifestDetails().name.split("/")[0];
     }
 
@@ -71,7 +131,7 @@ export class GithubStorage implements Storage {
      * via the config or storage layer.
      *
      * this.payloadRepoOwner = getPartnerStorageLocation(this.payloadRepoOwner);
-     */
+     
     this.pluginRepo = getPluginManifestDetails().name.split("/")[1];
 
     this.formatStoragePaths();
@@ -87,7 +147,7 @@ export class GithubStorage implements Storage {
    * - ubiquibot-config/plugin-store/ubiquity-os/ubiquity-os-kernel-telegram/chat-storage.json
    * - ubiquibot-config/plugin-store/ubiquity-os/ubiquity-os-kernel-telegram/user-base.json
    * - ubiquibot-config/plugin-store/ubiquity-os/ubiquity-os-kernel-telegram/session-storage.json
-   */
+   
   formatStoragePaths() {
     this.chatStoragePath = `plugin-store/${this.payloadRepoOwner}/${this.pluginRepo}/${this.chatStoragePath}`;
     this.userStoragePath = `plugin-store/${this.payloadRepoOwner}/${this.pluginRepo}/${this.userStoragePath}`;
@@ -101,7 +161,7 @@ export class GithubStorage implements Storage {
    *
    * Storage is handled via a dedicated GitHub App with the
    * necessary permissions to read/write to the repository.
-   */
+   
   async getStorageOctokit() {
     if (this.isEnvSetup) {
       // setup pushes secrets to ubiquity-os-kernel-telegram, doesn't need the app instance
@@ -109,11 +169,7 @@ export class GithubStorage implements Storage {
     }
 
     try {
-      this.octokit = PluginContext.getInstance().getAppOctokit();
-
-      if (this.installID) {
-        return await PluginContext.getInstance().getApp()?.getInstallationOctokit(this.installID);
-      }
+      this.octokit = await PluginContext.getInstance().getTelegramEventOctokit();
 
       if (!this.payloadRepoOwner) {
         throw new Error("Unable to initialize storage octokit: owner not found");
@@ -226,7 +282,7 @@ export class GithubStorage implements Storage {
   /**
    * This will create | reopen | close a chat. It must be passed the full
    * chat object.
-   */
+   
   async handleChat<TAction extends ChatAction>(params: HandleChatParams<TAction>) {
     // we'll need this no matter what
     const dbObject = await this.retrieveStorageDataObject("allChats");
@@ -265,7 +321,7 @@ export class GithubStorage implements Storage {
    * and replace it with the new one.
    *
    * "delete" will remove the session, this will break things without a new session.
-   */
+   
   async handleSession<TAction extends "create" | "delete">(session: string, action: TAction) {
     const dbObject = await this.retrieveStorageDataObject("session", true);
 
@@ -286,7 +342,7 @@ export class GithubStorage implements Storage {
    * This way notifications can only be received to the account which is subscribing,
    * them may choose to listen into other users, but cannot enable notifications for
    * another user.
-   */
+   
   async handleUserBaseStorage<TType extends "create" | "delete" | "update">(user: UserBaseStorage, action: TType) {
     const dbObject = await this.retrieveStorageDataObject("userBase");
 
@@ -311,7 +367,7 @@ export class GithubStorage implements Storage {
    * updated properties, or mistakes will be made.
    *
    * Do we need a safety check to ensure we are not accidentally deleting data? Maybe, needs tested.
-   */
+   
   async storeData<TType extends StorageTypes>(data: RetrievalHelper<TType>) {
     let path;
     let type: StorageTypes;
@@ -367,12 +423,11 @@ export class GithubStorage implements Storage {
         content: Buffer.from(content).toString("base64"),
         sha,
       });
+      return true;
     } catch (er) {
       this.logger.error("Failed to store data", { er });
-      return false;
     }
-
-    return true;
+    return false;
   }
 
   /**
@@ -380,7 +435,7 @@ export class GithubStorage implements Storage {
    * and returns it.
    *
    * Fitted with a helper for returning the correct storage type depending on the param.
-   */
+   
   async retrieveStorageDataObject<TType extends StorageTypes = StorageTypes>(type: TType, withSha?: boolean): Promise<RetrievalHelper<TType>> {
     const storagePaths = {
       allChats: this.chatStoragePath,
@@ -575,3 +630,4 @@ function isSingleChatStorage(data: unknown): data is Chat {
   if (typeof data !== "object" || !data) return false;
   return "chatId" in data || "taskNodeId" in data;
 }
+*/
