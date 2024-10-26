@@ -2,15 +2,18 @@ import { chatAction } from "@grammyjs/auto-chat-action";
 import { Composer } from "grammy";
 import { GrammyContext } from "../../../helpers/grammy-context";
 import { logHandle } from "../../../helpers/logging";
-import { PluginContext } from "../../../../types/plugin-context-single";
-import { Octokit } from "octokit";
 
 const composer = new Composer<GrammyContext>();
 
 const feature = composer.chatType("private");
 
 /**
- * Pairs the user's Telegram ID with the user's GitHub ID.
+ * Pairs the user's Telegram ID with the user's GitHub ID. Creating
+ * a new user in `userbase` and storing the user's GitHub ID.
+ *
+ * They must use `/wallet` after this to set their wallet address.
+ *
+ * Notification triggers are disabled by default.
  */
 feature.command("register", logHandle("command-register"), chatAction("typing"), async (ctx) => {
   const parts: string[] = [];
@@ -23,60 +26,49 @@ feature.command("register", logHandle("command-register"), chatAction("typing"),
       return;
     }
 
-    let octokit: Octokit | null = null;
-    const context = PluginContext.getInstance().getContext();
+    const user = await ctx.octokit.rest.users.getByUsername({
+      username: githubUsername,
+    });
 
-    await PluginContext.getInstance()
-      .getApp()
-      .eachInstallation(async (installation) => {
-        if (installation.installation.account?.login === context.config.storageOwner) {
-          octokit = installation.octokit;
+    if (user.status !== 200) {
+      await ctx.reply("User not found.");
+      return;
+    }
 
-          const user = await octokit?.rest.users.getByUsername({
-            username: githubUsername,
-          });
+    const githubId = user.data.id;
 
-          if (user.status !== 200) {
-            await ctx.reply("User not found.");
-            return;
-          }
+    if (user.data.login) {
+      parts.push(`<b>Login:</b> ${user.data.login}`);
+    }
 
-          const githubId = user.data.id;
+    if (user.data.name) {
+      parts.push(`<b>Name:</b> ${user.data.name}`);
+    }
 
-          if (user.data.login) {
-            parts.push(`<b>Login:</b> ${user.data.login}`);
-          }
+    if (user.data.email) {
+      parts.push(`<b>Email:</b> ${user.data.email}`);
+    }
 
-          if (user.data.name) {
-            parts.push(`<b>Name:</b> ${user.data.name}`);
-          }
+    if (user.data.bio) {
+      parts.push(`<b>Bio:</b> ${user.data.bio}`);
+    }
 
-          if (user.data.email) {
-            parts.push(`<b>Email:</b> ${user.data.email}`);
-          }
-
-          if (user.data.bio) {
-            parts.push(`<b>Bio:</b> ${user.data.bio}`);
-          }
-
-          await ctx.adapters.storage.handleUserBaseStorage(
-            {
-              additional_user_listeners: [],
-              github_id: githubId,
-              wallet_address: null,
-              telegram_id: userId,
-              github_username: githubUsername,
-              listening_to: {
-                disqualification: false,
-                payment: false,
-                reminder: false,
-                review: false,
-              },
-            },
-            "create"
-          );
-        }
-      });
+    await ctx.adapters.storage.handleUserBaseStorage(
+      {
+        additional_user_listeners: [],
+        github_id: githubId,
+        wallet_address: null,
+        telegram_id: userId,
+        github_username: githubUsername,
+        listening_to: {
+          disqualification: false,
+          payment: false,
+          reminder: false,
+          review: false,
+        },
+      },
+      "create"
+    );
   } catch (er) {
     if (er instanceof Error) {
       await ctx.reply(ctx.logger.error(`${er.message}`, { er }).logMessage.raw);
