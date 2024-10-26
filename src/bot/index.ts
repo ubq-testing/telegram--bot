@@ -19,10 +19,12 @@ import { unhandledFeature } from "./features/helpers/unhandled";
 import { registerFeature } from "./features/commands/private-chat/register";
 import { notifySubscribeFeature } from "./features/commands/private-chat/notify-subscribe";
 import { walletFeature } from "./features/commands/private-chat/wallet";
+import { Octokit as AppOctokit } from "octokit";
 
 interface Dependencies {
   config: UbiquityOsContext["env"];
   logger: Logger;
+  octokit: AppOctokit;
 }
 
 interface Options {
@@ -34,15 +36,10 @@ function getSessionKey(ctx: Omit<GrammyContext, "session">) {
   return ctx.chat?.id.toString();
 }
 
-export function createBot(token: string, dependencies: Dependencies, options: Options = {}) {
-  const { config, logger } = dependencies;
-
+export async function createBot(token: string, dependencies: Dependencies, options: Options = {}) {
   const bot = new TelegramBot(token, {
     ...options.botConfig,
-    ContextConstructor: createContextConstructor({
-      logger,
-      config,
-    }),
+    ContextConstructor: await createContextConstructor(dependencies),
   });
   const protectedBot = bot.errorBoundary(errorHandler);
 
@@ -80,4 +77,4 @@ export function createBot(token: string, dependencies: Dependencies, options: Op
   return bot;
 }
 
-export type Bot = ReturnType<typeof createBot>;
+export type Bot = Awaited<ReturnType<typeof createBot>>;

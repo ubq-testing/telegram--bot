@@ -8,6 +8,7 @@ import { Logger } from "../../utils/logger";
 import { createAdapters } from "../../adapters";
 import { PluginContext } from "../../types/plugin-context-single";
 import { Octokit } from "@octokit/rest";
+import { Octokit as AppOctokit } from "octokit";
 
 export type GrammyTelegramUpdate = Update;
 
@@ -15,31 +16,28 @@ export interface SessionData {
   field?: string;
 }
 
-interface ExtendedContextFlavor {
+interface Dependencies {
   logger: Logger;
   config: UbiquityOsContext["env"];
+  octokit: AppOctokit;
+}
+
+interface ExtendedContextFlavor extends Dependencies {
   adapters: ReturnType<typeof createAdapters>;
 }
 
 export type GrammyContext = ParseModeFlavor<HydrateFlavor<DefaultContext & ExtendedContextFlavor & SessionFlavor<SessionData> & AutoChatActionFlavor>>;
 
-interface Dependencies {
-  logger: Logger;
-  config: UbiquityOsContext["env"];
-}
-
-export function createContextConstructor({ logger, config }: Dependencies) {
+export async function createContextConstructor({ logger, config, octokit }: Dependencies) {
   return class extends DefaultContext implements ExtendedContextFlavor {
     logger: Logger;
-    config: UbiquityOsContext["env"];
-    octokit: Octokit;
     adapters: ReturnType<typeof createAdapters>;
+    octokit: AppOctokit = octokit;
+    config: UbiquityOsContext["env"];
 
     constructor(update: GrammyTelegramUpdate, api: Api, me: UserFromGetMe) {
       super(update, api, me);
       const instance = PluginContext.getInstance();
-      // @ts-expect-error - octokit mismatch in types - non-crucial
-      this.octokit = instance.getApp().octokit;
       this.logger = logger;
       this.config = config;
 
