@@ -19,16 +19,16 @@ feature.command("wallet", logHandle("command-wallet"), chatAction("typing"), asy
       return;
     }
 
-    const user = await ctx.adapters.github.retrieveUserByTelegramId(userId);
+    const user = await ctx.adapters.storage.retrieveUserByTelegramId(userId);
     if (!user) {
       await ctx.reply("You are not registered. Please register first.");
       return;
     }
 
-    await ctx.adapters.github.handleUserBaseStorage(
+    await ctx.adapters.storage.handleUserBaseStorage(
       {
         ...user,
-        walletAddress,
+        wallet_address: walletAddress,
       },
       "update"
     );
