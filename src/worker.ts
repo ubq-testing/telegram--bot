@@ -44,7 +44,6 @@ export default {
 
     if (["/telegram", "/telegram/"].includes(path)) {
       try {
-        console.log("TOUCHING TELEGRAM");
         await TelegramBotSingleton.initialize(envSettings);
         return await handleTelegramWebhook(request, envSettings);
       } catch (err) {

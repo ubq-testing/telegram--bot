@@ -7,7 +7,7 @@ import { logger } from "../../utils/logger";
 
 const reminderCommentRegex = /@(\w+), this task has been idle for a while. Please provide an update./gi;
 // eslint-disable-next-line sonarjs/duplicates-in-character-class
-const base64ClaimUrlRegex = /href="https:\/\/[^/]+\/?\?claim=([A-Za-z0-9+/=])"/gi;
+const base64ClaimUrlRegex = /href="https:\/\/[^/]+\/?\?claim=([A-Za-z0-9+/=]+)"/gi;
 const amountPatternRegex = /\[\s*\d+(\.\d+)?\s*[A-Z]+\s*\]/gi;
 // eslint-disable-next-line sonarjs/duplicates-in-character-class
 const githubUsernameRegex = /<h6>@([a-zA-Z0-9-]{1,39})<\/h6>/gi;
@@ -69,6 +69,7 @@ export async function notificationsRequiringComments(context: Context<"issue_com
   const { payload } = context;
   const { body } = payload.comment;
   const { results, users } = await getUsersFromStorage(context, body);
+
   const bot = (await TelegramBotSingleton.initialize(context.env)).getBot();
 
   const commentDependantTriggers = ["payment", "reminder"];
@@ -107,10 +108,10 @@ async function handleCommentNotificationTrigger({
   context: Context<"issue_comment.created" | "issue_comment.edited">;
   claimUrl?: string;
 }) {
-  if (trigger === "reminder") {
+  if (trigger === "reminder" && !claimUrl) {
     return handleReminderNotification(user.github_username, telegramId, bot, context);
   } else if (trigger === "payment") {
-    return handlePaymentNotification(user.github_username, claimUrl, telegramId, bot);
+    return handlePaymentNotification(user, claimUrl, telegramId, bot, context);
   }
 }
 
@@ -146,20 +147,32 @@ This task has been idle for a while, please provide an update on <a href="${cont
   return { status: 200, reason: "success" };
 }
 
-async function handlePaymentNotification(username: string, claimUrlBase64String: string | undefined, telegramId: string | number, bot: Bot) {
-  if (!claimUrlBase64String) {
-    logger.error(`Claim URL not found for ${username}`);
+async function handlePaymentNotification(
+  user: StorageUser,
+  claimUrlBase64String: string | undefined,
+  telegramId: string | number,
+  bot: Bot,
+  context: Context<"issue_comment.created" | "issue_comment.edited">
+) {
+  const { wallet_address, github_username: username } = user;
+  if (!wallet_address) {
+    logger.error(`Wallet address not found for ${username}`);
+    const noWalletMessage = `<b>Hello ${username.charAt(0).toUpperCase() + username.slice(1)}</b>,
+
+It seems you are subscribed to payment notifications and may have received a payment. However, we couldn't find a registered wallet address for you.
+  
+Please use the \`/wallet\` command to set your wallet address for future notifications.
+
+You can view the comment <a href="${context.payload.comment.html_url}">here</a>.
+`;
+
+    try {
+      await bot?.api.sendMessage(Number(telegramId), noWalletMessage, { parse_mode: "HTML" });
+    } catch (er) {
+      logger.error(`Error sending message to ${telegramId}`, { er });
+    }
     return;
   }
-  const message = `<b>Hello ${username.charAt(0).toUpperCase() + username.slice(1)}</b>,
-
-🎉 A task reward has been generated for you 🎉
-
-You can claim your reward by clicking the link below:
-
-<a href="https://pay.ubq.fi?claim=${claimUrlBase64String}">Claim Your Reward</a>
-
-Thank you for your contribution.`;
 
   let userPrivateChat;
 
@@ -174,8 +187,18 @@ Thank you for your contribution.`;
     return;
   }
 
+  const notificationMessage = `<b>Hello ${username.charAt(0).toUpperCase() + username.slice(1)}</b>,
+
+  🎉 A task reward has been generated for you 🎉
+  
+  You can claim your reward by clicking the link below:
+  
+  <a href="https://pay.ubq.fi?claim=${claimUrlBase64String}">Claim Your Reward</a>
+  
+  Thank you for your contribution.`;
+
   try {
-    await bot?.api.sendMessage(Number(telegramId), message, { parse_mode: "HTML" });
+    await bot?.api.sendMessage(Number(telegramId), notificationMessage, { parse_mode: "HTML" });
   } catch (er) {
     logger.error(`Error sending message to ${telegramId}`, { er });
   }
