@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * @DEV - This is disabled and while I plan to implement some sort of toggle
  *        for this, it's not a priority for this PR and will be completed in:
@@ -13,7 +14,7 @@ import { Chat, ChatAction, HandleChatParams, RetrievalHelper, StorageTypes, User
 import { Storage } from "../supabase/supabase";
 
 export class GithubStorage implements Storage {
-  constructor(ctx: Context, { storageOwner, isEnvSetup }: { storageOwner?: string; isEnvSetup?: boolean } = {}) {}
+  constructor() {}
   userSnapshot(chatId: number, userIds: number[]): Promise<void> {
     throw new Error("Method not implemented.");
   }

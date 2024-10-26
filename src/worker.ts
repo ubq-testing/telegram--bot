@@ -6,6 +6,7 @@ import { handleUncaughtError } from "./utils/errors";
 import { TelegramBotSingleton } from "./types/telegram-bot-single";
 import { PluginContext } from "./types/plugin-context-single";
 import { Value } from "@sinclair/typebox/value";
+import { logger } from "./utils/logger";
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
@@ -24,7 +25,18 @@ export default {
     try {
       envSettings = Value.Decode(envValidator.schema, Value.Default(envValidator.schema, env));
     } catch (err) {
+      logger.error("Could not decode env", { err });
       return new Response(JSON.stringify({ err, message: "Invalid environment provided" }), {
+        status: 400,
+        headers: { "content-type": "application/json" },
+      });
+    }
+
+    try {
+      PluginContext.initialize(await request.clone().json(), envSettings);
+    } catch (er) {
+      logger.error("Could not initialize PluginContext on fetch", { er });
+      return new Response(JSON.stringify({ err: er, message: "Invalid plugin context provided" }), {
         status: 400,
         headers: { "content-type": "application/json" },
       });
@@ -32,11 +44,11 @@ export default {
 
     if (["/telegram", "/telegram/"].includes(path)) {
       try {
+        console.log("TOUCHING TELEGRAM");
         await TelegramBotSingleton.initialize(envSettings);
-        PluginContext.initialize(await request.clone().json(), envSettings);
         return await handleTelegramWebhook(request, envSettings);
       } catch (err) {
-        console.log("/webhook entry error", err);
+        logger.error("handleTelegramWebhook failed", { err });
         return handleUncaughtError(err);
       }
     }
@@ -52,7 +64,7 @@ export default {
     try {
       return await handleGithubWebhook(request, envSettings);
     } catch (err) {
-      console.log("github entry error", err);
+      logger.error("handleGithubWebhook failed", { err });
       return handleUncaughtError(err);
     }
   },

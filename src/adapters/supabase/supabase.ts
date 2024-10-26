@@ -128,7 +128,7 @@ export class SuperbaseStorage implements Storage {
     return data;
   }
 
-  async retrieveUserByTelegramId(telegramId: number, dbObj?: UserBaseStorage): Promise<UserBaseStorage | undefined> {
+  async retrieveUserByTelegramId(telegramId: number): Promise<UserBaseStorage | undefined> {
     const { data, error } = await this.supabase.from("userbase").select("*").eq("telegram_id", telegramId).single();
     if (error || !data) {
       this.logger.error("No user found", { telegramId, err: error });
@@ -139,7 +139,7 @@ export class SuperbaseStorage implements Storage {
     return data;
   }
 
-  async retrieveUserByGithubId(githubId: number | null | undefined, dbObj?: UserBaseStorage): Promise<UserBaseStorage | undefined> {
+  async retrieveUserByGithubId(githubId: number | null | undefined): Promise<UserBaseStorage | undefined> {
     if (!githubId) {
       this.logger.error("No githubId provided to retrieve user");
       return;
@@ -207,7 +207,7 @@ export class SuperbaseStorage implements Storage {
   async handleUserBaseStorage<TType extends "create" | "delete" | "update">(user: UserBaseStorage, action: TType) {
     const existingUser = await this.retrieveUserByTelegramId(user.telegram_id);
 
-    if ((action === "create" && existingUser)) {
+    if (action === "create" && existingUser) {
       throw new Error("User already exists");
     }
     if (action === "delete" && !existingUser) {

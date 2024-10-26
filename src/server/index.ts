@@ -10,7 +10,7 @@ import { requestLogger } from "./middlewares/request-logger";
 
 interface Dependencies {
   bot: Bot;
-  config: UbiquityOsContext["env"];
+  env: UbiquityOsContext["env"];
   logger: Logger;
 }
 
@@ -24,7 +24,12 @@ interface HonoEnv {
  * Creates the Hono server instance for handling Bot API requests.
  */
 export function createServer(dependencies: Dependencies) {
-  const { bot, config, logger } = dependencies;
+  const { bot, env, logger } = dependencies;
+  const {
+    TELEGRAM_BOT_ENV: {
+      botSettings: { TELEGRAM_BOT_WEBHOOK_SECRET },
+    },
+  } = env;
 
   const server = new Hono<HonoEnv>();
 
@@ -60,7 +65,7 @@ export function createServer(dependencies: Dependencies) {
 
   server.post(
     webhookCallback(bot, "hono", {
-      secretToken: config.TELEGRAM_BOT_ENV.botSettings.TELEGRAM_BOT_WEBHOOK_SECRET,
+      secretToken: TELEGRAM_BOT_WEBHOOK_SECRET,
     })
   );
 

@@ -41,9 +41,9 @@ export class PluginContext {
     this._config = config;
   }
 
-  static initialize(inputs: PluginInputs, env: Env): Context {
+  static initialize(inputs: PluginInputs, env: Env): PluginContext {
     PluginContext._instance = new PluginContext(inputs, env);
-    return PluginContext._instance.getContext();
+    return PluginContext._instance;
   }
 
   static getInstance(): PluginContext {
@@ -111,9 +111,9 @@ export class PluginContext {
    * interact with the GitHub API.
    *
    */
-  getContext(): Context {
+  async getContext(): Promise<Context> {
     // use the octokit which we know for sure has a token for both payloads
-    const octokit = this.getTelegramEventOctokit();
+    const octokit = await this.getTelegramEventOctokit();
 
     if (!octokit) {
       throw new Error("Octokit could not be initialized");

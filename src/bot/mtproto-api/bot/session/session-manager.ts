@@ -16,7 +16,9 @@ export interface SessionManager extends StringSession {
 }
 
 export class SessionManagerFactory {
+  // eslint-disable-next-line sonarjs/public-static-readonly
   static sessionManager: SessionManager;
+  // eslint-disable-next-line sonarjs/public-static-readonly
   static storage: GithubStorage | SuperbaseStorage;
 
   static createSessionManager(shouldUseGithubStorage: boolean, context: Context, session?: string): SessionManager {

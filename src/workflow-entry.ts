@@ -54,7 +54,7 @@ export async function run() {
 
   PluginContext.initialize(inputs, env);
 
-  const context = PluginContext.getInstance().getContext();
+  const context = await PluginContext.getInstance().getContext();
 
   try {
     return proxyWorkflowCallbacks(context)[inputs.eventName];

@@ -7,7 +7,6 @@ import { Context as UbiquityOsContext } from "../../types";
 import { Logger } from "../../utils/logger";
 import { createAdapters } from "../../adapters";
 import { PluginContext } from "../../types/plugin-context-single";
-import { Octokit } from "@octokit/rest";
 import { Octokit as AppOctokit } from "octokit";
 
 export type GrammyTelegramUpdate = Update;
@@ -29,15 +28,15 @@ interface ExtendedContextFlavor extends Dependencies {
 export type GrammyContext = ParseModeFlavor<HydrateFlavor<DefaultContext & ExtendedContextFlavor & SessionFlavor<SessionData> & AutoChatActionFlavor>>;
 
 export async function createContextConstructor({ logger, config, octokit }: Dependencies) {
+  const adapters = createAdapters(await PluginContext.getInstance().getContext());
   return class extends DefaultContext implements ExtendedContextFlavor {
     logger: Logger;
-    adapters: ReturnType<typeof createAdapters>;
+    adapters = adapters;
     octokit: AppOctokit = octokit;
     config: UbiquityOsContext["env"];
 
     constructor(update: GrammyTelegramUpdate, api: Api, me: UserFromGetMe) {
       super(update, api, me);
-      const instance = PluginContext.getInstance();
       this.logger = logger;
       this.config = config;
 
@@ -55,7 +54,6 @@ export async function createContextConstructor({ logger, config, octokit }: Depe
        * We only operate as one organization on telegram, so I'm assuming
        * that we'll be centralizing the storage obtained.
        */
-      this.adapters = createAdapters(instance.getContext());
     }
   } as unknown as new (update: GrammyTelegramUpdate, api: Api, me: UserFromGetMe) => GrammyContext;
 }
