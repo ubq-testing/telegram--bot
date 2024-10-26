@@ -64,5 +64,11 @@ run()
   .catch((err) => {
     logger.error("Error running workflow: ", { err });
     core.setFailed(err);
+
+    if ("errorMessage" in err && err.errorMessage === "AUTH_KEY_DUPLICATED") {
+      // could try using the Bot API to send a message to the admins of the bot here
+      // TODO: find an elegant way to handle this either by resetting the session or some other way
+    }
+
     process.exit(0);
   });
