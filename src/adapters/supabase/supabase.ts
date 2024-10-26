@@ -175,7 +175,8 @@ export class SuperbaseStorage implements Storage {
     if (action === "create") {
       await this.saveChat(chat.chat_id, chat.chat_name, nodeId);
     } else if (action === "close" || action === "reopen") {
-      await this.updateChatStatus(action as "closed" | "reopened", nodeId);
+      const status = action === "close" ? "closed" : "reopened";
+      await this.updateChatStatus(status, nodeId);
     } else {
       throw new Error("Invalid chat storage action");
     }
