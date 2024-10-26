@@ -5,17 +5,9 @@ import { logger } from "../../utils/logger";
 
 export async function disqualificationNotification(context: Context<"issues.unassigned", SupportedEvents["issues.unassigned"]>): Promise<CallbackResult> {
   const {
-    adapters: { github },
+    adapters: { storage },
     payload,
-    logger,
   } = context;
-
-  const users = await github.retrieveStorageDataObject("userBase", false);
-
-  if (!users) {
-    logger.error("No users found in the database.");
-    return { status: 500, reason: "No users found in the database." };
-  }
 
   const unassignedUser = payload.assignee?.login;
 
@@ -23,8 +15,7 @@ export async function disqualificationNotification(context: Context<"issues.unas
     throw new Error("No user found in the payload");
   }
 
-  const dbUser = Object.values(users).find((user) => user.githubUsername.toLowerCase() === unassignedUser.toLowerCase());
-
+  const dbUser = await storage.retrieveUserByGithubId(payload.assignee?.id);
   if (!dbUser) {
     throw new Error("User not found in the database");
   }
@@ -32,17 +23,13 @@ export async function disqualificationNotification(context: Context<"issues.unas
   const ownerRepo = payload.repository.full_name;
   const issueNumber = payload.issue.number;
 
-  if (!dbUser.listeningTo.length) {
-    return { status: 200, reason: "skipped" };
-  }
-
   // skip if they've unassigned themselves
   if (payload.sender.login === unassignedUser) {
     return { status: 200, reason: "skipped" };
   }
 
-  if (dbUser.listeningTo.includes("disqualification")) {
-    await handleDisqualificationNotification(dbUser.githubUsername, dbUser.telegramId, ownerRepo, issueNumber, context);
+  if (dbUser.listening_to["disqualification"]) {
+    await handleDisqualificationNotification(dbUser.github_username, dbUser.telegram_id, ownerRepo, issueNumber, context);
   } else {
     return { status: 200, reason: "skipped" };
   }

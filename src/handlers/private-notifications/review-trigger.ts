@@ -7,25 +7,16 @@ export async function reviewNotification(
   context: Context<"pull_request.review_requested", SupportedEvents["pull_request.review_requested"]>
 ): Promise<CallbackResult> {
   const {
-    adapters: { github },
+    adapters: { storage },
     payload,
-    logger,
   } = context;
-
-  const users = await github.retrieveStorageDataObject("userBase", false);
-
-  if (!users) {
-    logger.error("No users found in the database.");
-    return { status: 500, reason: "No users found in the database." };
-  }
-
   const requestedReviewer = payload.requested_reviewer?.login;
 
   if (!requestedReviewer) {
     throw new Error("No user found in the payload");
   }
 
-  const dbUser = Object.values(users).find((user) => user.githubUsername.toLowerCase() === requestedReviewer.toLowerCase());
+  const dbUser = await storage.retrieveUserByGithubId(payload.requested_reviewer?.id);
 
   if (!dbUser) {
     throw new Error("User not found in the database");
@@ -34,17 +25,13 @@ export async function reviewNotification(
   const ownerRepo = payload.repository.full_name;
   const issueNumber = payload.pull_request.number;
 
-  if (!dbUser.listeningTo.length) {
-    return { status: 200, reason: "skipped" };
-  }
-
   // skip if they've requested review from themselves
   if (payload.sender.login === requestedReviewer) {
     return { status: 200, reason: "skipped" };
   }
 
-  if (dbUser.listeningTo.includes("review")) {
-    await handleReviewNotification(dbUser.githubUsername, dbUser.telegramId, ownerRepo, issueNumber, context);
+  if (dbUser.listening_to["review"]) {
+    await handleReviewNotification(dbUser.github_username, dbUser.telegram_id, ownerRepo, issueNumber, context);
   } else {
     return { status: 200, reason: "skipped" };
   }
