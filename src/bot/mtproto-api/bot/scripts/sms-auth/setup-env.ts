@@ -118,6 +118,16 @@ class SetUpHandler {
           message:
             "Enter your storage app private key. This can be obtained following the instructions in the README. \n\n This should be saved as an organization secret but we'll save it to the repo too.",
         },
+        {
+          type: "input",
+          name: "SUPABASE_SERVICE_KEY",
+          message: "Enter your Supabase service key. This can be obtained from the Supabase dashboard.",
+        },
+        {
+          type: "input",
+          name: "SUPABASE_URL",
+          message: "Enter your Supabase URL. This can be obtained from the Supabase dashboard.",
+        },
       ],
     },
   ];
@@ -167,6 +177,10 @@ class SetUpHandler {
           TELEGRAM_API_HASH: answers["MTProto settings"]["TELEGRAM_API_HASH"],
           TELEGRAM_APP_ID: Number(answers["MTProto settings"]["TELEGRAM_APP_ID"]),
         },
+        storageSettings: {
+          SUPABASE_SERVICE_KEY: answers["Storage settings"]["SUPABASE_SERVICE_KEY"],
+          SUPABASE_URL: answers["Storage settings"]["SUPABASE_URL"],
+        },
       },
     };
 
@@ -199,6 +213,7 @@ class SetUpHandler {
       "TELEGRAM_API_HASH",
       "TELEGRAM_BOT_TOKEN",
       "TELEGRAM_APP_ID",
+      "SUPABASE_SERVICE_KEY",
     ];
     let answer;
 
@@ -220,11 +235,12 @@ class SetUpHandler {
 
   async validateEnv() {
     const { TELEGRAM_BOT_ENV, STORAGE_APP_PRIVATE_KEY, STORAGE_APP_ID } = this.env;
-    const { botSettings, mtProtoSettings } = TELEGRAM_BOT_ENV;
+    const { botSettings, mtProtoSettings, storageSettings } = TELEGRAM_BOT_ENV;
 
     const merged = {
       ...botSettings,
       ...mtProtoSettings,
+      ...storageSettings,
       STORAGE_APP_PRIVATE_KEY,
       STORAGE_APP_ID,
     };
@@ -287,7 +303,7 @@ class SetUpHandler {
 
     try {
       const { owner, repo } = this.getOwnerRepo();
-      const pubKey = await octokit.actions.getRepoPublicKey({
+      const pubKey = await octokit.rest.actions.getRepoPublicKey({
         owner,
         repo,
       });
@@ -295,7 +311,7 @@ class SetUpHandler {
       const key = pubKey.data.key;
       const encryptedSecret = await this.encryptSecret(secret, key);
 
-      await octokit.actions.createOrUpdateRepoSecret({
+      await octokit.rest.actions.createOrUpdateRepoSecret({
         owner,
         repo,
         secret_name: "TELEGRAM_BOT_ENV",
@@ -321,7 +337,7 @@ class SetUpHandler {
     try {
       for (const [key, value] of Object.entries(secrets)) {
         const { owner, repo } = this.getOwnerRepo();
-        const pubKey = await octokit.actions.getRepoPublicKey({
+        const pubKey = await octokit.rest.actions.getRepoPublicKey({
           owner,
           repo,
         });
@@ -334,7 +350,7 @@ class SetUpHandler {
 
         const encryptedSecret = await this.encryptSecret(secret, pubKey.data.key);
 
-        await octokit.actions.createOrUpdateRepoSecret({
+        await octokit.rest.actions.createOrUpdateRepoSecret({
           owner,
           repo,
           secret_name: key,

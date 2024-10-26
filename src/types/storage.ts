@@ -5,9 +5,9 @@ export interface Withsha {
 }
 
 export type StorageUser = {
-  telegramId: number;
-  githubId: number;
-  githubUsername: string;
+  telegram_id: number;
+  github_id: number;
+  github_username: string;
   /**
    * The user's wallet address for receiving payments. This will likely
    * exist in the global user-base storage object for the given partner.
@@ -15,7 +15,7 @@ export type StorageUser = {
    * But we can also store it here for easy access or perhaps this will be
    * the global user-base storage object.
    */
-  walletAddress: string | null;
+  wallet_address: string | null;
   /**
    * These are offered the to user via the Telegram UI and work like this:
    *
@@ -23,7 +23,7 @@ export type StorageUser = {
    *
    * listeningTo: ["payment"]
    */
-  listeningTo: NotificationTriggers[];
+  listening_to: Record<NotificationTriggers, boolean>;
   /**
    * Push a GitHub username to this array to apply the same
    * listeners that your own notifications use, allowing a user
@@ -32,16 +32,14 @@ export type StorageUser = {
    * Maybe this can be expanded to have a separate set of triggers
    * compared to the user's own notifications.
    */
-  additionalUserListeners: string[];
+  additional_user_listeners: string[];
 };
 
 /**
  * Used as our user-base storage layer. We'll demo by setting up
  * direct DMs based on webhook events/plugin outcomes.
  */
-export type UserBaseStorage = {
-  [telegramId: string]: StorageUser & Withsha;
-} & Withsha;
+export type UserBaseStorage = StorageUser & Withsha;
 
 export type Chat = {
   status: "open" | "closed" | "reopened";
