@@ -54,7 +54,6 @@ export async function run() {
   PluginContext.initialize(inputs, env);
 
   const context = await PluginContext.getInstance().getContext();
-
   return proxyWorkflowCallbacks(context)[inputs.eventName];
 }
 
@@ -65,4 +64,5 @@ run()
   .catch((err) => {
     logger.error("Error running workflow: ", { err });
     core.setFailed(err);
+    process.exit(0);
   });
