@@ -3,10 +3,9 @@ import * as github from "@actions/github";
 import { Value } from "@sinclair/typebox/value";
 import { envValidator, pluginSettingsSchema, PluginInputs, pluginSettingsValidator } from "./types";
 import { PluginContext } from "./types/plugin-context-single";
-import { bubbleUpErrorComment } from "./utils/errors";
 import dotenv from "dotenv";
-import { proxyWorkflowCallbacks } from "./handlers/workflow-proxy";
 import { logger } from "./utils/logger";
+import { proxyWorkflowCallbacks } from "./handlers/workflow-proxy";
 dotenv.config();
 
 /**
@@ -56,11 +55,7 @@ export async function run() {
 
   const context = await PluginContext.getInstance().getContext();
 
-  try {
-    return proxyWorkflowCallbacks(context)[inputs.eventName];
-  } catch (err) {
-    return bubbleUpErrorComment(context, err);
-  }
+  return proxyWorkflowCallbacks(context)[inputs.eventName];
 }
 
 run()
