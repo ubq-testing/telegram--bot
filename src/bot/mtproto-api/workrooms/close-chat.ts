@@ -18,16 +18,18 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
   await mtProto.initialize();
 
   logger.info("Closing chat with name: ", { chatName: payload.issue.title });
-  const chat = await storage.retrieveChatByTaskNodeId(payload.issue.node_id);
+  const dbChat = await storage.retrieveChatByTaskNodeId(payload.issue.node_id);
 
-  if (!chat) {
+  if (!dbChat) {
     return { status: 500, reason: "chat_not_found" };
   }
+
+  logger.info("Chat found: ", { dbChat });
 
   await mtProto.client.getDialogs();
   const fetchedChat = await mtProto.client.invoke(
     new mtProto.api.messages.GetFullChat({
-      chatId: bigInt(chat.chatId),
+      chatId: bigInt(dbChat.chat_id),
     })
   );
 
@@ -48,7 +50,7 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
     new mtProto.api.folders.EditPeerFolders({
       folderPeers: [
         new mtProto.api.InputFolderPeer({
-          peer: new mtProto.api.InputPeerChat({ chatId: bigInt(chat.chatId) }),
+          peer: new mtProto.api.InputPeerChat({ chatId: bigInt(dbChat.chat_id) }),
           folderId: 1, // 0 is active, 1 is archived
         }),
       ],
@@ -59,7 +61,7 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
     await mtProto.client.invoke(
       new mtProto.api.messages.SendMessage({
         message: "This task has been closed and this chat has been archived.",
-        peer: new mtProto.api.InputPeerChat({ chatId: bigInt(chat.chatId) }),
+        peer: new mtProto.api.InputPeerChat({ chatId: bigInt(dbChat.chat_id) }),
       })
     );
 
@@ -81,10 +83,10 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
     }
 
     userIds.push(creatorId);
-    const chatInput = await mtProto.client.getInputEntity(chat.chatId);
+    const chatInput = await mtProto.client.getInputEntity(dbChat.chat_id);
 
     await storage.userSnapshot(
-      chat.chatId,
+      dbChat.chat_id,
       userIds.map((id) => id.toJSNumber())
     );
 
@@ -104,7 +106,7 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
     }
   }
 
-  await storage.handleChat({ action: "close", chat });
+  await storage.handleChat({ action: "close", chat: dbChat });
   return { status: 200, reason: "chat_closed" };
 }
 

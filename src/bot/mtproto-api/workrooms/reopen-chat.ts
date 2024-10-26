@@ -19,12 +19,12 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
   await mtProto.initialize();
 
   logger.info("Reopening chat with name: ", { chatName: payload.issue.title });
-  const chat = await storage.retrieveChatByTaskNodeId(payload.issue.node_id);
+  const dbChat = await storage.retrieveChatByTaskNodeId(payload.issue.node_id);
 
-  if (!chat) {
+  if (!dbChat) {
     return { status: 500, reason: "chat_not_found" };
   }
-  const chatIdBigInt = bigInt(chat.chatId);
+  const chatIdBigInt = bigInt(dbChat.chat_id);
 
   const fetchedChat = await mtProto.client.invoke(
     new mtProto.api.messages.GetFullChat({
@@ -67,13 +67,13 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
 
   await storage.handleChat({
     action: "reopen",
-    chat,
+    chat: dbChat,
   });
 
-  const { userIds } = chat;
+  const { user_ids } = dbChat;
   const chatInput = await mtProto.client.getInputEntity(chatIdBigInt);
 
-  for (const userId of userIds) {
+  for (const userId of user_ids) {
     /**
      * Dialogs are all of the chats, channels, and users that the account has interacted with.
      * By obtaining the dialogs, we guarantee our client (that's what we are considered to be by the MTProto API)
