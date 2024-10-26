@@ -7,7 +7,7 @@ import { CallbackResult } from "../../../types/proxy";
 export async function closeChat(context: Context<"issues.closed", SupportedEvents["issues.closed"]>): Promise<CallbackResult> {
   const {
     payload,
-    adapters: { github },
+    adapters: { storage },
     logger,
   } = context;
   if (payload.repository.full_name.includes("devpool-directory")) {
@@ -18,7 +18,7 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
   await mtProto.initialize();
 
   logger.info("Closing chat with name: ", { chatName: payload.issue.title });
-  const chat = await github.retrieveChatByTaskNodeId(payload.issue.node_id);
+  const chat = await storage.retrieveChatByTaskNodeId(payload.issue.node_id);
 
   if (!chat) {
     return { status: 500, reason: "chat_not_found" };
@@ -83,7 +83,7 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
     userIds.push(creatorId);
     const chatInput = await mtProto.client.getInputEntity(chat.chatId);
 
-    await github.userSnapshot(
+    await storage.userSnapshot(
       chat.chatId,
       userIds.map((id) => id.toJSNumber())
     );
@@ -104,7 +104,7 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
     }
   }
 
-  await github.handleChat({ action: "close", chat });
+  await storage.handleChat({ action: "close", chat });
   return { status: 200, reason: "chat_closed" };
 }
 

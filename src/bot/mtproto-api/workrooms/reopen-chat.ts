@@ -7,7 +7,7 @@ import { Api } from "telegram";
 export async function reopenChat(context: Context<"issues.reopened", SupportedEvents["issues.reopened"]>): Promise<CallbackResult> {
   const {
     payload,
-    adapters: { github },
+    adapters: { storage },
     logger,
   } = context;
 
@@ -19,7 +19,7 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
   await mtProto.initialize();
 
   logger.info("Reopening chat with name: ", { chatName: payload.issue.title });
-  const chat = await github.retrieveChatByTaskNodeId(payload.issue.node_id);
+  const chat = await storage.retrieveChatByTaskNodeId(payload.issue.node_id);
 
   if (!chat) {
     return { status: 500, reason: "chat_not_found" };
@@ -65,7 +65,7 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
     })
   );
 
-  await github.handleChat({
+  await storage.handleChat({
     action: "reopen",
     chat,
   });
