@@ -15,9 +15,11 @@ export const pluginSettingsSchema = T.Object({
   /**
    * The bot ID, NOT the ID of the personal account.
    */
-  botId: T.Transform(T.Unknown())
+  botId: T.Transform(T.Unknown({ default: 7543249164 }))
     .Decode((value) => Number(value))
     .Encode((value) => value.toString()),
+  shouldUseGithubStorage: T.Boolean({ default: false }),
+  storageOwner: T.String({ default: "ubq-testing" }),
 });
 
 export const pluginSettingsValidator = new StandardValidator(pluginSettingsSchema);

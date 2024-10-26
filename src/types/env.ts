@@ -56,9 +56,21 @@ const mtProtoSettings = T.Object({
   TELEGRAM_API_HASH: T.String(),
 });
 
+const storageSettings = T.Object({
+  /**
+   * The supabase instance url for storing chats, sessions, etc.
+   */
+  SUPABASE_URL: T.String(),
+  /**
+   * The supabase service key for storing chats, sessions, etc.
+   */
+  SUPABASE_SERVICE_KEY: T.String(),
+});
+
 const TELEGRAM_BOT_ENV = T.Object({
   botSettings,
   mtProtoSettings,
+  storageSettings,
 });
 
 const botEnvValidator = new StandardValidator(TELEGRAM_BOT_ENV);
