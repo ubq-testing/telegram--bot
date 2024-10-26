@@ -92,14 +92,13 @@ export async function createChat(context: Context<"issues.assigned", SupportedEv
   await context.adapters.storage.handleChat({
     action: "create",
     chat: {
-      chatId: chatId,
-      chatName: chatName,
-      taskNodeId: payload.issue.node_id,
-      userIds: [],
-      createdAt: new Date().toISOString(),
-      modifiedAt: new Date().toISOString(),
+      chat_id: chatId,
+      chat_name: chatName,
+      task_node_id: payload.issue.node_id,
+      user_ids: [],
+      created_at: new Date().toISOString(),
+      modified_at: new Date().toISOString(),
       status: "open",
-      // sha: // SHA is only for when we retrieve it from the GitHub API, as a ref to the latest commit
     },
   });
   return { status: 200, reason: "chat_created" };

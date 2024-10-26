@@ -43,12 +43,12 @@ export type UserBaseStorage = StorageUser & Withsha;
 
 export type Chat = {
   status: "open" | "closed" | "reopened";
-  taskNodeId: string;
-  chatName: string;
-  chatId: number;
-  userIds: number[];
-  createdAt: string;
-  modifiedAt: string;
+  task_node_id: string;
+  chat_name: string;
+  chat_id: number;
+  user_ids: number[];
+  created_at: string;
+  modified_at: string;
 } & Withsha;
 
 export type ChatStorage = {
@@ -68,7 +68,7 @@ export type HandleChatParams<TAction extends ChatAction = ChatAction> = {
 };
 
 export type RetrievalHelper<TType extends StorageTypes> = TType extends "allChats"
-  ? ChatStorage
+  ? Chat[]
   : TType extends "userBase"
     ? UserBaseStorage
     : TType extends "singleChat"

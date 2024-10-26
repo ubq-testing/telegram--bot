@@ -194,7 +194,7 @@ export class GithubStorage implements Storage {
   async retrieveChatByTaskNodeId(taskNodeId: string, dbObj?: ChatStorage): Promise<Chat | undefined> {
     const dbObject = dbObj ?? (await this.retrieveStorageDataObject("allChats"));
 
-    const chat = dbObject.chats.find((chat) => chat.taskNodeId === taskNodeId);
+    const chat = dbObject.chats.find((chat) => chat.task_node_id === taskNodeId);
     if (chat) {
       return {
         ...chat,
@@ -294,8 +294,8 @@ export class GithubStorage implements Storage {
       dbObject.chats ??= [];
       dbObject.chats.push(chat);
     } else {
-      const nodeId = chat.taskNodeId;
-      const chatIndex = dbObject.chats.findIndex((dbChat) => nodeId === dbChat.taskNodeId);
+      const nodeId = chat.task_node_id;
+      const chatIndex = dbObject.chats.findIndex((dbChat) => nodeId === dbchat.task_node_id);
 
       if (chatIndex === -1) {
         throw new Error("Chat not found");

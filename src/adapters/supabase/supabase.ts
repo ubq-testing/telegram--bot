@@ -166,14 +166,14 @@ export class SuperbaseStorage implements Storage {
 
   async handleChat<TAction extends ChatAction>(params: HandleChatParams<TAction>) {
     const { action, chat } = params;
-    const nodeId = chat.taskNodeId;
+    const nodeId = chat.task_node_id;
 
     if (!nodeId) {
       throw new Error("No taskNodeId provided");
     }
 
     if (action === "create") {
-      await this.saveChat(chat.chatId, chat.chatName, nodeId);
+      await this.saveChat(chat.chat_id, chat.chat_name, nodeId);
     } else if (action === "close" || action === "reopen") {
       await this.updateChatStatus(action as "closed" | "reopened", nodeId);
     } else {
@@ -293,5 +293,5 @@ function isUserBaseStorage(data: unknown): data is UserBaseStorage {
 
 function isSingleChatStorage(data: unknown): data is Chat {
   if (typeof data !== "object" || !data) return false;
-  return "chatId" in data || "taskNodeId" in data;
+  return "chat_id" in data || "task_node_id" in data;
 }
