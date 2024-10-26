@@ -7,6 +7,7 @@ import { Context } from "./context";
 import { App } from "octokit";
 import { logger } from "../utils/logger";
 import { Octokit } from "@octokit/rest";
+import { Octokit as AppOctokit } from "octokit";
 
 /**
  * Singleton for the plugin context making accessing it throughout
@@ -74,12 +75,33 @@ export class PluginContext {
     }
   }
 
-  getAppOctokit() {
-    const app = this.getApp();
-    return app.octokit;
+  /**
+   * Telegram payloads do not come with a token so we need to use the
+   * GitHub app to interact with the GitHub API for bot commands like /register etc.
+   *
+   * This can be used with events from both Telegram and GitHub, this token comes from
+   * the worker's environment variables i.e the Storage App.
+   */
+  async getTelegramEventOctokit(): Promise<AppOctokit> {
+    let octokit: AppOctokit | null = null;
+
+    await this.getApp().eachInstallation(async (installation) => {
+      if (installation.installation.account?.login === this.config.storageOwner) {
+        octokit = installation.octokit;
+      }
+    });
+
+    if (!octokit) {
+      throw new Error("Octokit could not be initialized");
+    }
+    return octokit;
   }
 
-  getStdOctokit() {
+  /**
+   * GitHub payloads come with their own token so this can only
+   * be used in logic that is triggered by a GitHub event.
+   */
+  getGitHubEventOctokit() {
     return new Octokit({ auth: this.inputs.authToken });
   }
 
@@ -90,7 +112,8 @@ export class PluginContext {
    *
    */
   getContext(): Context {
-    const octokit: Context["octokit"] = this.getApp().octokit;
+    // use the octokit which we know for sure has a token for both payloads
+    const octokit = this.getTelegramEventOctokit();
 
     if (!octokit) {
       throw new Error("Octokit could not be initialized");
@@ -100,7 +123,8 @@ export class PluginContext {
       eventName: this.inputs.eventName,
       payload: this.inputs.eventPayload,
       config: this.config,
-      octokit,
+      // if we have a token coming from GitHub we'll use it instead of the storage app.
+      octokit: !this.inputs.authToken ? octokit : this.getGitHubEventOctokit(),
       env: this.env,
       logger: new Logs("verbose"),
     } as Context;
