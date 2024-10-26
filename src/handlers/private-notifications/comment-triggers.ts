@@ -15,7 +15,7 @@ const githubUsernameRegex = /<h6>@([a-zA-Z0-9-]{1,39})<\/h6>/gi;
 // the regex is capturing the claim url and the github username
 
 export async function notificationsRequiringComments(
-  context: Context<"issue_comment.created" | "issue_comment.edited", SupportedEvents["issue_comment.created" | "issue_comment.edited"]>
+  context: Context<"issue_comment.created" | "issue_comment.edited">
 ): Promise<CallbackResult> {
   const {
     adapters: { storage },
@@ -57,8 +57,12 @@ export async function notificationsRequiringComments(
   const users = [];
 
   for (const username of usernames) {
-    const user = await ctxInstance.getStdOctokit().rest.users.getByUsername({ username });
-    users.push(await storage.retrieveUserByGithubId(user.data.id));
+    try {
+      const user = await ctxInstance.getStdOctokit().rest.users.getByUsername({ username });
+      users.push(await storage.retrieveUserByGithubId(user.data.id));
+    } catch (er) {
+      logger.error(`Error getting user by github id`, { er });
+    }
   }
 
   let bot;
@@ -106,7 +110,7 @@ async function handleCommentNotificationTrigger({
   user: StorageUser;
   telegramId: number | string;
   bot: Bot;
-  context: Context<"issue_comment.created" | "issue_comment.edited", SupportedEvents["issue_comment.created" | "issue_comment.edited"]>;
+  context: Context<"issue_comment.created" | "issue_comment.edited">;
   claimUrl?: string;
 }) {
   if (trigger === "reminder") {
@@ -120,7 +124,7 @@ async function handleReminderNotification(
   username: string,
   telegramId: string | number,
   bot: Bot,
-  context: Context<"issue_comment.created" | "issue_comment.edited", SupportedEvents["issue_comment.created" | "issue_comment.edited"]>
+  context: Context<"issue_comment.created" | "issue_comment.edited">
 ) {
   const message = `<b>Hello ${username.charAt(0).toUpperCase() + username.slice(1)}</b>,
 
