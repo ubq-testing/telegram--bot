@@ -207,8 +207,11 @@ export class SuperbaseStorage implements Storage {
   async handleUserBaseStorage<TType extends "create" | "delete" | "update">(user: UserBaseStorage, action: TType) {
     const existingUser = await this.retrieveUserByTelegramId(user.telegram_id);
 
-    if ((action === "create" && existingUser) || (action === "delete" && !existingUser)) {
-      throw new Error("User already exists or does not exist");
+    if ((action === "create" && existingUser)) {
+      throw new Error("User already exists");
+    }
+    if (action === "delete" && !existingUser) {
+      throw new Error("User does not exist");
     }
 
     if (action === "create" || action === "update") {
@@ -260,13 +263,15 @@ export class SuperbaseStorage implements Storage {
     };
 
     try {
-      await this.supabase.from(tables[type]).upsert(data);
+      const { error } = await this.supabase.from(tables[type]).upsert(data);
+      if (error) {
+        throw new Error("Failed to store data");
+      }
+      return true;
     } catch (er) {
-      this.logger.error("Failed to store data", { er });
+      logger.error("Failed to store data", { data, er });
       return false;
     }
-
-    return true;
   }
 }
 
