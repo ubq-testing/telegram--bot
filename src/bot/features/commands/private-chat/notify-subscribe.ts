@@ -10,7 +10,7 @@ const feature = composer.chatType("private");
 
 feature.command("subscribe", logHandle("command-notifySubscribe"), chatAction("typing"), async (ctx) => {
   try {
-    const user = await ctx.adapters.github.retrieveUserByTelegramId(ctx.from?.id);
+    const user = await ctx.adapters.storage.retrieveUserByTelegramId(ctx.from?.id);
 
     if (!user) {
       await ctx.reply("You are not registered. Please register first.");
@@ -34,7 +34,7 @@ feature.command("subscribe", logHandle("command-notifySubscribe"), chatAction("t
 
 feature.callbackQuery(/^notifySubscribe:(\d+)/, logHandle("callback-notifySubscribe"), async (ctx) => {
   try {
-    const user = await ctx.adapters.github.retrieveUserByTelegramId(ctx.from?.id);
+    const user = await ctx.adapters.storage.retrieveUserByTelegramId(ctx.from?.id);
 
     if (!user) {
       await ctx.reply("You are not registered. Please register first.");
@@ -50,13 +50,13 @@ feature.callbackQuery(/^notifySubscribe:(\d+)/, logHandle("callback-notifySubscr
       return;
     }
 
-    if (user.listeningTo.includes(trigger)) {
+    if (user.listening_to[trigger]) {
       await ctx.reply(`You are already subscribed to the ${trigger} trigger.`);
       return;
     }
 
-    user.listeningTo.push(trigger);
-    await ctx.adapters.github.handleUserBaseStorage(user, "update");
+    user.listening_to[trigger] = true;
+    await ctx.adapters.storage.handleUserBaseStorage(user, "update");
     await ctx.reply(`You have subscribed to the ${trigger} trigger.`);
   } catch (e) {
     await ctx.reply(`An error occurred while updating your subscription.\n\n${JSON.stringify(e)}`);
@@ -64,7 +64,7 @@ feature.callbackQuery(/^notifySubscribe:(\d+)/, logHandle("callback-notifySubscr
 });
 
 feature.command("unsubscribe", logHandle("command-notifyUnsubscribe"), chatAction("typing"), async (ctx) => {
-  const user = await ctx.adapters.github.retrieveUserByTelegramId(ctx.from?.id);
+  const user = await ctx.adapters.storage.retrieveUserByTelegramId(ctx.from?.id);
 
   if (!user) {
     await ctx.reply("You are not registered. Please register first.");
@@ -74,7 +74,7 @@ feature.command("unsubscribe", logHandle("command-notifyUnsubscribe"), chatActio
     parse_mode: "HTML",
     reply_markup: {
       inline_keyboard: [
-        user.listeningTo.map((part, index) => ({
+        Object.keys(user.listening_to).map((part, index) => ({
           text: part,
           callback_data: `notifyUnsubscribe:${index}`,
         })),
@@ -84,7 +84,7 @@ feature.command("unsubscribe", logHandle("command-notifyUnsubscribe"), chatActio
 });
 
 feature.callbackQuery(/^notifyUnsubscribe:(\d+)/, logHandle("callback-notifyUnsubscribe"), async (ctx) => {
-  const user = await ctx.adapters.github.retrieveUserByTelegramId(ctx.from?.id);
+  const user = await ctx.adapters.storage.retrieveUserByTelegramId(ctx.from?.id);
 
   if (!user) {
     await ctx.reply("You are not registered. Please register first.");
@@ -92,15 +92,15 @@ feature.callbackQuery(/^notifyUnsubscribe:(\d+)/, logHandle("callback-notifyUnsu
   }
 
   const selected = ctx.match[1];
-  const trigger = user.listeningTo.find((a, index) => index === parseInt(selected));
+  const trigger = Object.keys(user.listening_to).find((a, index) => index === parseInt(selected));
   if (!trigger) {
     await ctx.reply("You are not subscribed to this trigger.");
     return;
   }
 
   try {
-    user.listeningTo = user.listeningTo.filter((part) => part !== trigger);
-    await ctx.adapters.github.handleUserBaseStorage(user, "update");
+    user.listening_to[trigger as keyof typeof user.listening_to] = false;
+    await ctx.adapters.storage.handleUserBaseStorage(user, "update");
     await ctx.reply(`You have unsubscribed from the ${trigger} trigger.`);
   } catch {
     await ctx.reply("An error occurred while updating your subscription.");
