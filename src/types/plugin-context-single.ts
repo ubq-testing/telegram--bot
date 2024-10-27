@@ -7,7 +7,7 @@ import { Context } from "./context";
 import { App } from "octokit";
 import { logger } from "../utils/logger";
 import { Octokit } from "@octokit/rest";
-import { Octokit as AppOctokit } from "octokit";
+import { Octokit as RestOctokitFromApp } from "octokit";
 
 /**
  * Singleton for the plugin context making accessing it throughout
@@ -82,8 +82,8 @@ export class PluginContext {
    * This can be used with events from both Telegram and GitHub, this token comes from
    * the worker's environment variables i.e the Storage App.
    */
-  async getTelegramEventOctokit(): Promise<AppOctokit> {
-    let octokit: AppOctokit | null = null;
+  async getTelegramEventOctokit(): Promise<RestOctokitFromApp> {
+    let octokit: RestOctokitFromApp | null = null;
 
     await this.getApp().eachInstallation(async (installation) => {
       if (installation.installation.account?.login === this.config.storageOwner) {

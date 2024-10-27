@@ -7,7 +7,7 @@ import { Context as UbiquityOsContext } from "../../types";
 import { Logger } from "../../utils/logger";
 import { createAdapters } from "../../adapters";
 import { PluginContext } from "../../types/plugin-context-single";
-import { Octokit as AppOctokit } from "octokit";
+import { Octokit as RestOctokitFromApp } from "octokit";
 
 export type GrammyTelegramUpdate = Update;
 
@@ -18,7 +18,7 @@ export interface SessionData {
 interface Dependencies {
   logger: Logger;
   config: UbiquityOsContext["env"];
-  octokit: AppOctokit;
+  octokit: RestOctokitFromApp;
 }
 
 interface ExtendedContextFlavor extends Dependencies {
@@ -32,7 +32,7 @@ export async function createContextConstructor({ logger, config, octokit }: Depe
   return class extends DefaultContext implements ExtendedContextFlavor {
     logger: Logger;
     adapters = adapters;
-    octokit: AppOctokit = octokit;
+    octokit: RestOctokitFromApp = octokit;
     config: UbiquityOsContext["env"];
 
     constructor(update: GrammyTelegramUpdate, api: Api, me: UserFromGetMe) {

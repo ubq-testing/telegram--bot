@@ -19,12 +19,12 @@ import { unhandledFeature } from "./features/helpers/unhandled";
 import { registerFeature } from "./features/commands/private-chat/register";
 import { notifySubscribeFeature } from "./features/commands/private-chat/notify-subscribe";
 import { walletFeature } from "./features/commands/private-chat/wallet";
-import { Octokit as AppOctokit } from "octokit";
+import { Octokit as RestOctokitFromApp } from "octokit";
 
 interface Dependencies {
   config: UbiquityOsContext["env"];
   logger: Logger;
-  octokit: AppOctokit;
+  octokit: RestOctokitFromApp;
 }
 
 interface Options {
