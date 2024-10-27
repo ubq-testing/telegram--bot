@@ -8,7 +8,7 @@ const composer = new Composer<GrammyContext>();
 
 const feature = composer.chatType("private").filter((ctx) => isAdmin(ctx.config.TELEGRAM_BOT_ENV.botSettings.TELEGRAM_BOT_ADMINS)(ctx));
 
-feature.command("setwebhook", logHandle("command-setwebhook"), chatAction("typing"), async (ctx) => {
+feature.command("setWebhook", logHandle("command-setWebhook"), chatAction("typing"), async (ctx) => {
   const webhookUrl = ctx.message?.text?.split(" ")[1];
   if (!webhookUrl) {
     return ctx.reply("Please provide a webhook URL.");

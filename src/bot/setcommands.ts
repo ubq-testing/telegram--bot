@@ -29,17 +29,17 @@ export const BOT_COMMANDS = [
     type: "all_private_chats",
   },
   {
-    command: "myid",
+    command: "myId",
     description: "Get your user ID",
     type: "all_private_chats",
   },
   {
-    command: "botid",
+    command: "botId",
     description: "Get the bot's ID",
     type: "all_private_chats",
   },
   {
-    command: "chatid",
+    command: "chatId",
     description: "Get the chat ID",
     type: "all_private_chats",
   },
@@ -50,13 +50,13 @@ export const BOT_COMMANDS = [
     isAdmin: true,
   },
   {
-    command: "setcommands",
+    command: "setCommands",
     description: "Set the bot's commands",
     type: "chat",
     isAdmin: true,
   },
   {
-    command: "setwebhook",
+    command: "setWebhook",
     description: "Set the webhook URL",
     type: "chat",
     isAdmin: true,
@@ -66,11 +66,11 @@ export const BOT_COMMANDS = [
 function getPrivateChatCommands(): BotCommand[] {
   return [
     {
-      command: "botid",
+      command: "botId",
       description: "Get the bot's ID",
     },
     {
-      command: "myid",
+      command: "myId",
       description: "Get your user ID",
     },
     {
@@ -95,11 +95,11 @@ function getPrivateChatCommands(): BotCommand[] {
 function getPrivateChatAdminCommands(): BotCommand[] {
   return [
     {
-      command: "setcommands",
+      command: "setCommands",
       description: "Set the bot's commands",
     },
     {
-      command: "setwebhook",
+      command: "setWebhook",
       description: "Set the webhook URL",
     },
   ];

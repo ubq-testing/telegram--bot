@@ -9,6 +9,6 @@ const composer = new Composer<GrammyContext>();
 
 const feature = composer.chatType("private").filter((ctx) => isAdmin(ctx.config.TELEGRAM_BOT_ENV.botSettings.TELEGRAM_BOT_ADMINS)(ctx));
 
-feature.command("setcommands", logHandle("command-setcommands"), chatAction("typing"), setCommandsHandler);
+feature.command("setCommands", logHandle("command-setCommands"), chatAction("typing"), setCommandsHandler);
 
 export { composer as adminFeature };
