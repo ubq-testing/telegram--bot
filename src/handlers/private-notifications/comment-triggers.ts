@@ -5,12 +5,12 @@ import { CallbackResult } from "../../types/proxy";
 import { TelegramBotSingleton } from "../../types/telegram-bot-single";
 import { logger } from "../../utils/logger";
 
-const reminderCommentRegex = /@(\w+), this task has been idle for a while. Please provide an update./gi;
+const reminderCommentRegex = /@(\w+), this task has been idle for a while/gi;
 // eslint-disable-next-line sonarjs/duplicates-in-character-class
 const base64ClaimUrlRegex = /href="https:\/\/[^/]+\/?\?claim=([A-Za-z0-9+/=]+)"/gi;
 const amountPatternRegex = /\[\s*\d+(\.\d+)?\s*[A-Z]+\s*\]/gi;
 // eslint-disable-next-line sonarjs/duplicates-in-character-class
-const githubUsernameRegex = /<h6>@([a-zA-Z0-9-]{1,39})<\/h6>/gi;
+const githubUsernameRegex = /@([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?)/gi;
 
 // we'll have multiple permit comments to parse out here
 // the regex is capturing the claim url and the github username
@@ -18,51 +18,65 @@ const githubUsernameRegex = /<h6>@([a-zA-Z0-9-]{1,39})<\/h6>/gi;
 async function getUsersFromStorage(
   context: Context<"issue_comment.created" | "issue_comment.edited">,
   body: string
-): Promise<{ results: { claimUrl?: string; amount?: string }[]; users: StorageUser[] }> {
-  const {
-    adapters: { storage },
-    octokit,
-  } = context;
-  const paymentComment = body.match(base64ClaimUrlRegex) && body.match(amountPatternRegex) && body.match(githubUsernameRegex);
-  // skip if not a bot comment or not a reward comment
+): Promise<{ results: { claimUrl?: string }[]; users: StorageUser[] }> {
+  const isPaymentComment = base64ClaimUrlRegex.test(body) && amountPatternRegex.test(body) && githubUsernameRegex.test(body);
+  const isReminderComment = reminderCommentRegex.test(body);
 
-  if (!paymentComment && !body.match(reminderCommentRegex)) {
+  if (!isPaymentComment && !isReminderComment) {
     return { results: [], users: [] };
   }
 
-  const base64Matches = body.matchAll(base64ClaimUrlRegex);
-  const amountMatches = body.matchAll(amountPatternRegex);
-  const usernameMatches = body.matchAll(githubUsernameRegex);
+  const base64Matches = body.match(base64ClaimUrlRegex);
+  const usernameMatches = body.match(githubUsernameRegex);
 
   const results = [];
   const usernames = [];
 
-  for (const match of base64Matches) {
-    results.push({ claimUrl: match[1] });
+  if (isPaymentComment) {
+    for (const match of base64Matches || []) {
+      results.push({ claimUrl: match[1] });
+    }
+
+    for (const username of usernameMatches || []) {
+      usernames.push(username);
+    }
+  } else if (isReminderComment) {
+    usernames.push(body.match(reminderCommentRegex)?.[0].split(",")[0].replace("@", ""));
+  } else {
+    throw logger.error("Invalid notification trigger or not implemented yet", { body });
   }
 
-  for (const match of amountMatches) {
-    const amount = match[0];
-    results.push({ amount });
-  }
+  const users = await fetchUsers(
+    usernames.filter((u): u is string => !!u),
+    context
+  );
+  return { results, users: users.filter((u): u is StorageUser => !!u) };
+}
 
-  for (const match of usernameMatches) {
-    const username = match[1];
-    usernames.push(username);
-  }
+async function fetchUsers(usernames: string[], context: Context<"issue_comment.created" | "issue_comment.edited">) {
+  const {
+    adapters: { storage },
+    octokit,
+  } = context;
 
-  const users = [];
+  const users: StorageUser[] = [];
 
   for (const username of usernames) {
+    if (!username) {
+      continue;
+    }
     try {
-      const user = await octokit.rest.users.getByUsername({ username });
-      users.push(await storage.retrieveUserByGithubId(user.data.id));
+      const user = await octokit.rest.users.getByUsername({ username: username.replace("@", "") });
+      const storageUser = await storage.retrieveUserByGithubId(user.data.id);
+      if (storageUser) {
+        users.push(storageUser);
+      }
     } catch (er) {
       logger.error(`Error getting user by github id`, { er });
     }
   }
 
-  return { results, users: users.filter((u): u is StorageUser => !!u) };
+  return users;
 }
 
 export async function notificationsRequiringComments(context: Context<"issue_comment.created" | "issue_comment.edited">): Promise<CallbackResult> {
@@ -85,7 +99,7 @@ export async function notificationsRequiringComments(context: Context<"issue_com
       if (!isActive || !commentDependantTriggers.includes(trigger)) {
         continue;
       }
-      await handleCommentNotificationTrigger({ trigger, user, telegramId: user.telegram_id, bot, context, claimUrl: results[i].claimUrl });
+      await handleCommentNotificationTrigger({ trigger, user, telegramId: user.telegram_id, bot, context, claimUrl: results[i]?.claimUrl });
     }
     i++;
   }
@@ -110,7 +124,7 @@ async function handleCommentNotificationTrigger({
 }) {
   if (trigger === "reminder" && !claimUrl) {
     return handleReminderNotification(user.github_username, telegramId, bot, context);
-  } else if (trigger === "payment") {
+  } else if (trigger === "payment" && claimUrl) {
     return handlePaymentNotification(user, claimUrl, telegramId, bot, context);
   }
 }
