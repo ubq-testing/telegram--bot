@@ -12,12 +12,8 @@ dotenv.config();
  * this will give us the necessary session information to login in the future.
  */
 export class AuthHandler {
-  private _supabase: SupabaseClient | null = null;
-  private _env = {
-    TELEGRAM_API_HASH: null as string | null,
-    TELEGRAM_APP_ID: 0,
-    TELEGRAM_BOT_TOKEN: null as string | null,
-  };
+  private _supabase: SupabaseClient;
+  private _env;
 
   constructor() {
     const env = process.env.TELEGRAM_BOT_ENV;
@@ -81,7 +77,7 @@ export class AuthHandler {
       throw new Error("Missing required environment variables for MtProto settings");
     }
 
-    await mtProto.initialize(this._env as Context["env"]["TELEGRAM_BOT_ENV"]["mtProtoSettings"], "");
+    await mtProto.initialize(this._env, "");
     try {
       await mtProto.client?.start({
         phoneNumber: async () => await input.text("Enter your phone number:"),
