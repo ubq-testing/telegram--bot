@@ -85,12 +85,15 @@ export class PluginContext {
   async getTelegramEventOctokit(): Promise<RestOctokitFromApp> {
     let octokit: RestOctokitFromApp | null = null;
 
-    await this.getApp().eachInstallation(async (installation) => {
-      if (installation.installation.account?.login === this.config.storageOwner) {
-        octokit = installation.octokit;
-      }
-    });
-
+    try {
+      await this.getApp().eachInstallation(async (installation) => {
+        if (installation.installation.account?.login === this.config.storageOwner) {
+          octokit = installation.octokit;
+        }
+      });
+    } catch (er) {
+      logger.error("Error initializing octokit in getTelegramEventOctokit", { er });
+    }
     if (!octokit) {
       throw new Error("Octokit could not be initialized");
     }

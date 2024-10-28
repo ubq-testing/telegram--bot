@@ -23,6 +23,10 @@ export class TelegramBotSingleton {
 
     const octokit = await PluginContext.getInstance().getTelegramEventOctokit();
 
+    if (!octokit) {
+      throw new Error("octokit could not be initialized");
+    }
+
     if (!TelegramBotSingleton._instance) {
       TelegramBotSingleton._instance = new TelegramBotSingleton();
       try {

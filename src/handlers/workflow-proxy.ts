@@ -32,7 +32,6 @@ export function proxyWorkflowCallbacks(context: Context): ProxyCallbacks {
           for (const r of res) {
             if (r.status !== 200) {
               await bubbleUpErrorComment(context, new Error(r.reason));
-              await exit(1);
             }
           }
           await exit(0);
