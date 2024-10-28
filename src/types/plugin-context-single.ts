@@ -23,12 +23,14 @@ export class PluginContext {
     public readonly inputs: PluginInputs,
     public _env: Env
   ) {
+    // this will fallback to defaults if it's a telegram bot command
     this._config = this.inputs.settings;
   }
 
   get env() {
     return Value.Decode(envValidator.schema, Value.Default(envValidator.schema, this._env));
   }
+
   set env(env: Env) {
     this._env = env;
   }
