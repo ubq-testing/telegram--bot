@@ -82,12 +82,8 @@ export class SuperbaseStorage extends StorageGetters implements Storage {
     }
   }
 
-  async handleSession<TAction extends "create" | "delete">(session: string, action: TAction) {
+  async handleSession<TAction extends "create" | "delete">(action: TAction, session: string) {
     if (action === "create") {
-      const { error } = await this.supabase.from("tg-bot-sessions").delete().single();
-      if (error) {
-        throw new Error("Failed to delete existing session");
-      }
       await this.storeData({ session });
     } else {
       await this.storeData({ session: null });

@@ -120,12 +120,11 @@ function getGroupChatCommands(): BotCommand[] {
 }
 
 export async function setCommandsHandler(ctx: CommandContext<GrammyContext>) {
-
   const updatedCommands = {
     private_chat: false,
     group_chat: false,
     owner: false,
-  }
+  };
 
   // set private chat commands
   try {
@@ -140,7 +139,6 @@ export async function setCommandsHandler(ctx: CommandContext<GrammyContext>) {
     logger.error("Error setting private chat commands", { err });
   }
 
-
   try {
     // set group chat commands
     await ctx.api.setMyCommands(getGroupChatCommands(), {
@@ -153,7 +151,6 @@ export async function setCommandsHandler(ctx: CommandContext<GrammyContext>) {
   } catch (err) {
     logger.error("Error setting group chat commands", { err });
   }
-
 
   // set private chat commands for owner
   try {
@@ -174,7 +171,7 @@ export async function setCommandsHandler(ctx: CommandContext<GrammyContext>) {
     `Private chat commands: ${updatedCommands.private_chat ? "✅" : "❌"}`,
     `Group chat commands: ${updatedCommands.group_chat ? "✅" : "❌"}`,
     `Owner commands: ${updatedCommands.owner ? "✅" : "❌"}`,
-  ]
+  ];
 
   return ctx.reply(msgParts.join("\n"));
 }
