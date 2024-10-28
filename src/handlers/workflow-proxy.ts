@@ -28,7 +28,13 @@ export function proxyWorkflowCallbacks(context: Context): ProxyCallbacks {
       return (async () => {
         try {
           const res = await Promise.all(target[prop].map((callback) => handleCallback(callback, context)));
-          logger.info(`Successfully ran ${prop} callbacks`, { res });
+          logger.info(`${prop} callbacks completed`, { res });
+          for (const r of res) {
+            if (r.status !== 200) {
+              await bubbleUpErrorComment(context, new Error(r.reason));
+              await exit(1);
+            }
+          }
           await exit(0);
         } catch (er) {
           await bubbleUpErrorComment(context, er);
