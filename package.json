@@ -1,5 +1,5 @@
 {
-  "name": "@ubiquity-os/kernel-telegram",
+  "name": "@ubiquity-os/ubiquity-os-kernel-telegram",
   "version": "0.1.0",
   "description": "Part kernel plugin, part Telegram kernel. This bot is designed to be a bridge between UbiquityOS and Telegram.",
   "author": "Ubiquity DAO",
