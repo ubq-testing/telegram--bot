@@ -87,7 +87,7 @@ export class PluginContext {
 
     try {
       await this.getApp().eachInstallation((installation) => {
-        if (installation.installation.account?.login === this.config.storageOwner) {
+        if (installation.installation.account?.login.toLowerCase() === this.config.storageOwner.toLowerCase()) {
           octokit = installation.octokit;
         }
       });
