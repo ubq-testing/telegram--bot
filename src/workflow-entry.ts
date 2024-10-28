@@ -3,10 +3,9 @@ import * as github from "@actions/github";
 import { Value } from "@sinclair/typebox/value";
 import { envValidator, pluginSettingsSchema, PluginInputs, pluginSettingsValidator } from "./types";
 import { PluginContext } from "./types/plugin-context-single";
-import { bubbleUpErrorComment } from "./utils/errors";
 import dotenv from "dotenv";
-import { proxyWorkflowCallbacks } from "./handlers/workflow-proxy";
 import { logger } from "./utils/logger";
+import { proxyWorkflowCallbacks } from "./handlers/workflow-proxy";
 dotenv.config();
 
 /**
@@ -19,6 +18,8 @@ export async function run() {
 
   const payloadEnv = {
     TELEGRAM_BOT_ENV: process.env.TELEGRAM_BOT_ENV,
+    APP_ID: process.env.APP_ID,
+    APP_PRIVATE_KEY: process.env.APP_PRIVATE_KEY,
   };
 
   try {
@@ -52,13 +53,8 @@ export async function run() {
 
   PluginContext.initialize(inputs, env);
 
-  const context = PluginContext.getInstance().getContext();
-
-  try {
-    return proxyWorkflowCallbacks(context)[inputs.eventName];
-  } catch (err) {
-    return bubbleUpErrorComment(context, err);
-  }
+  const context = await PluginContext.getInstance().getContext();
+  return proxyWorkflowCallbacks(context)[inputs.eventName];
 }
 
 run()
@@ -68,4 +64,16 @@ run()
   .catch((err) => {
     logger.error("Error running workflow: ", { err });
     core.setFailed(err);
+
+    if ("errorMessage" in err && err.errorMessage === "AUTH_KEY_DUPLICATED") {
+      /**
+       * Basically the server has decided that we are kicked at this point and
+       * will manual handling by a CODEOWNER or project admin that has the
+       * access needed in order to actually reset the auth key.
+       *
+       * We could try using the Bot API to send a message to the admins of the bot here
+       */
+    }
+
+    process.exit(0);
   });

@@ -13,7 +13,7 @@ export async function createChat(context: Context<"issues.assigned", SupportedEv
     return { status: 200, reason: "skipped" };
   }
 
-  const chatExists = await context.adapters.supabase.chats.getChatByTaskNodeId(payload.issue.node_id);
+  const chatExists = await context.adapters.storage.retrieveChatByTaskNodeId(payload.issue.node_id);
 
   if (chatExists) {
     logger.info("Chat already exists for this issue.");
@@ -89,6 +89,17 @@ export async function createChat(context: Context<"issues.assigned", SupportedEv
     return { status: 500, reason: "chat_create_failed", content: { error: er } };
   }
 
-  await context.adapters.supabase.chats.saveChat(chatId, payload.issue.title, payload.issue.node_id);
+  await context.adapters.storage.handleChat({
+    action: "create",
+    chat: {
+      chat_id: chatId,
+      chat_name: chatName,
+      task_node_id: payload.issue.node_id,
+      user_ids: [],
+      created_at: new Date().toISOString(),
+      modified_at: new Date().toISOString(),
+      status: "open",
+    },
+  });
   return { status: 200, reason: "chat_created" };
 }

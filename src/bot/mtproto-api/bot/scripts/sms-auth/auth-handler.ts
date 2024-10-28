@@ -12,12 +12,8 @@ dotenv.config();
  * this will give us the necessary session information to login in the future.
  */
 export class AuthHandler {
-  private _supabase: SupabaseClient | null = null;
-  private _env = {
-    TELEGRAM_API_HASH: "",
-    TELEGRAM_APP_ID: 0,
-    TELEGRAM_BOT_TOKEN: "",
-  };
+  private _supabase: SupabaseClient;
+  private _env;
 
   constructor() {
     const env = process.env.TELEGRAM_BOT_ENV;
@@ -77,6 +73,10 @@ export class AuthHandler {
   async smsLogin() {
     const mtProto = new BaseMtProto();
     // empty string as it's a new session
+    if (!this._env.TELEGRAM_API_HASH || !this._env.TELEGRAM_APP_ID) {
+      throw new Error("Missing required environment variables for MtProto settings");
+    }
+
     await mtProto.initialize(this._env, "");
     try {
       await mtProto.client?.start({
@@ -86,9 +86,25 @@ export class AuthHandler {
         onError: (err: unknown) => console.error("Error during login:", { err }),
       });
 
-      const data = await this._supabase?.from("tg-bot-sessions").insert([{ session_data: mtProto.session?.save() }]);
+      if (!this._supabase) {
+        throw new Error("Supabase client is not initialized");
+      }
 
-      if (data?.error) {
+      const { data: existingSessions } = await this._supabase.from("tg-bot-sessions").select("*");
+
+      if (existingSessions?.length) {
+        for (const sessionData of existingSessions || []) {
+          const { error } = await this._supabase.from("tg-bot-sessions").delete().eq("id", sessionData.id);
+
+          if (error) {
+            logger.error("Failed to delete session", { sessionData, er: error });
+          }
+        }
+      }
+
+      const { error } = await this._supabase.from("tg-bot-sessions").insert([{ session_data: mtProto.session?.save() }]);
+
+      if (error) {
         throw new Error("Failed to save session data to Supabase.");
       }
 
@@ -97,5 +113,6 @@ export class AuthHandler {
     } catch (err) {
       logger.error("Failed to log in:", { err });
     }
+    process.exit(1);
   }
 }

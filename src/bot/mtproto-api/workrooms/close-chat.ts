@@ -7,9 +7,7 @@ import { CallbackResult } from "../../../types/proxy";
 export async function closeChat(context: Context<"issues.closed", SupportedEvents["issues.closed"]>): Promise<CallbackResult> {
   const {
     payload,
-    adapters: {
-      supabase: { chats },
-    },
+    adapters: { storage },
     logger,
   } = context;
   if (payload.repository.full_name.includes("devpool-directory")) {
@@ -20,12 +18,18 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
   await mtProto.initialize();
 
   logger.info("Closing chat with name: ", { chatName: payload.issue.title });
-  const chat = await chats.getChatByTaskNodeId(payload.issue.node_id);
+  const dbChat = await storage.retrieveChatByTaskNodeId(payload.issue.node_id);
+
+  if (!dbChat) {
+    return { status: 500, reason: "chat_not_found" };
+  }
+
+  logger.info("Chat found: ", { dbChat });
 
   await mtProto.client.getDialogs();
   const fetchedChat = await mtProto.client.invoke(
     new mtProto.api.messages.GetFullChat({
-      chatId: chat.chat_id,
+      chatId: bigInt(dbChat.chat_id),
     })
   );
 
@@ -46,7 +50,7 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
     new mtProto.api.folders.EditPeerFolders({
       folderPeers: [
         new mtProto.api.InputFolderPeer({
-          peer: new mtProto.api.InputPeerChat({ chatId: chat.chat_id }),
+          peer: new mtProto.api.InputPeerChat({ chatId: bigInt(dbChat.chat_id) }),
           folderId: 1, // 0 is active, 1 is archived
         }),
       ],
@@ -57,7 +61,7 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
     await mtProto.client.invoke(
       new mtProto.api.messages.SendMessage({
         message: "This task has been closed and this chat has been archived.",
-        peer: new mtProto.api.InputPeerChat({ chatId: chat.chat_id }),
+        peer: new mtProto.api.InputPeerChat({ chatId: bigInt(dbChat.chat_id) }),
       })
     );
 
@@ -79,10 +83,10 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
     }
 
     userIds.push(creatorId);
-    const chatInput = await mtProto.client.getInputEntity(chat.chat_id);
+    const chatInput = await mtProto.client.getInputEntity(dbChat.chat_id);
 
-    await chats.userSnapshot(
-      chat.chat_id,
+    await storage.userSnapshot(
+      dbChat.chat_id,
       userIds.map((id) => id.toJSNumber())
     );
 
@@ -102,7 +106,7 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
     }
   }
 
-  await chats.updateChatStatus("closed", payload.issue.node_id);
+  await storage.handleChat({ action: "close", chat: dbChat });
   return { status: 200, reason: "chat_closed" };
 }
 

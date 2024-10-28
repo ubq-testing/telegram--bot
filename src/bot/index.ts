@@ -9,17 +9,22 @@ import { userIdFeature } from "./features/commands/private-chat/user-id";
 import { chatIdFeature } from "./features/commands/shared/chat-id";
 import { botIdFeature } from "./features/commands/private-chat/bot-id";
 import { banCommand } from "./features/commands/groups/ban";
-import { setWebhookFeature } from "./features/commands/private-chat/set-webhook";
+import { setWebhookFeature } from "./features/admin/set-webhook";
 import { Logger } from "../utils/logger";
 import { createContextConstructor, GrammyContext, SessionData } from "./helpers/grammy-context";
 import { errorHandler } from "./handlers/error";
 import { session } from "./middlewares/session";
-import { welcomeFeature } from "./features/welcome";
+import { welcomeFeature } from "./features/start-command";
 import { unhandledFeature } from "./features/helpers/unhandled";
+import { registerFeature } from "./features/commands/private-chat/register";
+import { notifySubscribeFeature } from "./features/commands/private-chat/notify-subscribe";
+import { walletFeature } from "./features/commands/private-chat/wallet";
+import { Octokit as RestOctokitFromApp } from "octokit";
 
 interface Dependencies {
   config: UbiquityOsContext["env"];
   logger: Logger;
+  octokit: RestOctokitFromApp;
 }
 
 interface Options {
@@ -31,15 +36,10 @@ function getSessionKey(ctx: Omit<GrammyContext, "session">) {
   return ctx.chat?.id.toString();
 }
 
-export function createBot(token: string, dependencies: Dependencies, options: Options = {}) {
-  const { config, logger } = dependencies;
-
+export async function createBot(token: string, dependencies: Dependencies, options: Options = {}) {
   const bot = new TelegramBot(token, {
     ...options.botConfig,
-    ContextConstructor: createContextConstructor({
-      logger,
-      config,
-    }),
+    ContextConstructor: await createContextConstructor(dependencies),
   });
   const protectedBot = bot.errorBoundary(errorHandler);
 
@@ -63,6 +63,11 @@ export function createBot(token: string, dependencies: Dependencies, options: Op
   protectedBot.use(chatIdFeature);
   protectedBot.use(botIdFeature);
 
+  // Private chat commands
+  protectedBot.use(registerFeature); // /register <GitHub username>
+  protectedBot.use(notifySubscribeFeature); // /subscribe
+  protectedBot.use(walletFeature); // /wallet <wallet address>
+
   // group commands
   protectedBot.use(banCommand);
 
@@ -72,4 +77,4 @@ export function createBot(token: string, dependencies: Dependencies, options: Op
   return bot;
 }
 
-export type Bot = ReturnType<typeof createBot>;
+export type Bot = Awaited<ReturnType<typeof createBot>>;

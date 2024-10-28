@@ -3,6 +3,8 @@ import { createChat } from "../bot/mtproto-api/workrooms/create-chat";
 import { reopenChat } from "../bot/mtproto-api/workrooms/reopen-chat";
 import { Context, SupportedEventsU } from "../types";
 import { ProxyCallbacks } from "../types/proxy";
+import { bubbleUpErrorComment } from "../utils/errors";
+import { logger } from "../utils/logger";
 import { handleCallback } from "./worker-proxy";
 
 /**
@@ -23,10 +25,21 @@ export function proxyWorkflowCallbacks(context: Context): ProxyCallbacks {
         context.logger.info(`No callbacks found for event ${prop}`);
         return { status: 204, reason: "skipped" };
       }
-
       return (async () => {
-        await Promise.all(target[prop].map((callback) => handleCallback(callback, context)));
-        await exit(0);
+        try {
+          const res = await Promise.all(target[prop].map((callback) => handleCallback(callback, context)));
+          logger.info(`${prop} callbacks completed`, { res });
+          for (const r of res) {
+            if (r.status !== 200) {
+              await bubbleUpErrorComment(context, new Error(r.reason));
+              await exit(1);
+            }
+          }
+          await exit(0);
+        } catch (er) {
+          await bubbleUpErrorComment(context, er);
+          await exit(1);
+        }
       })();
     },
   });
