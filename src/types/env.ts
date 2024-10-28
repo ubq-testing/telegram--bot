@@ -90,8 +90,8 @@ export const env = T.Object({
       return str;
     })
     .Encode((obj) => JSON.stringify(obj)),
-  STORAGE_APP_ID: T.String(),
-  STORAGE_APP_PRIVATE_KEY: T.String(),
+  APP_ID: T.String(),
+  APP_PRIVATE_KEY: T.String(),
 });
 
 export type Env = StaticDecode<typeof env>;

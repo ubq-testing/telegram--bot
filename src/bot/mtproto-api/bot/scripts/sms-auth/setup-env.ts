@@ -108,13 +108,13 @@ class SetUpHandler {
       questions: [
         {
           type: "input",
-          name: "STORAGE_APP_ID",
+          name: "APP_ID",
           message:
             "Enter your storage app id. This can be obtained from `https://github.com/settings/apps`\n\n This should be saved as an organization secret but we'll save it to the repo too.",
         },
         {
           type: "input",
-          name: "STORAGE_APP_PRIVATE_KEY",
+          name: "APP_PRIVATE_KEY",
           message:
             "Enter your storage app private key. This can be obtained following the instructions in the README. \n\n This should be saved as an organization secret but we'll save it to the repo too.",
         },
@@ -164,8 +164,8 @@ class SetUpHandler {
     console.clear();
 
     this.env = {
-      STORAGE_APP_ID: answers["Storage settings"]["STORAGE_APP_ID"],
-      STORAGE_APP_PRIVATE_KEY: answers["Storage settings"]["STORAGE_APP_PRIVATE_KEY"],
+      APP_ID: answers["Storage settings"]["APP_ID"],
+      APP_PRIVATE_KEY: answers["Storage settings"]["APP_PRIVATE_KEY"],
       TELEGRAM_BOT_ENV: {
         botSettings: {
           TELEGRAM_BOT_ADMINS: JSON.parse(answers["Bot settings"]["TELEGRAM_BOT_ADMINS"]),
@@ -207,7 +207,7 @@ class SetUpHandler {
     console.log(step.title);
 
     const passwords = [
-      "STORAGE_APP_PRIVATE_KEY",
+      "APP_PRIVATE_KEY",
       "TELEGRAM_BOT_WEBHOOK_SECRET",
       "REPO_ADMIN_ACCESS_TOKEN",
       "TELEGRAM_API_HASH",
@@ -234,15 +234,15 @@ class SetUpHandler {
   }
 
   async validateEnv() {
-    const { TELEGRAM_BOT_ENV, STORAGE_APP_PRIVATE_KEY, STORAGE_APP_ID } = this.env;
+    const { TELEGRAM_BOT_ENV, APP_PRIVATE_KEY, APP_ID } = this.env;
     const { botSettings, mtProtoSettings, storageSettings } = TELEGRAM_BOT_ENV;
 
     const merged = {
       ...botSettings,
       ...mtProtoSettings,
       ...storageSettings,
-      STORAGE_APP_PRIVATE_KEY,
-      STORAGE_APP_ID,
+      APP_PRIVATE_KEY,
+      APP_ID,
     };
 
     const keys = Object.keys(merged);
@@ -272,8 +272,8 @@ class SetUpHandler {
 
     const telegramBotEnv = `TELEGRAM_BOT_ENV=${JSON.stringify(this.env.TELEGRAM_BOT_ENV)}`;
     const repositoryEnv = `TELEGRAM_BOT_REPOSITORY_FULL_NAME=${process.env.TELEGRAM_BOT_REPOSITORY_FULL_NAME}`;
-    const storageAppId = `STORAGE_APP_ID=${this.env.STORAGE_APP_ID}`;
-    const storageAppPrivateKey = `STORAGE_APP_PRIVATE_KEY=${this.env.STORAGE_APP_PRIVATE_KEY}`;
+    const storageAppId = `APP_ID=${this.env.APP_ID}`;
+    const storageAppPrivateKey = `APP_PRIVATE_KEY=${this.env.APP_PRIVATE_KEY}`;
 
     for (const path of paths) {
       const envVar = `${repositoryEnv}\n${telegramBotEnv}\n${storageAppId}\n${storageAppPrivateKey}`;
@@ -330,8 +330,8 @@ class SetUpHandler {
     const octokit = new Octokit({ auth: process.env.REPO_ADMIN_ACCESS_TOKEN });
     const secrets = {
       TELEGRAM_BOT_ENV: this.env.TELEGRAM_BOT_ENV,
-      STORAGE_APP_ID: this.env.STORAGE_APP_ID,
-      STORAGE_APP_PRIVATE_KEY: this.env.STORAGE_APP_PRIVATE_KEY,
+      APP_ID: this.env.APP_ID,
+      APP_PRIVATE_KEY: this.env.APP_PRIVATE_KEY,
     };
 
     try {

@@ -25,8 +25,8 @@ jobs:
     permissions: write-all
     env:
       TELEGRAM_BOT_ENV: ${{ secrets.TELEGRAM_BOT_ENV }}
-      STORAGE_APP_ID: ${{ secrets.STORAGE_APP_ID }}
-      STORAGE_APP_PRIVATE_KEY: ${{ secrets.STORAGE_APP_PRIVATE_KEY }}
+      APP_ID: ${{ secrets.APP_ID }}
+      APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
 
     steps:
       - uses: actions/checkout@v4
@@ -47,5 +47,5 @@ jobs:
         id: Kernel-Telegram
         env:
           TELEGRAM_BOT_ENV: ${{ secrets.TELEGRAM_BOT_ENV }}
-          STORAGE_APP_ID: ${{ secrets.STORAGE_APP_ID }}
-          STORAGE_APP_PRIVATE_KEY: ${{ secrets.STORAGE_APP_PRIVATE_KEY }}
+          APP_ID: ${{ secrets.APP_ID }}
+          APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}

@@ -59,8 +59,8 @@ export class PluginContext {
 
   getApp() {
     try {
-      const appId = this.env.STORAGE_APP_ID;
-      const privateKey = this.env.STORAGE_APP_PRIVATE_KEY;
+      const appId = this.env.APP_ID;
+      const privateKey = this.env.APP_PRIVATE_KEY;
 
       if (!appId || !privateKey) {
         throw new Error("Storage app ID or private key not found");
