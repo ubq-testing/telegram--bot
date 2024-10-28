@@ -7,7 +7,7 @@ const composer = new Composer<GrammyContext>();
 
 const feature = composer.chatType("private");
 
-feature.command("myId", logHandle("command-myId"), chatAction("typing"), async (ctx) => {
+feature.command("myid", logHandle("command-myId"), chatAction("typing"), async (ctx) => {
   return ctx.reply(`Your ID is ${ctx.from.id}`);
 });
 

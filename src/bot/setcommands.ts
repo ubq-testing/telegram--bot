@@ -1,6 +1,7 @@
 import type { BotCommand } from "@grammyjs/types";
 import type { CommandContext } from "grammy";
 import { GrammyContext } from "./helpers/grammy-context";
+import { logger } from "../utils/logger";
 
 export const BOT_COMMANDS = [
   {
@@ -29,17 +30,17 @@ export const BOT_COMMANDS = [
     type: "all_private_chats",
   },
   {
-    command: "myId",
+    command: "myid",
     description: "Get your user ID",
     type: "all_private_chats",
   },
   {
-    command: "botId",
+    command: "botid",
     description: "Get the bot's ID",
     type: "all_private_chats",
   },
   {
-    command: "chatId",
+    command: "chatid",
     description: "Get the chat ID",
     type: "all_private_chats",
   },
@@ -50,13 +51,13 @@ export const BOT_COMMANDS = [
     isAdmin: true,
   },
   {
-    command: "setCommands",
+    command: "setcommands",
     description: "Set the bot's commands",
     type: "chat",
     isAdmin: true,
   },
   {
-    command: "setWebhook",
+    command: "setwebhook",
     description: "Set the webhook URL",
     type: "chat",
     isAdmin: true,
@@ -66,11 +67,11 @@ export const BOT_COMMANDS = [
 function getPrivateChatCommands(): BotCommand[] {
   return [
     {
-      command: "botId",
+      command: "botid",
       description: "Get the bot's ID",
     },
     {
-      command: "myId",
+      command: "myid",
       description: "Get your user ID",
     },
     {
@@ -89,17 +90,21 @@ function getPrivateChatCommands(): BotCommand[] {
       command: "wallet",
       description: "Register your wallet address",
     },
+    {
+      command: "setcommands",
+      description: "Set the bot's commands",
+    },
   ];
 }
 
 function getPrivateChatAdminCommands(): BotCommand[] {
   return [
     {
-      command: "setCommands",
+      command: "setcommands",
       description: "Set the bot's commands",
     },
     {
-      command: "setWebhook",
+      command: "setwebhook",
       description: "Set the webhook URL",
     },
   ];
@@ -116,11 +121,15 @@ function getGroupChatCommands(): BotCommand[] {
 
 export async function setCommandsHandler(ctx: CommandContext<GrammyContext>) {
   // set private chat commands
-  await ctx.api.setMyCommands([...getPrivateChatCommands()], {
-    scope: {
-      type: "all_private_chats",
-    },
-  });
+  try {
+    await ctx.api.setMyCommands([...getPrivateChatCommands()], {
+      scope: {
+        type: "all_private_chats",
+      },
+    });
+  } catch (err) {
+    logger.error("Error setting private chat commands", { err });
+  }
 
   // set group chat commands
   await ctx.api.setMyCommands(getGroupChatCommands(), {
@@ -129,13 +138,20 @@ export async function setCommandsHandler(ctx: CommandContext<GrammyContext>) {
     },
   });
 
+  logger.info("Setting admin commands");
+
   // set private chat commands for owner
-  await ctx.api.setMyCommands([...getPrivateChatCommands(), ...getPrivateChatAdminCommands()], {
-    scope: {
-      type: "chat",
-      chat_id: ctx.chat.id,
-    },
-  });
+
+  try {
+    await ctx.api.setMyCommands([...getPrivateChatCommands(), ...getPrivateChatAdminCommands()], {
+      scope: {
+        type: "chat",
+        chat_id: ctx.from?.id ?? ctx.chat?.id,
+      },
+    });
+  } catch (er) {
+    logger.error("Error setting private chat commands for owner", { er });
+  }
 
   return ctx.reply("admin-commands-updated");
 }
