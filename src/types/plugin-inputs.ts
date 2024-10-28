@@ -19,7 +19,7 @@ export const pluginSettingsSchema = T.Object({
     .Decode((value) => Number(value))
     .Encode((value) => value.toString()),
   shouldUseGithubStorage: T.Boolean({ default: false }),
-  storageOwner: T.String({ default: "ubq-testing" }),
+  storageOwner: T.String({ default: "ubiquity-os-marketplace" }),
 });
 
 export const pluginSettingsValidator = new StandardValidator(pluginSettingsSchema);
