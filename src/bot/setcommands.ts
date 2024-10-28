@@ -120,6 +120,13 @@ function getGroupChatCommands(): BotCommand[] {
 }
 
 export async function setCommandsHandler(ctx: CommandContext<GrammyContext>) {
+
+  const updatedCommands = {
+    private_chat: false,
+    group_chat: false,
+    owner: false,
+  }
+
   // set private chat commands
   try {
     await ctx.api.setMyCommands([...getPrivateChatCommands()], {
@@ -127,21 +134,28 @@ export async function setCommandsHandler(ctx: CommandContext<GrammyContext>) {
         type: "all_private_chats",
       },
     });
+
+    updatedCommands.private_chat = true;
   } catch (err) {
     logger.error("Error setting private chat commands", { err });
   }
 
-  // set group chat commands
-  await ctx.api.setMyCommands(getGroupChatCommands(), {
-    scope: {
-      type: "all_group_chats",
-    },
-  });
 
-  logger.info("Setting admin commands");
+  try {
+    // set group chat commands
+    await ctx.api.setMyCommands(getGroupChatCommands(), {
+      scope: {
+        type: "all_group_chats",
+      },
+    });
+
+    updatedCommands.group_chat = true;
+  } catch (err) {
+    logger.error("Error setting group chat commands", { err });
+  }
+
 
   // set private chat commands for owner
-
   try {
     await ctx.api.setMyCommands([...getPrivateChatCommands(), ...getPrivateChatAdminCommands()], {
       scope: {
@@ -149,9 +163,18 @@ export async function setCommandsHandler(ctx: CommandContext<GrammyContext>) {
         chat_id: ctx.from?.id ?? ctx.chat?.id,
       },
     });
+
+    updatedCommands.owner = true;
   } catch (er) {
     logger.error("Error setting private chat commands for owner", { er });
   }
 
-  return ctx.reply("admin-commands-updated");
+  const msgParts = [
+    `Commands updated:`,
+    `Private chat commands: ${updatedCommands.private_chat ? "✅" : "❌"}`,
+    `Group chat commands: ${updatedCommands.group_chat ? "✅" : "❌"}`,
+    `Owner commands: ${updatedCommands.owner ? "✅" : "❌"}`,
+  ]
+
+  return ctx.reply(msgParts.join("\n"));
 }
