@@ -23,12 +23,14 @@ export class PluginContext {
     public readonly inputs: PluginInputs,
     public _env: Env
   ) {
+    // this will fallback to defaults if it's a telegram bot command
     this._config = this.inputs.settings;
   }
 
   get env() {
     return Value.Decode(envValidator.schema, Value.Default(envValidator.schema, this._env));
   }
+
   set env(env: Env) {
     this._env = env;
   }
@@ -82,18 +84,19 @@ export class PluginContext {
    * This can be used with events from both Telegram and GitHub, this token comes from
    * the worker's environment variables i.e the Storage App.
    */
-  async getTelegramEventOctokit(): Promise<RestOctokitFromApp> {
+  async getTelegramEventOctokit(): Promise<RestOctokitFromApp | null> {
     let octokit: RestOctokitFromApp | null = null;
 
-    await this.getApp().eachInstallation(async (installation) => {
-      if (installation.installation.account?.login === this.config.storageOwner) {
-        octokit = installation.octokit;
-      }
-    });
-
-    if (!octokit) {
-      throw new Error("Octokit could not be initialized");
+    try {
+      await this.getApp().eachInstallation((installation) => {
+        if (installation.installation.account?.login.toLowerCase() === this.config.storageOwner.toLowerCase()) {
+          octokit = installation.octokit;
+        }
+      });
+    } catch (er) {
+      logger.error("Error initializing octokit in getTelegramEventOctokit", { er });
     }
+
     return octokit;
   }
 

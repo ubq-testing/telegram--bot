@@ -22,23 +22,38 @@ interface Dependencies {
 }
 
 interface ExtendedContextFlavor extends Dependencies {
-  adapters: ReturnType<typeof createAdapters>;
+  adapters?: ReturnType<typeof createAdapters>;
 }
 
 export type GrammyContext = ParseModeFlavor<HydrateFlavor<DefaultContext & ExtendedContextFlavor & SessionFlavor<SessionData> & AutoChatActionFlavor>>;
 
 export async function createContextConstructor({ logger, config, octokit }: Dependencies) {
-  const adapters = createAdapters(await PluginContext.getInstance().getContext());
+  let adapters: ReturnType<typeof createAdapters> | undefined;
+
+  try {
+    adapters = createAdapters(await PluginContext.getInstance().getContext());
+  } catch (er) {
+    logger.error("createAdapters in Grammy Context failed", { er });
+  }
+
+  if (!adapters) {
+    throw new Error("Adapters not initialized");
+  }
+
   return class extends DefaultContext implements ExtendedContextFlavor {
     logger: Logger;
-    adapters = adapters;
     octokit: RestOctokitFromApp = octokit;
     config: UbiquityOsContext["env"];
+    adapters: ReturnType<typeof createAdapters> | undefined = adapters;
 
     constructor(update: GrammyTelegramUpdate, api: Api, me: UserFromGetMe) {
       super(update, api, me);
       this.logger = logger;
       this.config = config;
+
+      if (!this.adapters) {
+        throw new Error("Adapters not initialized");
+      }
 
       /**
        * We'll need to add handling to detect forks and in such cases

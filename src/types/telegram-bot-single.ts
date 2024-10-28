@@ -1,3 +1,4 @@
+import { Octokit } from "octokit";
 import { Env } from ".";
 import { Bot, createBot } from "../bot";
 import { createServer } from "../server";
@@ -21,7 +22,17 @@ export class TelegramBotSingleton {
       },
     } = env;
 
-    const octokit = await PluginContext.getInstance().getTelegramEventOctokit();
+    let octokit: Octokit | null = null;
+
+    try {
+      octokit = await PluginContext.getInstance().getTelegramEventOctokit();
+    } catch (er) {
+      logger.error("Error initializing octokit in TelegramBotSingleton", { er });
+    }
+
+    if (!octokit) {
+      throw new Error("Octokit not initialized");
+    }
 
     if (!TelegramBotSingleton._instance) {
       TelegramBotSingleton._instance = new TelegramBotSingleton();
