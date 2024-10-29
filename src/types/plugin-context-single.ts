@@ -1,5 +1,4 @@
 import { Value } from "@sinclair/typebox/value";
-import { Logs } from "@ubiquity-dao/ubiquibot-logger";
 import { createAdapters } from "../adapters";
 import { PluginInputs, pluginSettingsSchema } from "./plugin-inputs";
 import { Env, envValidator } from "./env";
@@ -129,7 +128,7 @@ export class PluginContext {
       // if we have a token coming from GitHub we'll use it instead of the storage app.
       octokit: !this.inputs.authToken ? octokit : this.getGitHubEventOctokit(),
       env: this.env,
-      logger: new Logs("verbose"),
+      logger,
     } as Context;
 
     return {

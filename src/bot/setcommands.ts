@@ -90,10 +90,6 @@ function getPrivateChatCommands(): BotCommand[] {
       command: "wallet",
       description: "Register your wallet address",
     },
-    {
-      command: "setcommands",
-      description: "Set the bot's commands",
-    },
   ];
 }
 
