@@ -83,17 +83,27 @@ export class PluginContext {
    * This can be used with events from both Telegram and GitHub, this token comes from
    * the worker's environment variables i.e the Storage App.
    */
-  async getTelegramEventOctokit(): Promise<RestOctokitFromApp | null> {
-    let octokit: RestOctokitFromApp | null = null;
+  async getTelegramEventOctokit(): Promise<RestOctokitFromApp | Octokit | null> {
+    let octokit: RestOctokitFromApp | Octokit | null = null;
 
     try {
       await this.getApp().eachInstallation((installation) => {
+        logger.info("Checking installation", { installation: installation.installation.account?.login, storageOwner: this.config.storageOwner });
         if (installation.installation.account?.login.toLowerCase() === this.config.storageOwner.toLowerCase()) {
           octokit = installation.octokit;
         }
       });
     } catch (er) {
-      logger.error("Error initializing octokit in getTelegramEventOctokit", { er });
+      logger.error("Error initializing octokit in getTelegramEventOctokit", { er: String(er) });
+    }
+
+    if (!octokit) {
+      logger.info("Falling back to TEMP_SAFE_PAT for octokit");
+      octokit = new Octokit({ auth: this.env.TEMP_SAFE_PAT });
+    }
+
+    if (!octokit) {
+      throw new Error("Octokit could not be initialized");
     }
 
     return octokit;
