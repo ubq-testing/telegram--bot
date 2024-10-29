@@ -1,5 +1,5 @@
 import { BotConfig, StorageAdapter } from "grammy";
-import { Bot as TelegramBot, Context as GrammyContext, session } from "grammy";
+import { Bot as TelegramBot, Context as GrammyContext } from "grammy";
 import { autoChatAction } from "@grammyjs/auto-chat-action";
 import { hydrate } from "@grammyjs/hydrate";
 import { hydrateReply, parseMode } from "@grammyjs/parse-mode";
@@ -21,6 +21,7 @@ import { banCommand } from "./features/commands/groups/ban";
 import { welcomeFeature } from "./features/start-command";
 import { unhandledFeature } from "./features/helpers/unhandled";
 import { Context } from "../types";
+import { session } from "./middlewares/session";
 
 interface Dependencies {
   config: Context["env"];
