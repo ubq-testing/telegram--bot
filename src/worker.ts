@@ -1,9 +1,8 @@
-import { Env, envValidator } from "./types";
+import { Env, envValidator, PluginInputs } from "./types";
 import { handleGithubWebhook } from "./handlers/github-webhook";
 import { handleTelegramWebhook } from "./handlers/telegram-webhook";
 import manifest from "../manifest.json";
 import { handleUncaughtError } from "./utils/errors";
-import { TelegramBotSingleton } from "./types/telegram-bot-single";
 import { PluginContext } from "./types/plugin-context-single";
 import { Value } from "@sinclair/typebox/value";
 import { logger } from "./utils/logger";
@@ -20,6 +19,15 @@ export default {
       }
     }
 
+    const contentType = request.headers.get("content-type");
+    if (contentType !== "application/json") {
+      logger.info("!application/json", { contentType });
+      return new Response(JSON.stringify({ error: `Error: ${contentType} is not a valid content type` }), {
+        status: 400,
+        headers: { "content-type": "application/json" },
+      });
+    }
+
     let envSettings;
 
     try {
@@ -32,10 +40,12 @@ export default {
       });
     }
 
+    const payload = (await request.clone().json()) as PluginInputs; // required cast
+    Reflect.deleteProperty(payload, "authToken");
     try {
-      PluginContext.initialize(await request.clone().json(), envSettings);
+      PluginContext.initialize(payload, envSettings);
     } catch (er) {
-      logger.error("Could not initialize PluginContext on fetch", { er });
+      logger.error("Could not initialize PluginContext on fetch", { er, payload });
       return new Response(JSON.stringify({ err: er, message: "Invalid plugin context provided" }), {
         status: 400,
         headers: { "content-type": "application/json" },
@@ -44,27 +54,19 @@ export default {
 
     if (["/telegram", "/telegram/"].includes(path)) {
       try {
-        await TelegramBotSingleton.initialize(envSettings);
+        logger.info("payload", { payload });
         return await handleTelegramWebhook(request, envSettings);
       } catch (err) {
-        logger.error("handleTelegramWebhook failed", { err });
+        logger.error("handleTelegramWebhook failed", { err, path, content: payload });
         return handleUncaughtError(err);
       }
-    }
-
-    const contentType = request.headers.get("content-type");
-    if (contentType !== "application/json") {
-      return new Response(JSON.stringify({ error: `Error: ${contentType} is not a valid content type` }), {
-        status: 400,
-        headers: { "content-type": "application/json" },
-      });
-    }
-
-    try {
-      return await handleGithubWebhook(request, envSettings);
-    } catch (err) {
-      logger.error("handleGithubWebhook failed", { err });
-      return handleUncaughtError(err);
+    } else {
+      try {
+        return await handleGithubWebhook(request, envSettings);
+      } catch (err) {
+        logger.error("handleGithubWebhook failed", { err, path, content: payload });
+        return handleUncaughtError(err);
+      }
     }
   },
 };

@@ -22,7 +22,7 @@ interface Dependencies {
 }
 
 interface ExtendedContextFlavor extends Dependencies {
-  adapters?: ReturnType<typeof createAdapters>;
+  adapters: ReturnType<typeof createAdapters>;
 }
 
 export type GrammyContext = ParseModeFlavor<HydrateFlavor<DefaultContext & ExtendedContextFlavor & SessionFlavor<SessionData> & AutoChatActionFlavor>>;
@@ -44,31 +44,18 @@ export async function createContextConstructor({ logger, config, octokit }: Depe
     logger: Logger;
     octokit: RestOctokitFromApp = octokit;
     config: UbiquityOsContext["env"];
-    adapters: ReturnType<typeof createAdapters> | undefined = adapters;
+    adapters: ReturnType<typeof createAdapters>;
 
     constructor(update: GrammyTelegramUpdate, api: Api, me: UserFromGetMe) {
       super(update, api, me);
       this.logger = logger;
       this.config = config;
 
-      if (!this.adapters) {
+      if (!adapters) {
         throw new Error("Adapters not initialized");
       }
 
-      /**
-       * We'll need to add handling to detect forks and in such cases
-       * we'll need to handle the storage differently.
-       *
-       * Storing the repository full name would work, and we already have it
-       * during setup. Otherwise via plugin config.
-       *
-       * if (me.username !== "ubiquity_os_bot") { }
-       */
-
-      /**
-       * We only operate as one organization on telegram, so I'm assuming
-       * that we'll be centralizing the storage obtained.
-       */
+      this.adapters = adapters;
     }
   } as unknown as new (update: GrammyTelegramUpdate, api: Api, me: UserFromGetMe) => GrammyContext;
 }
