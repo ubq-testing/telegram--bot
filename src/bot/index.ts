@@ -1,28 +1,29 @@
-import type { BotConfig, StorageAdapter } from "grammy";
-import { Bot as TelegramBot } from "grammy";
-import { Context as UbiquityOsContext } from "../types";
+import { BotConfig, StorageAdapter } from "grammy";
+import { Bot as TelegramBot, Context as GrammyContext, session } from "grammy";
 import { autoChatAction } from "@grammyjs/auto-chat-action";
 import { hydrate } from "@grammyjs/hydrate";
 import { hydrateReply, parseMode } from "@grammyjs/parse-mode";
+import { Octokit as RestOctokitFromApp } from "octokit";
+
+import { Logger } from "../utils/logger";
+import { createContextConstructor, SessionData } from "./helpers/grammy-context";
+import { errorHandler } from "./handlers/error";
+
 import { adminFeature } from "./features/admin/admin";
+import { setWebhookFeature } from "./features/admin/set-webhook";
 import { userIdFeature } from "./features/commands/private-chat/user-id";
 import { chatIdFeature } from "./features/commands/shared/chat-id";
 import { botIdFeature } from "./features/commands/private-chat/bot-id";
-import { banCommand } from "./features/commands/groups/ban";
-import { setWebhookFeature } from "./features/admin/set-webhook";
-import { Logger } from "../utils/logger";
-import { createContextConstructor, GrammyContext, SessionData } from "./helpers/grammy-context";
-import { errorHandler } from "./handlers/error";
-import { session } from "./middlewares/session";
-import { welcomeFeature } from "./features/start-command";
-import { unhandledFeature } from "./features/helpers/unhandled";
 import { registerFeature } from "./features/commands/private-chat/register";
 import { notifySubscribeFeature } from "./features/commands/private-chat/notify-subscribe";
 import { walletFeature } from "./features/commands/private-chat/wallet";
-import { Octokit as RestOctokitFromApp } from "octokit";
+import { banCommand } from "./features/commands/groups/ban";
+import { welcomeFeature } from "./features/start-command";
+import { unhandledFeature } from "./features/helpers/unhandled";
+import { Context } from "../types";
 
 interface Dependencies {
-  config: UbiquityOsContext["env"];
+  config: Context["env"];
   logger: Logger;
   octokit: RestOctokitFromApp;
 }
@@ -37,42 +38,60 @@ function getSessionKey(ctx: Omit<GrammyContext, "session">) {
 }
 
 export async function createBot(token: string, dependencies: Dependencies, options: Options = {}) {
+  const { logger } = dependencies;
+
   const bot = new TelegramBot(token, {
     ...options.botConfig,
     ContextConstructor: await createContextConstructor(dependencies),
   });
-  const protectedBot = bot.errorBoundary(errorHandler);
 
+  // Error handling
+  bot.catch(errorHandler);
+
+  // Configure bot API
   bot.api.config.use(parseMode("HTML"));
 
-  protectedBot.use(autoChatAction(bot.api));
-  protectedBot.use(hydrateReply);
-  protectedBot.use(hydrate());
-  protectedBot.use(session({ getSessionKey, storage: options.botSessionStorage }));
+  // Middleware usage
+  bot.use(hydrate());
+  bot.use(hydrateReply);
+  bot.use(autoChatAction());
 
-  // the `/start` command for a traditional TG bot, doubt we need this as-is
-  // but a variation of can be built for various scenarios.
-  protectedBot.use(welcomeFeature);
+  // Session middleware
+  bot.use(
+    session({
+      getSessionKey,
+      storage: options.botSessionStorage,
+    })
+  );
 
-  // admin commands
-  protectedBot.use(adminFeature);
-  protectedBot.use(setWebhookFeature);
+  // Log middleware initialization
+  logger.info("Initializing middlewares and features...");
 
-  // development commands
-  protectedBot.use(userIdFeature);
-  protectedBot.use(chatIdFeature);
-  protectedBot.use(botIdFeature);
+  // Feature middlewares
+  bot.use(welcomeFeature);
+
+  // Admin commands
+  bot.use(adminFeature);
+  bot.use(setWebhookFeature);
+
+  // Development commands
+  bot.use(userIdFeature);
+  bot.use(chatIdFeature);
+  bot.use(botIdFeature);
 
   // Private chat commands
-  protectedBot.use(registerFeature); // /register <GitHub username>
-  protectedBot.use(notifySubscribeFeature); // /subscribe
-  protectedBot.use(walletFeature); // /wallet <wallet address>
+  bot.use(registerFeature);
+  bot.use(notifySubscribeFeature);
+  bot.use(walletFeature);
 
-  // group commands
-  protectedBot.use(banCommand);
+  // Group commands
+  bot.use(banCommand);
 
-  // unhandled command handler
-  protectedBot.use(unhandledFeature);
+  // Unhandled command handler
+  bot.use(unhandledFeature);
+
+  // Log bot is ready
+  logger.info("Bot is initialized and ready to handle updates.");
 
   return bot;
 }
