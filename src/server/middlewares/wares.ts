@@ -18,11 +18,11 @@ export function rateLimit(options: { windowMs: number; max: number }) {
     }
     if (ip) {
       hits.set(ip, record);
-      await next();
     } else {
       // throws when resetting local. Might not be required at all but was for debugging
       // throw new HTTPException(400, { message: "Bad Request" });
     }
+    await next();
   };
 }
 
