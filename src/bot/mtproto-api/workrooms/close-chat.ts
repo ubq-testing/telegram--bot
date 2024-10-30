@@ -21,7 +21,8 @@ export async function closeChat(context: Context<"issues.closed", SupportedEvent
   const dbChat = await storage.retrieveChatByTaskNodeId(payload.issue.node_id);
 
   if (!dbChat) {
-    return { status: 500, reason: "chat_not_found" };
+    logger.error("Chat not found in database", { chatName: payload.issue.title });
+    return { status: 200, reason: "chat_not_found" };
   }
 
   logger.info("Chat found: ", { dbChat });

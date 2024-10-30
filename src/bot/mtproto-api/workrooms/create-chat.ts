@@ -71,18 +71,31 @@ export async function createChat(context: Context<"issues.assigned", SupportedEv
       } else {
         throw new Error(logger.error(`Failed to create chat invite link for the workroom: ${chatName}`).logMessage.raw);
       }
-    }
 
-    const isBotPromotedToAdmin = await mtProto.client.invoke(
-      new mtProto.api.messages.EditChatAdmin({
-        chatId: chatIdBigInt,
-        isAdmin: true,
-        userId: botIdString,
-      })
-    );
+      // edit chat description
+      try {
+        await mtProto.client.invoke(
+          new mtProto.api.messages.EditChatAbout({
+            peer: new mtProto.api.InputPeerChat({ chatId: chatIdBigInt }),
+            about: `${payload.issue.html_url}`,
+          })
+        );
+      } catch (er) {
+        logger.error("Error in editing chat description: ", { er });
+        return { status: 500, reason: "chat_create_failed", content: { error: er } };
+      }
 
-    if (!isBotPromotedToAdmin) {
-      throw new Error("Failed to promote bot to admin");
+      const isBotPromotedToAdmin = await mtProto.client.invoke(
+        new mtProto.api.messages.EditChatAdmin({
+          chatId: chatIdBigInt,
+          isAdmin: true,
+          userId: botIdString,
+        })
+      );
+
+      if (!isBotPromotedToAdmin) {
+        throw new Error("Failed to promote bot to admin");
+      }
     }
   } catch (er) {
     logger.error("Error in creating chat: ", { er });
