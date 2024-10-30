@@ -22,8 +22,11 @@ export async function reopenChat(context: Context<"issues.reopened", SupportedEv
   const dbChat = await storage.retrieveChatByTaskNodeId(payload.issue.node_id);
 
   if (!dbChat) {
-    return { status: 500, reason: "chat_not_found" };
+    logger.error("Chat not found in database", { chatName: payload.issue.title });
+    // no need to create one if it doesn't exist, this really only affects backwards compatibility
+    return { status: 200, reason: "chat_not_found" };
   }
+
   const chatIdBigInt = bigInt(dbChat.chat_id);
 
   const fetchedChat = await mtProto.client.invoke(
