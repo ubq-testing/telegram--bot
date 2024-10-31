@@ -57,7 +57,7 @@ async function getValue(body: ReadableStream<Uint8Array> | null) {
       try {
         return JSON.parse(text);
       } catch (error) {
-        logger.error("Failed to parse body as JSON", error);
+        console.error("Failed to parse body as JSON", error);
       }
     }
   }
