@@ -12,6 +12,9 @@ jobs:
 
     steps:
       - uses: ubiquity-os/action-deploy-plugin@main
+        with:
+          pluginEntry: '${{ github.workspace }}/src/workflow-entry.ts'
+          schemaPath: '${{ github.workspace }}/src/types/plugin-inputs.ts'
         env:
           APP_ID: ${{ secrets.APP_ID }}
           APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
