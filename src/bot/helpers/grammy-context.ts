@@ -1,4 +1,5 @@
 import type { Update, UserFromGetMe } from "@grammyjs/types";
+import { Octokit } from "@octokit/rest";
 import { type Api, Context as DefaultContext, type SessionFlavor } from "grammy";
 import type { AutoChatActionFlavor } from "@grammyjs/auto-chat-action";
 import type { HydrateFlavor } from "@grammyjs/hydrate";
@@ -18,7 +19,7 @@ export interface SessionData {
 interface Dependencies {
   logger: Logger;
   config: UbiquityOsContext["env"];
-  octokit: RestOctokitFromApp;
+  octokit: RestOctokitFromApp | Octokit;
 }
 
 interface ExtendedContextFlavor extends Dependencies {
@@ -42,7 +43,7 @@ export async function createContextConstructor({ logger, config, octokit }: Depe
 
   return class extends DefaultContext implements ExtendedContextFlavor {
     logger: Logger;
-    octokit: RestOctokitFromApp = octokit;
+    octokit: RestOctokitFromApp | Octokit = octokit;
     config: UbiquityOsContext["env"];
     adapters: ReturnType<typeof createAdapters>;
 

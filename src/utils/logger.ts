@@ -1,4 +1,4 @@
-import { Logs, LogReturn, Metadata, LogLevel } from "@ubiquity-dao/ubiquibot-logger";
+import { Logs, LogReturn, Metadata, LogLevel } from "@ubiquity-os/ubiquity-os-logger";
 
 function createLogReturn(method: (log: string, ...args: unknown[]) => void, ...args: Parameters<typeof method>): LogReturn {
   method(...args);

@@ -4,6 +4,7 @@ import { autoChatAction } from "@grammyjs/auto-chat-action";
 import { hydrate } from "@grammyjs/hydrate";
 import { hydrateReply, parseMode } from "@grammyjs/parse-mode";
 import { Octokit as RestOctokitFromApp } from "octokit";
+import { Octokit } from "@octokit/rest";
 
 import { Logger } from "../utils/logger";
 import { createContextConstructor, SessionData } from "./helpers/grammy-context";
@@ -26,7 +27,7 @@ import { session } from "./middlewares/session";
 interface Dependencies {
   config: Context["env"];
   logger: Logger;
-  octokit: RestOctokitFromApp;
+  octokit: RestOctokitFromApp | Octokit;
 }
 
 interface Options {

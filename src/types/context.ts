@@ -2,7 +2,7 @@ import { Octokit } from "@octokit/rest";
 import { EmitterWebhookEvent as WebhookEvent, EmitterWebhookEventName as WebhookEventName } from "@octokit/webhooks";
 import { Env } from "./env";
 import { PluginSettings } from "./plugin-inputs";
-import { Logs } from "@ubiquity-dao/ubiquibot-logger";
+import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import { createAdapters } from "../adapters";
 import { Octokit as RestOctokitFromApp } from "octokit";
 

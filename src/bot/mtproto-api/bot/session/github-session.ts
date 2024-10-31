@@ -15,10 +15,7 @@ export class GitHubSession extends StringSession implements SessionManager {
 
   constructor(context: Context, session?: string) {
     super(session);
-    const {
-      config: { storageOwner },
-    } = context;
-    this.storage = new GithubStorage(context, { storageOwner, isEnvSetup: false });
+    this.storage = new GithubStorage();
     this.context = context;
     this.session = session;
   }
