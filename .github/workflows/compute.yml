@@ -31,20 +31,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20.10.0"
-
-      - name: install dependencies
-        run: yarn
-
       - run: ${{ toJSON(inputs) }}
         shell: cat {0}
 
       - name: execute directive
-        run: npx tsx ./src/workflow-entry.ts
-        id: Kernel-Telegram
+        uses: ./
         env:
           TELEGRAM_BOT_ENV: ${{ secrets.TELEGRAM_BOT_ENV }}
           APP_ID: ${{ secrets.APP_ID }}
