@@ -1,7 +1,7 @@
 import { drop } from "@mswjs/data";
 import { db } from "./__mocks__/db";
 import { server } from "./__mocks__/node";
-import { expect, describe, beforeAll, beforeEach, afterAll, afterEach, it } from "@jest/globals";
+import { expect, describe, beforeAll, beforeEach, afterAll, afterEach, it, jest } from "@jest/globals";
 import { setupTests } from "./__mocks__/helpers";
 import manifest from "../manifest.json";
 import dotenv from "dotenv";
@@ -25,7 +25,7 @@ describe("Plugin tests", () => {
   });
 
   it("Should serve the manifest file", async () => {
-    const worker = require("../src/worker").default;
+    const { default: worker } = await import("../src/worker");
     const response = await worker.fetch(new Request("http://localhost/manifest.json"), {} as Env);
     const body = await response.json();
     expect(response.status).toBe(200);
