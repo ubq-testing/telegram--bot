@@ -1,0 +1,24 @@
+name: "Telegram Room"
+description: "Handles the creation and deletion of a room."
+inputs:
+  stateId:
+    description: "State Id to keep track on the Kernel side"
+  eventName:
+    description: "Event Name that triggered the run"
+  eventPayload:
+    description: "Event Payload for the plugin"
+  settings:
+    description: "Settings for the plugin"
+  authToken:
+    description: "Auth Token to auth as the Kernel"
+  ref:
+    description: "GitHub branch reference for the run"
+  signature:
+    description: "The kernel signature"
+outputs:
+  result:
+    description: "Actions taken by the telegram bridge."
+    value: ${{ steps.main.outputs.result }}
+runs:
+  using: "node20"
+  main: "dist/index.js"

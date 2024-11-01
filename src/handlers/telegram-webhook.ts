@@ -39,7 +39,7 @@ async function initializeBotInstance(env: Env, failures: unknown[]) {
       stack: er instanceof Error ? er.stack : undefined,
     };
     failures.push(errorInfo);
-    logger.error(errorInfo.message, { error: er });
+    logger.error(errorInfo.message, { error: er as Error });
     return null;
   }
 }
@@ -61,7 +61,7 @@ function getServerFromBot(botInstance: TelegramBotSingleton | null, failures: un
       stack: er instanceof Error ? er.stack : undefined,
     };
     failures.push(errorInfo);
-    logger.error(errorInfo.message, { error: er });
+    logger.error(errorInfo.message, { error: er as Error });
     return { server: null, bot: null };
   }
 }
@@ -87,7 +87,7 @@ async function makeServerRequest(
       stack: er instanceof Error ? er.stack : undefined,
     };
     failures.push(errorInfo);
-    logger.error(errorInfo.message, { error: er });
+    logger.error(errorInfo.message, { error: er as Error });
     return new Response("Internal Server Error", { status: 500 });
   }
 }
@@ -110,7 +110,7 @@ async function readResponseBody(res: Response, failures: unknown[]): Promise<str
       stack: er instanceof Error ? er.stack : undefined,
     };
     failures.push(errorInfo);
-    logger.error(errorInfo.message, { error: er });
+    logger.error(errorInfo.message, { error: er as Error });
     return "";
   }
 }
@@ -130,7 +130,7 @@ function createResponse(res: Response, body: string, failures: unknown[]): Respo
       stack: er instanceof Error ? er.stack : undefined,
     };
     failures.push(errorInfo);
-    logger.error(errorInfo.message, { error: er });
+    logger.error(errorInfo.message, { error: er as Error });
     return new Response("Internal Server Error", { status: 500 });
   }
 }

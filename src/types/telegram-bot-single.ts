@@ -1,3 +1,4 @@
+import { Octokit as OctokitRest } from "@octokit/rest";
 import { Octokit } from "octokit";
 import { Env } from ".";
 import { Bot, createBot } from "../bot";
@@ -22,7 +23,7 @@ export class TelegramBotSingleton {
       },
     } = env;
 
-    let octokit: Octokit | null = null;
+    let octokit: Octokit | OctokitRest | null = null;
 
     try {
       octokit = await PluginContext.getInstance().getTelegramEventOctokit();

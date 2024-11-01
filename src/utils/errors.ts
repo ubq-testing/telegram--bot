@@ -1,4 +1,4 @@
-import { LogReturn } from "@ubiquity-dao/ubiquibot-logger";
+import { LogReturn } from "@ubiquity-os/ubiquity-os-logger";
 import { Context } from "../types";
 import { logger } from "./logger";
 import { addCommentToIssue } from "./add-comment-to-issues";
