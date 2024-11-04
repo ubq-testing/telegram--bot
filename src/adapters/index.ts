@@ -1,6 +1,7 @@
 import { Context } from "../types";
 import { SessionManagerFactory } from "../bot/mtproto-api/bot/session/session-manager";
 import { UserBaseStorage, ChatAction, HandleChatParams, StorageTypes, RetrievalHelper, Chat } from "../types/storage";
+import { Completions } from "./openai/openai";
 
 export interface Storage {
   userSnapshot(chatId: number, userIds: number[]): Promise<void>;
@@ -20,8 +21,10 @@ export interface Storage {
 export function createAdapters(ctx: Context) {
   const {
     config: { shouldUseGithubStorage },
+    env: { OPENAI_API_KEY },
   } = ctx;
   return {
     storage: SessionManagerFactory.createSessionManager(shouldUseGithubStorage, ctx).storage,
+    ai: new Completions(OPENAI_API_KEY),
   };
 }
