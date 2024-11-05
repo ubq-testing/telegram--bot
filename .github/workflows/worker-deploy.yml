@@ -42,10 +42,14 @@ jobs:
             TELEGRAM_BOT_ENV
             APP_ID
             APP_PRIVATE_KEY
+            CLOUDFLARE_ACCOUNT_ID
+            CLOUDFLARE_API_TOKEN
         env:
           TELEGRAM_BOT_ENV: ${{ secrets.TELEGRAM_BOT_ENV }}
           APP_ID: ${{ secrets.APP_ID }}
           APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
       - name: Write Deployment URL to Summary
         run: |
