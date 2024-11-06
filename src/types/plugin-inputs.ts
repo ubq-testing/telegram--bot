@@ -20,7 +20,23 @@ export const pluginSettingsSchema = T.Object({
     .Encode((value) => value.toString()),
   shouldUseGithubStorage: T.Boolean({ default: false }),
   storageOwner: T.String({ default: "ubiquity-os-marketplace" }),
-  maxCompletionTokens: T.Number({ default: 7000 }),
+  aiConfig: T.Union(
+    [
+      T.Object({
+        kind: T.Literal("OpenAi"),
+        model: T.String({ default: "openai/o1-mini" }),
+        baseUrl: T.String({ default: "https://api.openai.com/v1" }),
+        maxCompletionTokens: T.Number({ default: 5000 }),
+      }),
+      T.Object({
+        kind: T.Literal("OpenRouter"),
+        model: T.String({ default: "openai/o1-mini" }),
+        baseUrl: T.String({ default: "https://openrouter.ai/api/v1" }),
+        maxCompletionTokens: T.Number({ default: 5000 }),
+      }),
+    ],
+    { default: { kind: "OpenAi", model: "openai/o1-mini", baseUrl: "https://api.openai.com/v1" }, maxCompletionTokens: 5000 }
+  ),
 });
 
 export const pluginSettingsValidator = new StandardValidator(pluginSettingsSchema);
