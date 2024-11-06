@@ -13,15 +13,15 @@ export class Completions {
       },
       env,
     } = context;
-    const key = kind === "OpenAi" ? env.OPENAI_API_KEY : env.OPENROUTER_API_KEY;
+    const apiKey = kind === "OpenAi" ? env.OPENAI_API_KEY : env.OPENROUTER_API_KEY;
 
-    if (!key) {
+    if (!apiKey) {
       throw new Error(`Plugin is configured to use ${kind} but ${kind === "OpenAi" ? "OPENAI_API_KEY" : "OPENROUTER_API_KEY"} is not set in the environment`);
     }
 
     this.client = new OpenAI({
       baseURL: baseUrl,
-      apiKey: kind === "OpenAi" ? env.OPENAI_API_KEY : env.OPENROUTER_API_KEY,
+      apiKey,
     });
   }
 
