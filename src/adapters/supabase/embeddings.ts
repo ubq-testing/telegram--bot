@@ -1,43 +1,7 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { logger } from "../../utils/logger";
 import { VoyageAIClient } from "voyageai";
-const VECTOR_SIZE = 1024;
-
-export interface CommentType {
-  id: string;
-  plaintext: string;
-  markdown?: string;
-  author_id: number;
-  created_at: string;
-  modified_at: string;
-  embedding: number[];
-}
-
-export interface CommentSimilaritySearchResult {
-  comment_id: string;
-  comment_plaintext: string;
-  comment_issue_id: string;
-  similarity: number;
-  text_similarity: number;
-}
-
-export interface IssueSimilaritySearchResult {
-  issue_id: string;
-  issue_plaintext: string;
-  similarity: number;
-  text_similarity: number;
-}
-
-export interface DatabaseIssue {
-  id: string;
-  markdown?: string;
-  plaintext?: string;
-  payload?: Record<string, unknown>;
-  author_id: number;
-  created_at: string;
-  modified_at: string;
-  embedding: number[];
-}
+import { CommentSimilaritySearchResult, DatabaseItem, IssueSimilaritySearchResult } from "../../types/ai";
 
 export class Embeddings {
   protected supabase: SupabaseClient;
@@ -51,8 +15,8 @@ export class Embeddings {
     this.voyage = client;
   }
 
-  async getIssue(issueNodeId: string): Promise<DatabaseIssue[] | null> {
-    const { data, error } = await this.supabase.from("issues").select("*").eq("id", issueNodeId).returns<DatabaseIssue[]>();
+  async getIssue(issueNodeId: string): Promise<DatabaseItem[] | null> {
+    const { data, error } = await this.supabase.from("issues").select("*").eq("id", issueNodeId).returns<DatabaseItem[]>();
     if (error) {
       logger.error("Error getting issue", { error });
       return null;
@@ -60,7 +24,7 @@ export class Embeddings {
     return data;
   }
 
-  async getComment(commentNodeId: string): Promise<CommentType[] | null> {
+  async getComment(commentNodeId: string): Promise<DatabaseItem[] | null> {
     const { data, error } = await this.supabase.from("issue_comments").select("*").eq("id", commentNodeId);
     if (error) {
       logger.error("Error getting comment", { error });
@@ -104,6 +68,7 @@ export class Embeddings {
   }
 
   async createEmbedding(input: { text?: string; prompt?: string } = {}): Promise<number[]> {
+    const VECTOR_SIZE = 1024;
     const { text = null, prompt = null } = input;
     if (text === null) {
       return new Array(VECTOR_SIZE).fill(0);

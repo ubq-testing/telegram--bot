@@ -4,29 +4,16 @@ import { GrammyContext } from "../../../helpers/grammy-context";
 import { logHandle } from "../../../helpers/logging";
 import { logger } from "../../../../utils/logger";
 import { PluginContext } from "../../../../types/plugin-context-single";
+import { CommentSimilaritySearchResult, IssueSimilaritySearchResult } from "../../../../types/ai";
 
 const composer = new Composer<GrammyContext>();
-
 const feature = composer.chatType(["group", "private", "supergroup", "channel"]);
-export interface CommentSimilaritySearchResult {
-  comment_id: string;
-  comment_plaintext: string;
-  comment_issue_id: string;
-  similarity: number;
-  text_similarity: number;
-}
-
-export interface IssueSimilaritySearchResult {
-  issue_id: string;
-  issue_plaintext: string;
-  similarity: number;
-  text_similarity: number;
-}
 
 feature.command("ubiquityos", logHandle("command-ubiquityos"), chatAction("typing"), async (ctx) => {
   const {
     adapters: { ai, embeddings },
   } = ctx;
+
   const directives = [
     "Extract Relevant Information: Identify key pieces of information, even if they are incomplete, from the available corpus.",
     "Apply Knowledge: Use the extracted information and relevant documentation to construct an informed response.",
@@ -59,9 +46,11 @@ feature.command("ubiquityos", logHandle("command-ubiquityos"), chatAction("typin
       ...(issues?.map((issue: IssueSimilaritySearchResult) => issue.issue_plaintext) || []),
     ];
   });
+
   logger.info("Similar Text:\n\n", { similarText });
   const rerankedText = similarText.length > 0 ? await embeddings.reRankResults(similarText, question) : [];
-  logger.info("Reranked Text:\n\n", { rerankedText: rerankedText });
+  logger.info("Reranked Text:\n\n", { rerankedText });
+
   return ctx.reply(
     await ai.createCompletion({
       directives,

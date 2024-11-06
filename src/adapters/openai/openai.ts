@@ -8,10 +8,10 @@ export class Completions {
 
   constructor(context: Context) {
     const {
+      env,
       config: {
         aiConfig: { baseUrl, kind },
       },
-      env,
     } = context;
     const apiKey = kind === "OpenAi" ? env.OPENAI_API_KEY : env.OPENROUTER_API_KEY;
 
@@ -79,7 +79,9 @@ export class Completions {
   }): Promise<string> {
     const config = PluginContext.getInstance().config;
     const ctxWindow = this.createSystemMessage(params);
+
     logger.info("ctxWindow:\n\n", { ctxWindow });
+
     const res: OpenAI.Chat.Completions.ChatCompletion = await this.client.chat.completions.create({
       model: params.model,
       messages: ctxWindow,
@@ -92,6 +94,7 @@ export class Completions {
         type: "text",
       },
     });
+
     const answer = res.choices[0].message;
     if (answer?.content) {
       return answer.content;
