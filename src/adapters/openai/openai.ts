@@ -1,5 +1,7 @@
 import OpenAI from "openai";
 import { PluginContext } from "../../types/plugin-context-single";
+import { logger } from "../../utils/logger";
+import { Context } from "../../types";
 
 export interface ResponseFromLlm {
   answer: string;
@@ -13,8 +15,23 @@ export interface ResponseFromLlm {
 export class Completions {
   protected client: OpenAI;
 
-  constructor(apiKey: string) {
-    this.client = new OpenAI({ apiKey: apiKey });
+  constructor(context: Context) {
+    const {
+      config: {
+        aiConfig: { baseUrl, kind },
+      },
+      env,
+    } = context;
+    const key = kind === "OpenAi" ? env.OPENAI_API_KEY : env.OPENROUTER_API_KEY;
+
+    if (!key) {
+      throw new Error(`Plugin is configured to use ${kind} but ${kind === "OpenAi" ? "OPENAI_API_KEY" : "OPENROUTER_API_KEY"} is not set in the environment`);
+    }
+
+    this.client = new OpenAI({
+      baseURL: baseUrl,
+      apiKey: kind === "OpenAi" ? env.OPENAI_API_KEY : env.OPENROUTER_API_KEY,
+    });
   }
 
   createSystemMessage({
@@ -60,15 +77,7 @@ export class Completions {
     ];
   }
 
-  async createCompletion({
-    directives,
-    constraints,
-    additionalContext,
-    embeddingsSearch,
-    outputStyle,
-    query,
-    model,
-  }: {
+  async createCompletion(params: {
     directives: string[];
     constraints: string[];
     additionalContext: string[];
@@ -76,13 +85,15 @@ export class Completions {
     outputStyle: string;
     query: string;
     model: string;
-  }): Promise<ResponseFromLlm | undefined> {
+  }): Promise<string> {
     const config = PluginContext.getInstance().config;
+    const ctxWindow = this.createSystemMessage(params);
+    logger.info("ctxWindow:\n\n", { ctxWindow });
     const res: OpenAI.Chat.Completions.ChatCompletion = await this.client.chat.completions.create({
-      model: model,
-      messages: this.createSystemMessage({ directives, constraints, query, embeddingsSearch, additionalContext, outputStyle }),
+      model: params.model,
+      messages: ctxWindow,
       temperature: 0.2,
-      max_completion_tokens: config.maxCompletionTokens,
+      max_completion_tokens: config.aiConfig.maxCompletionTokens,
       top_p: 0.5,
       frequency_penalty: 0,
       presence_penalty: 0,
@@ -91,12 +102,11 @@ export class Completions {
       },
     });
     const answer = res.choices[0].message;
-    if (answer?.content && res.usage) {
-      const { prompt_tokens, completion_tokens, total_tokens } = res.usage;
-      return {
-        answer: answer.content,
-        tokenUsage: { input: prompt_tokens, output: completion_tokens, total: total_tokens },
-      };
+    if (answer?.content) {
+      return answer.content;
     }
+
+    logger.error("No answer found", { res });
+    return `There was an error processing your request. Please try again later.`;
   }
 }
