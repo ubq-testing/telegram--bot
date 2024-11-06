@@ -4,8 +4,6 @@ import { logger } from "../utils/logger";
 
 export async function handleTelegramWebhook(request: Request, env: Env): Promise<Response> {
   const failures: unknown[] = [];
-  logger.info("Handling telegram webhook request", { request });
-
   // Initialize bot instance
   const botInstance = await initializeBotInstance(env, failures);
 
@@ -30,7 +28,6 @@ export async function handleTelegramWebhook(request: Request, env: Env): Promise
 async function initializeBotInstance(env: Env, failures: unknown[]) {
   try {
     const botInstance = await TelegramBotSingleton.initialize(env);
-    logger.info("Initialized TelegramBotSingleton");
     return botInstance;
   } catch (er) {
     const errorInfo = {
@@ -46,13 +43,11 @@ async function initializeBotInstance(env: Env, failures: unknown[]) {
 
 function getServerFromBot(botInstance: TelegramBotSingleton | null, failures: unknown[]) {
   try {
-    logger.info("Getting server from bot");
     const server = botInstance?.getServer();
     const bot = botInstance?.getBot();
     if (!server || !bot) {
       throw new Error("Server or bot is undefined");
     }
-    logger.info("Got server from bot");
     return { server, bot };
   } catch (er) {
     const errorInfo = {
@@ -76,9 +71,7 @@ async function makeServerRequest(
     if (!server) {
       throw new Error("Server is null");
     }
-    logger.info("Making hono server request");
     const res = await server.fetch(request, env);
-    logger.info("Hono server request made", { res });
     return res;
   } catch (er) {
     const errorInfo = {
@@ -101,7 +94,6 @@ async function readResponseBody(res: Response, failures: unknown[]): Promise<str
   }
 
   try {
-    logger.info("Response from hono server", { body });
     return typeof body === "string" ? body : JSON.stringify(body);
   } catch (er) {
     const errorInfo = {
@@ -121,7 +113,6 @@ function createResponse(res: Response, body: string, failures: unknown[]): Respo
       throw new Error("Response is null");
     }
     const { status, statusText, headers } = res;
-    logger.info("Creating response from hono server", { status, statusText, headers });
     return new Response(body, { status, statusText, headers });
   } catch (er) {
     const errorInfo = {

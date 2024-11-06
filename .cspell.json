@@ -41,7 +41,17 @@
     "Superbase",
     "SUPABASE",
     "CODEOWNER",
-    "nosniff"
+    "nosniff",
+    "voyageai",
+    "OPENROUTER",
+    "reranked",
+    "rerank",
+    "Reranked",
+    "ftse",
+    "Reranking",
+    "VOYAGEAI",
+    "supergroup",
+    "ubiquityos"
   ],
   "dictionaries": ["typescript", "node", "software-terms"],
   "import": ["@cspell/dict-typescript/cspell-ext.json", "@cspell/dict-node/cspell-ext.json", "@cspell/dict-software-terms"],

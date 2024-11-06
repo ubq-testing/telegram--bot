@@ -38,39 +38,30 @@ export class TelegramBotSingleton {
     if (!TelegramBotSingleton._instance) {
       TelegramBotSingleton._instance = new TelegramBotSingleton();
       try {
-        logger.info("Creating bot");
         TelegramBotSingleton._bot = await createBot(TELEGRAM_BOT_TOKEN, {
           config: env,
           logger,
           octokit,
         });
-
-        logger.info("Bot created");
       } catch (er) {
         logger.error("Error initializing TelegramBotSingleton", { er });
       }
 
       try {
-        logger.info("Setting webhook");
         await TelegramBotSingleton._bot.api.setWebhook(TELEGRAM_BOT_WEBHOOK, {
           allowed_updates: ALLOWED_UPDATES,
           secret_token: TELEGRAM_BOT_WEBHOOK_SECRET,
         });
-
-        logger.info("Webhook set");
       } catch (er) {
         logger.error("Error setting webhook in TelegramBotSingleton", { er });
       }
 
       try {
-        logger.info("Creating server");
         TelegramBotSingleton._server = createServer({
           bot: TelegramBotSingleton._bot,
           env,
           logger,
         });
-
-        logger.info("Server created");
       } catch (er) {
         logger.error("Error initializing server in TelegramBotSingleton", { er });
       }
