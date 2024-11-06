@@ -20,6 +20,10 @@ export class GitHubSession extends StringSession implements SessionManager {
     this.session = session;
   }
 
+  getClient() {
+    return;
+  }
+
   async saveSession(): Promise<void> {
     if (!this.session) {
       throw new Error("No session found. Please run the SMS Login script first.");

@@ -23,6 +23,13 @@ export class SupabaseSession extends StringSession implements SessionManager {
     this.context = context;
   }
 
+  /**
+   * Returns the Supabase client.
+   */
+  getClient() {
+    return this.supabase;
+  }
+
   async saveSession(): Promise<void> {
     await this.supabase?.from("tg-bot-sessions").insert([{ session_data: super.save() }]);
   }
