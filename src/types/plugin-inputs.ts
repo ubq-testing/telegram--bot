@@ -27,12 +27,14 @@ export const pluginSettingsSchema = T.Object({
         model: T.String({ default: "openai/o1-mini" }),
         baseUrl: T.String({ default: "https://api.openai.com/v1" }),
         maxCompletionTokens: T.Number({ default: 5000 }),
+        similarityThreshold: T.Number({ default: 0.9 }),
       }),
       T.Object({
         kind: T.Literal("OpenRouter"),
         model: T.String({ default: "openai/o1-mini" }),
         baseUrl: T.String({ default: "https://openrouter.ai/api/v1" }),
         maxCompletionTokens: T.Number({ default: 5000 }),
+        similarityThreshold: T.Number({ default: 0.9 }),
       }),
     ],
     { default: { kind: "OpenAi", model: "openai/o1-mini", baseUrl: "https://api.openai.com/v1" }, maxCompletionTokens: 5000 }

@@ -42,12 +42,13 @@ feature.command("ubiquityos", logHandle("command-ubiquityos"), chatAction("typin
 
   const outputStyle = "Concise and coherent responses in paragraphs that directly address the user's question.";
 
-  const similarityThreshold = 0.9;
   const question = ctx.message?.text.replace("/ubiquityos", "").trim();
 
   if (!question) {
     return ctx.reply("Please provide a question to ask UbiquityOS.");
   }
+
+  const { similarityThreshold, model } = PluginContext.getInstance().config.aiConfig;
 
   const similarText = await Promise.all([
     embeddings.findSimilarComments(question, 1 - similarityThreshold),
@@ -69,7 +70,7 @@ feature.command("ubiquityos", logHandle("command-ubiquityos"), chatAction("typin
       embeddingsSearch: rerankedText,
       additionalContext: [],
       outputStyle,
-      model: PluginContext.getInstance().config.aiConfig.model,
+      model,
     }),
     {
       parse_mode: "Markdown",
