@@ -1,5 +1,4 @@
 import OpenAI from "openai";
-import { PluginContext } from "../../types/plugin-context-single";
 
 export interface ResponseFromLlm {
   answer: string;
@@ -77,12 +76,10 @@ export class Completions {
     query: string;
     model: string;
   }): Promise<ResponseFromLlm | undefined> {
-    const config = PluginContext.getInstance().config;
     const res: OpenAI.Chat.Completions.ChatCompletion = await this.client.chat.completions.create({
       model: model,
       messages: this.createSystemMessage({ directives, constraints, query, embeddingsSearch, additionalContext, outputStyle }),
       temperature: 0.2,
-      max_completion_tokens: config.maxCompletionTokens,
       top_p: 0.5,
       frequency_penalty: 0,
       presence_penalty: 0,

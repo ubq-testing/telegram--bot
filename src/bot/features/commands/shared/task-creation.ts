@@ -5,6 +5,7 @@ import { logHandle } from "../../../helpers/logging";
 import { isAdmin } from "../../../filters/is-admin";
 import { logger } from "../../../../utils/logger";
 import { RestEndpointMethodTypes } from "@octokit/rest";
+import Fuse from "fuse.js";
 
 const composer = new Composer<GrammyContext>();
 
@@ -50,26 +51,48 @@ feature.command("newtask", logHandle("task-creation"), chatAction("typing"), asy
   }
 
   const response = await fetch("https://raw.githubusercontent.com/ubiquity/devpool-directory/__STORAGE__/devpool-issues.json");
-  const devPoolIssues = await response.json() as RestEndpointMethodTypes["issues"]["get"]["response"]["data"][]
+  const devPoolIssues = (await response.json()) as RestEndpointMethodTypes["issues"]["get"]["response"]["data"][];
 
-  const toMatch = new RegExp(repoToCreateIn.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), "i");
+  const repoNames = Array.from(
+    new Set(
+      devPoolIssues.map((issue) => {
+        return ownerRepoFromUrl(issue.html_url)?.repo ?? "";
+      })
+    )
+  );
 
-  const foundIssue = devPoolIssues.find((issue) => {
-    return toMatch.test(ownerRepoFromUrl(issue.html_url)?.repo ?? "");
-  });
+  const options = {
+    includeScore: true,
+    threshold: 0.2, // less is stricter
+  };
 
-  const found = ownerRepoFromUrl(foundIssue?.html_url ?? "");
+  const fuse = new Fuse(repoNames, options);
+  const results = fuse.search(repoToCreateIn);
 
-  if (!found) {
-    return await ctx.reply("No repository found");
+  if (results.length > 0) {
+    const bestMatchRepoName = results[0].item;
+    const foundIssue = devPoolIssues.find((issue) => {
+      const repoName = ownerRepoFromUrl(issue.html_url)?.repo ?? "";
+      return repoName === bestMatchRepoName;
+    });
+
+    if (!foundIssue) {
+      return await ctx.reply("No issue found");
+    }
+
+    const found = ownerRepoFromUrl(foundIssue?.html_url);
+
+    if (!found) {
+      return await ctx.reply("No repo found");
+    }
+
+    return await createTask(taskToCreate, ctx, found, fromId);
   }
-
-  return await createTask(taskToCreate, ctx, found, fromId);
+  return await ctx.reply("No repo found");
 });
 
 function ownerRepoFromUrl(url: string) {
-  //https://github.com/ubiquity/ubiquity-dollar/issues/978
-  const namedGroups = /https:\/\/github.com\/(?<owner>[^/]+)\/(?<repo>[^/]+)\/issues\/(?<issue>[0-9]+)/.exec(url)?.groups;
+  const namedGroups = /https:\/\/github.com\/(?<owner>[^/]+)\/(?<repo>[^/]+)\/issues\/(?<issue>\d+)/.exec(url)?.groups;
 
   if (!namedGroups) {
     return null;
@@ -81,12 +104,7 @@ function ownerRepoFromUrl(url: string) {
   };
 }
 
-async function createTask(
-  taskToCreate: string,
-  ctx: GrammyContext,
-  { owner, repo }: { owner: string; repo: string },
-  fromId: number
-) {
+async function createTask(taskToCreate: string, ctx: GrammyContext, { owner, repo }: { owner: string; repo: string }, fromId: number) {
   const directives = [
     "Consume the user's message and begin to transform it into a GitHub task specification",
     "Include a relevant short title for opening the task with",
@@ -113,21 +131,19 @@ async function createTask(
 
   const outputStyle = `{ "title": "Task Title", "body": "Task Body" }`;
 
-  // const llmResponse = await ctx.adapters.ai.createCompletion({
-  //   embeddingsSearch: [],
-  //   directives,
-  //   constraints,
-  //   additionalContext,
-  //   outputStyle,
-  //   model: "gpt-4o",
-  //   query: taskToCreate,
-  // });
+  const llmResponse = await ctx.adapters.ai.createCompletion({
+    embeddingsSearch: [],
+    directives,
+    constraints,
+    additionalContext,
+    outputStyle,
+    model: "gpt-4o",
+    query: taskToCreate,
+  });
 
-  // if (!llmResponse) {
-  //   return await ctx.reply("Failed to create task");
-  // }
-
-  const llmResponse = { answer: outputStyle }
+  if (!llmResponse) {
+    return await ctx.reply("Failed to create task");
+  }
 
   const taskFromLlm = llmResponse.answer;
 
@@ -147,24 +163,26 @@ async function createTask(
   const chatLinkText = chatLink ? ` [here](${chatLink.invite_link})` : "";
   const fullSpec = `${taskDetails.body}\n\n_Originally created by @${username} via Telegram${chatLinkText}_`;
 
-  console.log("creating task", {
+  logger.info("creating task", {
     taskDetails,
     fullSpec,
     owner,
-    repo
-  })
-  // const task = await ctx.octokit.rest.issues.create({
-  //   owner,
-  //   repo,
-  //   title: taskDetails.title,
-  //   body: fullSpec,
-  // })
+    repo,
+    author: username,
+  });
 
-  // if (!task) {
-  //   return await ctx.reply("Failed to create task");
-  // }
+  const task = await ctx.octokit.rest.issues.create({
+    owner,
+    repo,
+    title: taskDetails.title,
+    body: fullSpec,
+  });
 
-  return await ctx.reply(`Task created: {task.data.html_url}`);
+  if (!task) {
+    return await ctx.reply("Failed to create task");
+  }
+
+  return await ctx.reply(`Task created: ${task.data.html_url}`);
 }
 
 export { composer as newTaskFeature };
