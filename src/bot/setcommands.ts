@@ -103,6 +103,10 @@ function getPrivateChatAdminCommands(): BotCommand[] {
       command: "setwebhook",
       description: "Set the webhook URL",
     },
+    {
+      command: "newtask",
+      description: "Create a new task",
+    },
   ];
 }
 
@@ -111,6 +115,10 @@ function getGroupChatCommands(): BotCommand[] {
     {
       command: "ban",
       description: "Ban a user",
+    },
+    {
+      command: "newtask",
+      description: "Create a new task",
     },
   ];
 }

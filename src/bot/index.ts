@@ -23,6 +23,7 @@ import { welcomeFeature } from "./features/start-command";
 import { unhandledFeature } from "./features/helpers/unhandled";
 import { Context } from "../types";
 import { session } from "./middlewares/session";
+import { newTaskFeature } from "./features/commands/shared/task-creation";
 
 interface Dependencies {
   config: Context["env"];
@@ -80,6 +81,7 @@ export async function createBot(token: string, dependencies: Dependencies, optio
   bot.use(userIdFeature);
   bot.use(chatIdFeature);
   bot.use(botIdFeature);
+  bot.use(newTaskFeature);
 
   // Private chat commands
   bot.use(registerFeature);

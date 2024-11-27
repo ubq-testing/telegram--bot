@@ -93,6 +93,7 @@ export const env = T.Object({
   APP_ID: T.String(),
   APP_PRIVATE_KEY: T.String(),
   TEMP_SAFE_PAT: T.Optional(T.String()),
+  OPENAI_API_KEY: T.String(),
 });
 
 export type Env = StaticDecode<typeof env>;
