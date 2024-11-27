@@ -48,7 +48,7 @@ export async function createBot(token: string, dependencies: Dependencies, optio
     ...options.botConfig,
     ContextConstructor: await createContextConstructor(dependencies),
     client: {
-      timeoutSeconds: 20,
+      timeoutSeconds: 500,
     },
   });
 

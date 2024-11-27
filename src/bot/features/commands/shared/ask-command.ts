@@ -36,7 +36,6 @@ feature.command("ubiquityos", logHandle("command-ubiquityos"), chatAction("typin
   }
 
   const { similarityThreshold, model } = PluginContext.getInstance().config.aiConfig;
-
   const similarText = await Promise.all([
     embeddings.findSimilarComments(question, 1 - similarityThreshold),
     embeddings.findSimilarIssues(question, 1 - similarityThreshold),

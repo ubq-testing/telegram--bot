@@ -51,7 +51,7 @@ export class Completions {
   }): OpenAI.Chat.Completions.ChatCompletionMessageParam[] {
     return [
       {
-        role: "system",
+        role: "user",
         content: `You are UbiquityOS, a Telegram-integrated GitHub-first assistant for UbiquityDAO.
 
                 # Directives
@@ -94,11 +94,7 @@ export class Completions {
     const res: OpenAI.Chat.Completions.ChatCompletion = await this.client.chat.completions.create({
       model: params.model,
       messages: ctxWindow,
-      temperature: 0.2,
       max_completion_tokens: config.aiConfig.maxCompletionTokens,
-      top_p: 0.5,
-      frequency_penalty: 0,
-      presence_penalty: 0,
       response_format: {
         type: "text",
       },
