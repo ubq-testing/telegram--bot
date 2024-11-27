@@ -24,6 +24,7 @@ import { unhandledFeature } from "./features/helpers/unhandled";
 import { Context } from "../types";
 import { session } from "./middlewares/session";
 import { askFeature } from "./features/commands/shared/ask-command";
+import { newTaskFeature } from "./features/commands/shared/task-creation";
 
 interface Dependencies {
   config: Context["env"];
@@ -95,6 +96,7 @@ export async function createBot(token: string, dependencies: Dependencies, optio
 
   // shared commands
   bot.use(askFeature);
+  bot.use(newTaskFeature);
 
   // Unhandled command handler
   bot.use(unhandledFeature);

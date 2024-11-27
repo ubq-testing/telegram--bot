@@ -3,6 +3,15 @@ import { PluginContext } from "../../types/plugin-context-single";
 import { logger } from "../../utils/logger";
 import { Context } from "../../types";
 
+export interface ResponseFromLlm {
+  answer: string;
+  tokenUsage: {
+    input: number;
+    output: number;
+    total: number;
+  };
+}
+
 export class Completions {
   protected client: OpenAI;
 

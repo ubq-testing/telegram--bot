@@ -107,6 +107,10 @@ function getPrivateChatAdminCommands(): BotCommand[] {
       command: "setwebhook",
       description: "Set the webhook URL",
     },
+    {
+      command: "newtask",
+      description: "Create a new task",
+    },
   ];
 }
 
@@ -119,6 +123,10 @@ function getGroupChatCommands(): BotCommand[] {
     {
       command: "ubiquityos",
       description: "Ask UbiquityOS a question",
+    },
+    {
+      command: "newtask",
+      description: "Create a new task",
     },
   ];
 }

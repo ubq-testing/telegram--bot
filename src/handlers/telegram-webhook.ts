@@ -8,7 +8,7 @@ export async function handleTelegramWebhook(request: Request, env: Env): Promise
   const botInstance = await initializeBotInstance(env, failures);
 
   // Get server and bot from botInstance
-  const { server, bot } = getServerFromBot(botInstance, failures);
+  const { server } = getServerFromBot(botInstance, failures);
 
   // Make server request even if server is null to collect all failures
   const res = await makeServerRequest(server, request, env, failures);
@@ -18,9 +18,6 @@ export async function handleTelegramWebhook(request: Request, env: Env): Promise
 
   // Create final response
   const response = createResponse(res, body, failures);
-
-  // Try to send error messages if any
-  await sendErrorMessages(bot, env, failures);
 
   return response;
 }
@@ -71,8 +68,7 @@ async function makeServerRequest(
     if (!server) {
       throw new Error("Server is null");
     }
-    const res = await server.fetch(request, env);
-    return res;
+    return await server.fetch(request, env);
   } catch (er) {
     const errorInfo = {
       message: "Error fetching request from hono server",
@@ -123,16 +119,5 @@ function createResponse(res: Response, body: string, failures: unknown[]): Respo
     failures.push(errorInfo);
     logger.error(errorInfo.message, { error: er as Error });
     return new Response("Internal Server Error", { status: 500 });
-  }
-}
-
-async function sendErrorMessages(bot: ReturnType<TelegramBotSingleton["getBot"]> | null, env: Env, failures: unknown[]): Promise<void> {
-  if (failures.length) {
-    const errorMessage = failures.map((failure, index) => `Error ${index + 1}:\n${JSON.stringify(failure, null, 2)}`).join("\n\n");
-    try {
-      await bot?.api.sendMessage(env.TELEGRAM_BOT_ENV.botSettings.TELEGRAM_BOT_ADMINS[0], `Error handling webhook request:\n\n${errorMessage}`);
-    } catch (er) {
-      logger.error("Error sending error message to admin", { er });
-    }
   }
 }

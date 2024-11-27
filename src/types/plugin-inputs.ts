@@ -15,11 +15,12 @@ export const pluginSettingsSchema = T.Object({
   /**
    * The bot ID, NOT the ID of the personal account.
    */
-  botId: T.Transform(T.Unknown({ default: 7543249164 }))
+  botId: T.Transform(T.Unknown({ default: 7543249164, description: "The ID given to you when creating a Telegram Bot via @TheBotFather." }))
     .Decode((value) => Number(value))
     .Encode((value) => value.toString()),
-  shouldUseGithubStorage: T.Boolean({ default: false }),
-  storageOwner: T.String({ default: "ubiquity-os-marketplace" }),
+  shouldUseGithubStorage: T.Boolean({ default: false, description: "Activates the GitHub storage module." }),
+  storageOwner: T.String({ default: "ubiquity-os-marketplace", description: "Determines where the storage location of this plugin should be." }),
+  fuzzySearchThreshold: T.Number({ default: 0.2, description: "The threshold for fuzzy search when invoking the `/newtask` command (0 is a perfect match)." }),
   aiConfig: T.Union(
     [
       T.Object({

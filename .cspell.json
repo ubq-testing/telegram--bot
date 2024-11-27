@@ -1,7 +1,13 @@
 {
   "$schema": "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json",
   "version": "0.2",
-  "ignorePaths": ["**/*.json", "**/*.css", "node_modules", "**/*.log", "src/adapters/github/storage-layer.ts"],
+  "ignorePaths": [
+    "**/*.json",
+    "**/*.css",
+    "node_modules",
+    "**/*.log",
+    "src/adapters/github/storage-layer.ts"
+  ],
   "useGitignore": true,
   "language": "en",
   "words": [
@@ -51,9 +57,21 @@
     "Reranking",
     "VOYAGEAI",
     "supergroup",
-    "ubiquityos"
+    "ubiquityos",
+    "newtask",
+    "supergroup"
   ],
-  "dictionaries": ["typescript", "node", "software-terms"],
-  "import": ["@cspell/dict-typescript/cspell-ext.json", "@cspell/dict-node/cspell-ext.json", "@cspell/dict-software-terms"],
-  "ignoreRegExpList": ["[0-9a-fA-F]{6}"]
+  "dictionaries": [
+    "typescript",
+    "node",
+    "software-terms"
+  ],
+  "import": [
+    "@cspell/dict-typescript/cspell-ext.json",
+    "@cspell/dict-node/cspell-ext.json",
+    "@cspell/dict-software-terms"
+  ],
+  "ignoreRegExpList": [
+    "[0-9a-fA-F]{6}"
+  ]
 }
