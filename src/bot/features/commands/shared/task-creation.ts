@@ -185,7 +185,7 @@ async function createTask(taskToCreate: string, ctx: GrammyContext, { owner, rep
     return await ctx.reply("Failed to create task");
   }
 
-  return await ctx.reply(`Task created: ${task.data.html_url}`);
+  return await ctx.reply(`${fullSpec}\n\n [View on GitHub](${task.data.html_url})`);
 }
 
 export { composer as newTaskFeature };
