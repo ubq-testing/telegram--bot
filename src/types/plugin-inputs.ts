@@ -26,13 +26,21 @@ export const pluginSettingsSchema = T.Object({
       T.Object({
         kind: T.Literal("OpenAi", { description: "The API provider you wish to use.", examples: ["OpenAi", "OpenRouter"] }),
         model: T.String({ default: "o1-mini", description: "The model to use.", examples: ["o1-mini", "gpt-4o"] }),
-        baseUrl: T.String({ default: "https://api.openai.com/v1", description: "The base URL of the API.", examples: ["https://api.openai.com/v1", "https://api.openai.com/v2"] }),
+        baseUrl: T.String({
+          default: "https://api.openai.com/v1",
+          description: "The base URL of the API.",
+          examples: ["https://api.openai.com/v1", "https://api.openai.com/v2"],
+        }),
         similarityThreshold: T.Number({ default: 0.9, description: "The similarity threshold for when fetching embeddings-based context." }),
       }),
       T.Object({
         kind: T.Literal("OpenRouter", { description: "The API provider you wish to use.", examples: ["OpenAi", "OpenRouter"] }),
         model: T.String({ default: "openai/o1-mini", description: "The model to use.", examples: ["openai/o1-mini", "openai/gpt-4o"] }),
-        baseUrl: T.String({ default: "https://openrouter.ai/api/v1", description: "The base URL of the API.", examples: ["https://openrouter.ai/api/v1", "https://openrouter.ai/api/v2"] }),
+        baseUrl: T.String({
+          default: "https://openrouter.ai/api/v1",
+          description: "The base URL of the API.",
+          examples: ["https://openrouter.ai/api/v1", "https://openrouter.ai/api/v2"],
+        }),
         similarityThreshold: T.Number({ default: 0.9, description: "The similarity threshold for when fetching embeddings-based context." }),
       }),
     ],

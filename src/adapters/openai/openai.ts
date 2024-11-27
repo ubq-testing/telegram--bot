@@ -1,5 +1,4 @@
 import OpenAI from "openai";
-import { PluginContext } from "../../types/plugin-context-single";
 import { logger } from "../../utils/logger";
 import { Context } from "../../types";
 
@@ -86,7 +85,6 @@ export class Completions {
     query: string;
     model: string;
   }): Promise<string> {
-    const config = PluginContext.getInstance().config;
     const ctxWindow = this.createSystemMessage(params);
 
     logger.info("ctxWindow:\n\n", { ctxWindow });
@@ -94,7 +92,6 @@ export class Completions {
     const res: OpenAI.Chat.Completions.ChatCompletion = await this.client.chat.completions.create({
       model: params.model,
       messages: ctxWindow,
-      max_completion_tokens: config.aiConfig.maxCompletionTokens,
       response_format: {
         type: "text",
       },

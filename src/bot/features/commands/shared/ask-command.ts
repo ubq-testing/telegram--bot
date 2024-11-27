@@ -24,7 +24,7 @@ feature.command("ubiquityos", logHandle("command-ubiquityos"), chatAction("typin
   const constraints = [
     "Ensure the response is crafted from the corpus provided, without introducing information outside of what's available or relevant to the query.",
     "Consider edge cases where the corpus might lack explicit answers, and justify responses with logical reasoning based on the existing information.",
-    "Replies MUST be in Markdown V1 format.",
+    "Replies MUST be in Markdown V1 format but do not wrap in code blocks.",
   ];
 
   const outputStyle = "Concise and coherent responses in paragraphs that directly address the user's question.";
