@@ -84,6 +84,7 @@ export function createServer(dependencies: Dependencies) {
     },
     webhookCallback(bot, "hono", {
       secretToken: TELEGRAM_BOT_WEBHOOK_SECRET,
+      timeoutMilliseconds: 60_000,
     })
   );
 

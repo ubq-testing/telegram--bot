@@ -134,7 +134,7 @@ async function createTask(taskToCreate: string, ctx: GrammyContext, { owner, rep
 
   const outputStyle = `{ "title": "Task Title", "body": "Task Body" }`;
 
-  const llmResponse = await ctx.adapters.ai.createCompletion({
+  const taskFromLlm = await ctx.adapters.ai.createCompletion({
     embeddingsSearch: [],
     directives,
     constraints,
@@ -144,11 +144,9 @@ async function createTask(taskToCreate: string, ctx: GrammyContext, { owner, rep
     query: taskToCreate,
   });
 
-  if (!llmResponse) {
+  if (!taskFromLlm) {
     return await ctx.reply("Failed to create task");
   }
-
-  const taskFromLlm = llmResponse.answer;
 
   let taskDetails;
 

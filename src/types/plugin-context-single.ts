@@ -134,7 +134,6 @@ export class PluginContext {
       eventName: this.inputs.eventName,
       payload: this.inputs.eventPayload,
       config: this.config,
-      // if we have a token coming from GitHub we'll use it instead of the storage app.
       octokit: !this.inputs.authToken ? octokit : this.getGitHubEventOctokit(),
       env: this.env,
       logger,

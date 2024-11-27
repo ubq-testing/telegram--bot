@@ -25,7 +25,6 @@ export async function handleTelegramWebhook(request: Request, env: Env): Promise
 async function initializeBotInstance(env: Env, failures: unknown[]) {
   try {
     const botInstance = await TelegramBotSingleton.initialize(env);
-    logger.info("Initialized TelegramBotSingleton");
     return botInstance;
   } catch (er) {
     const errorInfo = {

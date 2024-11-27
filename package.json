@@ -17,7 +17,7 @@
     "knip": "knip --config .github/knip.ts",
     "knip-ci": "knip --no-exit-code --reporter json --config .github/knip.ts",
     "prepare": "husky install",
-    "test": "NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" jest --setupFiles dotenv/config --coverage",
+    "test": "cross-env NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" jest --setupFiles dotenv/config --coverage",
     "worker": "wrangler dev --env dev --port 3000",
     "deploy": "wrangler deploy --env dev",
     "sms-auth": "npx tsx src/bot/mtproto-api/bot/scripts/sms-auth/sms-auth.ts",
@@ -51,7 +51,8 @@
     "octokit": "^4.0.2",
     "openai": "^4.70.2",
     "telegram": "^2.24.11",
-    "typebox-validators": "0.3.5"
+    "typebox-validators": "0.3.5",
+    "voyageai": "^0.0.1-5"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20240529.0",
@@ -65,6 +66,7 @@
     "@mswjs/data": "0.16.1",
     "@types/jest": "^29.5.12",
     "@types/node": "20.14.5",
+    "cross-env": "^7.0.3",
     "cspell": "8.14.2",
     "eslint": "9.9.1",
     "eslint-config-prettier": "9.1.0",
