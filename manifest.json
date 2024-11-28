@@ -1,5 +1,5 @@
 {
-  "name": "ubiquity-os-marketplace/ubiquity-os-kernel-telegram",
+  "name": "Ubiquity OS Kernel Telegram",
   "description": "Part kernel plugin, part Telegram kernel. This bot is designed to be a bridge between UbiquityOS and Telegram.",
   "ubiquity:listeners": [
     "issues.assigned",
