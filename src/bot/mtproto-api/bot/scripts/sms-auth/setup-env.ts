@@ -182,6 +182,7 @@ class SetUpHandler {
           SUPABASE_URL: answers["Storage settings"]["SUPABASE_URL"],
         },
       },
+      VOYAGEAI_API_KEY: answers["Storage settings"]["VOYAGEAI_API_KEY"],
     };
 
     await this.validateEnv();

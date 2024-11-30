@@ -20,11 +20,8 @@ export class MtProto extends BaseMtProto {
 
   constructor(context: Context) {
     super();
-    const {
-      config: { shouldUseGithubStorage },
-    } = context;
     this._context = context;
-    this._session = SessionManagerFactory.createSessionManager(shouldUseGithubStorage, context);
+    this._session = SessionManagerFactory.createSessionManager(context);
     this.storage = this._session.storage;
   }
 
