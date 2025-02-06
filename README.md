@@ -19,6 +19,15 @@ A Telegram bridge for Ubiquity OS, uniquely combining Cloudflare Workers and Git
   - [Usage](#usage)
   - [Commands](#commands)
 - [Repository Structure](#repository-structure)
+- [Technical Implementation Details](#technical-implementation-details)
+  - [Event Handling System](#event-handling-system)
+  - [Runtime Architecture Details](#runtime-architecture-details)
+    - [Cloudflare Worker Runtime](#cloudflare-worker-runtime)
+    - [GitHub Actions Runtime](#github-actions-runtime)
+  - [Storage Layer Implementation](#storage-layer-implementation)
+  - [Error Handling & Logging](#error-handling--logging)
+  - [Performance Optimizations](#performance-optimizations)
+  - [Security Measures](#security-measures)
 - [Considerations](#considerations)
 
 ## High-Level Overview
@@ -213,6 +222,142 @@ curl -X POST http://localhost:3000/telegram -H "Content-Type: application/json" 
 │   ├── plugin.ts               # GitHub event handler, forwards events to `workflow-entry.ts` or processes them
 │   ├── workflow-entry.ts       # Handles forwarded GitHub events, MTProto API interactions, and workflow logic
 ```
+
+## Technical Implementation Details
+
+### Event Handling System
+
+The system implements a sophisticated event handling architecture through a proxy-based callback system:
+
+```typescript
+// Core event handling structure in worker-proxy.ts
+const callbacks = {
+  "issue_comment.created": [notificationsRequiringComments],
+  "issue_comment.edited": [notificationsRequiringComments],
+  "issues.unassigned": [disqualificationNotification],
+  "pull_request.review_requested": [reviewNotification],
+} as ProxyCallbacks;
+```
+
+The proxy pattern enables dynamic handling of events with built-in error handling and logging:
+
+```typescript
+// Proxy implementation for flexible event handling
+export function proxyCallbacks(context: Context): ProxyCallbacks {
+  return new Proxy(callbacks, {
+    get(target, prop: SupportedEventsU) {
+      if (!target[prop]) {
+        context.logger.info(`No callbacks found for event ${prop}`);
+        return { status: 204, reason: "skipped" };
+      }
+      return (async () => {
+        try {
+          return await Promise.all(target[prop].map((callback) => handleCallback(callback, context)));
+        } catch (er) {
+          await bubbleUpErrorComment(context, er);
+          return { status: 500, reason: "failed" };
+        }
+      })();
+    },
+  });
+}
+```
+
+### Runtime Architecture Details
+
+#### Cloudflare Worker Runtime
+
+The worker runtime (`worker.ts`) serves as the main entry point and implements:
+
+1. **Request Routing**: Routes incoming webhooks based on path and content type
+2. **Environment Validation**: Validates environment variables using TypeBox schemas
+3. **Context Initialization**: Sets up plugin context for request handling
+4. **Error Boundaries**: Implements comprehensive error handling
+
+Key implementation from worker.ts:
+```typescript
+export default {
+  async fetch(request: Request, env: Env): Promise<Response> {
+    const url = new URL(request.url);
+    const path = url.pathname;
+    
+    // Environment validation
+    let envSettings = Value.Decode(envValidator.schema, Value.Default(envValidator.schema, env));
+    
+    // Context initialization
+    const payload = (await request.clone().json()) as PluginInputs;
+    PluginContext.initialize(payload, envSettings);
+    
+    // Route handling
+    if (["/telegram", "/telegram/"].includes(path)) {
+      return await handleTelegramWebhook(request, envSettings);
+    } else {
+      return await handleGithubWebhook(request, envSettings);
+    }
+  }
+}
+```
+
+#### GitHub Actions Runtime
+
+The Actions runtime handles:
+
+1. Long-running operations through workflow-entry.ts
+2. MTProto API interactions for advanced Telegram features
+3. Stateful operations requiring Node.js environment
+
+### Storage Layer Implementation
+
+The system uses multiple storage adapters:
+
+1. **Supabase Adapter** (`src/adapters/supabase/`):
+   - Handles user sessions and preferences
+   - Manages embeddings for AI features
+   - Provides real-time capabilities
+
+2. **GitHub Storage Layer** (`src/adapters/github/`):
+   - Manages repository-specific data
+   - Handles issue and PR related storage
+
+### Error Handling & Logging
+
+The system implements comprehensive error handling:
+
+1. **Structured Logging**:
+```typescript
+logger.error("Operation failed", { 
+  err,
+  context,
+  additionalInfo: {
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV
+  }
+});
+```
+
+2. **Error Boundaries**:
+```typescript
+try {
+  // Operation code
+} catch (err) {
+  await bubbleUpErrorComment(context, er);
+  return { status: 500, reason: "failed" };
+}
+```
+
+### Performance Optimizations
+
+1. **Edge Computing**: Utilizes Cloudflare Workers for fast response times
+2. **Efficient Routing**: Implements path-based routing for quick request handling
+3. **Resource Distribution**: Balances tasks between Worker and Actions runtimes
+4. **Caching Strategy**: Implements appropriate caching mechanisms where possible
+
+### Security Measures
+
+1. **Webhook Verification**: Validates incoming webhook signatures
+2. **Environment Security**: Implements secure environment variable handling
+3. **Access Control**: Uses role-based access control for bot commands
+4. **Session Management**: Secure session handling across runtimes
 
 ## Considerations
 
