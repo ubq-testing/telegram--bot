@@ -24,6 +24,7 @@ export class PluginContext {
   ) {
     // this will fallback to defaults if it's a telegram bot command
     this._config = this.inputs.settings;
+    this._env = _env;
   }
 
   get env() {
