@@ -7,8 +7,9 @@ export interface PluginInputs<T extends SupportedEventsU = SupportedEventsU, TU 
   eventName: T;
   eventPayload: TU["payload"];
   settings: PluginSettings;
-  authToken: string;
   ref: string;
+  command: string;
+  signature: string;
 }
 
 export const pluginSettingsSchema = T.Object({

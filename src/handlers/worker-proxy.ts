@@ -4,6 +4,7 @@ import { bubbleUpErrorComment } from "../utils/errors";
 import { notificationsRequiringComments } from "./private-notifications/comment-triggers";
 import { disqualificationNotification } from "./private-notifications/disqualification-trigger";
 import { reviewNotification } from "./private-notifications/review-trigger";
+import { closeWorkroom, createWorkroom, reOpenWorkroom } from "./workflow-functions";
 
 /**
  * The `callbacks` object defines an array of callback functions for each supported event type.
@@ -17,6 +18,9 @@ const callbacks = {
   "issue_comment.edited": [notificationsRequiringComments],
   "issues.unassigned": [disqualificationNotification],
   "pull_request.review_requested": [reviewNotification],
+  "issues.closed": [closeWorkroom],
+  "issues.reopened": [reOpenWorkroom],
+  "issues.assigned": [createWorkroom],
 } as ProxyCallbacks;
 
 /**
