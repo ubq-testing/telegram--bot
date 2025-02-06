@@ -20,6 +20,8 @@ export async function run() {
     TELEGRAM_BOT_ENV: process.env.TELEGRAM_BOT_ENV,
     APP_ID: process.env.APP_ID,
     APP_PRIVATE_KEY: process.env.APP_PRIVATE_KEY,
+    VOYAGEAI_API_KEY: process.env.VOYAGEAI_API_KEY,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   };
 
   try {
