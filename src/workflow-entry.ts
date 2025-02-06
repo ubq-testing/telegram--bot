@@ -49,6 +49,8 @@ export async function run() {
     settings,
     authToken: payload.authToken,
     ref: payload.ref,
+    command: payload.command,
+    signature: payload.signature,
   };
 
   PluginContext.initialize(inputs, env);

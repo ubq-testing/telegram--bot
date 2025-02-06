@@ -41,7 +41,6 @@ export default {
     }
 
     const payload = (await request.clone().json()) as PluginInputs; // required cast
-    Reflect.deleteProperty(payload, "authToken");
     try {
       PluginContext.initialize(payload, envSettings);
     } catch (er) {

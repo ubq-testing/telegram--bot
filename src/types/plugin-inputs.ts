@@ -10,6 +10,7 @@ export interface PluginInputs<T extends SupportedEventsU = SupportedEventsU, TU 
   ref: string;
   command: string;
   signature: string;
+  authToken: string;
 }
 
 export const pluginSettingsSchema = T.Object({
