@@ -130,6 +130,31 @@ class SetUpHandler {
         },
       ],
     },
+    {
+      title: "API keys",
+      questions: [
+        {
+          type: "input",
+          name: "VOYAGEAI_API_KEY",
+          message: "Enter your Voyage AI API key. This can be obtained from the Voyage AI dashboard.",
+        },
+        {
+          type: "input",
+          name: "OPENAI_API_KEY",
+          message: "Enter your OpenAI API key. This can be obtained from the OpenAI dashboard.",
+        },
+        {
+          type: "input",
+          name: "OPENROUTER_API_KEY",
+          message: "Enter your OpenRouter API key. This can be obtained from the OpenRouter dashboard.",
+        },
+        {
+          type: "input",
+          name: "KERNEL_PUBLIC_KEY",
+          message: "Enter your Kernel public key. This can be obtained from your Kernel private key.",
+        },
+      ],
+    },
   ];
 
   shouldTestToken = !!process.env.REPO_ADMIN_ACCESS_TOKEN;
@@ -183,6 +208,9 @@ class SetUpHandler {
         },
       },
       VOYAGEAI_API_KEY: answers["Storage settings"]["VOYAGEAI_API_KEY"],
+      OPENAI_API_KEY: answers["Storage settings"]["OPENAI_API_KEY"],
+      OPENROUTER_API_KEY: answers["Storage settings"]["OPENROUTER_API_KEY"],
+      KERNEL_PUBLIC_KEY: answers["Storage settings"]["KERNEL_PUBLIC_KEY"],
     };
 
     await this.validateEnv();
@@ -215,6 +243,9 @@ class SetUpHandler {
       "TELEGRAM_BOT_TOKEN",
       "TELEGRAM_APP_ID",
       "SUPABASE_SERVICE_KEY",
+      "VOYAGEAI_API_KEY",
+      "OPENAI_API_KEY",
+      "OPENROUTER_API_KEY",
     ];
     let answer;
 
@@ -235,15 +266,14 @@ class SetUpHandler {
   }
 
   async validateEnv() {
-    const { TELEGRAM_BOT_ENV, APP_PRIVATE_KEY, APP_ID } = this.env;
-    const { botSettings, mtProtoSettings, storageSettings } = TELEGRAM_BOT_ENV;
+    const { botSettings, mtProtoSettings, storageSettings } = this.env.TELEGRAM_BOT_ENV;
+    Reflect.deleteProperty(this.env, "TELEGRAM_BOT_ENV");
 
     const merged = {
       ...botSettings,
       ...mtProtoSettings,
       ...storageSettings,
-      APP_PRIVATE_KEY,
-      APP_ID,
+      ...this.env,
     };
 
     const keys = Object.keys(merged);
@@ -275,10 +305,15 @@ class SetUpHandler {
     const repositoryEnv = `TELEGRAM_BOT_REPOSITORY_FULL_NAME=${process.env.TELEGRAM_BOT_REPOSITORY_FULL_NAME}`;
     const storageAppId = `APP_ID=${this.env.APP_ID}`;
     const storageAppPrivateKey = `APP_PRIVATE_KEY=${this.env.APP_PRIVATE_KEY}`;
+    const voyageaiApiKey = `VOYAGEAI_API_KEY=${this.env.VOYAGEAI_API_KEY}`;
+    const openaiApiKey = `OPENAI_API_KEY=${this.env.OPENAI_API_KEY}`;
+    const openrouterApiKey = `OPENROUTER_API_KEY=${this.env.OPENROUTER_API_KEY}`;
+    const kernelPublicKey = `KERNEL_PUBLIC_KEY=${this.env.KERNEL_PUBLIC_KEY}`;
+
+    const envVars = [telegramBotEnv, repositoryEnv, storageAppId, storageAppPrivateKey, voyageaiApiKey, openaiApiKey, openrouterApiKey, kernelPublicKey];
 
     for (const path of paths) {
-      const envVar = `${repositoryEnv}\n${telegramBotEnv}\n${storageAppId}\n${storageAppPrivateKey}`;
-      await writeFile(path, envVar, "utf-8");
+      await writeFile(path, envVars.join("\n"), "utf-8");
     }
 
     logger.ok("Local env files saved successfully");
