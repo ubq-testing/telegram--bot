@@ -96,7 +96,7 @@ export const env = T.Object({
   OPENAI_API_KEY: T.Optional(T.String()),
   OPENROUTER_API_KEY: T.Optional(T.String()),
   VOYAGEAI_API_KEY: T.String(),
-  KERNEL_PUBLIC_KEY: T.String(),
+  KERNEL_PUBLIC_KEY: T.Optional(T.String())
 });
 
 export type Env = StaticDecode<typeof env>;
