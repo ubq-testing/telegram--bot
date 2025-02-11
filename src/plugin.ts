@@ -5,7 +5,7 @@ import { proxyCallbacks } from "./handlers/worker-proxy";
 
 export async function runPlugin(context: Context) {
   const { eventName } = context;
-  return proxyCallbacks(context)[eventName];
+  await Promise.resolve(proxyCallbacks(context)[eventName]);
 }
 
 export async function plugin(inputs: PluginInputs, env: Env) {

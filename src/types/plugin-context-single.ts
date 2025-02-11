@@ -7,6 +7,7 @@ import { App } from "octokit";
 import { logger } from "../utils/logger";
 import { Octokit } from "@octokit/rest";
 import { Octokit as RestOctokitFromApp } from "octokit";
+import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 
 /**
  * Singleton for the plugin context making accessing it throughout
@@ -137,7 +138,7 @@ export class PluginContext {
       config: this.config,
       octokit: !this.inputs.authToken ? octokit : this.getGitHubEventOctokit(),
       env: this.env,
-      logger,
+      logger: logger as Logs,
     } as Context;
 
     return {
