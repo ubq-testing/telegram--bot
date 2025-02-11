@@ -10,7 +10,6 @@ export type SupportedEvents = {
   [K in SupportedEventsU]: K extends WebhookEventName ? WebhookEvent<K> : never;
 };
 
-// @ts-expect-error - mismatch in octokit types causing a type error in T - no affect on runtime
 interface ExtendedContext<T extends SupportedEventsU> extends _Context<PluginSettings, Env, null, T> {
   adapters: ReturnType<typeof createAdapters>;
 }

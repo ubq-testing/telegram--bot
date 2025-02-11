@@ -139,7 +139,7 @@ export class PluginContext {
       octokit: !this.inputs.authToken ? octokit : this.getGitHubEventOctokit(),
       env: this.env,
       logger: logger as Logs,
-    } as Context;
+    } as unknown as Context;
 
     return {
       ...ctx,
