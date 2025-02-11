@@ -1,11 +1,9 @@
-import { Context, SupportedEvents } from "../../types";
+import { Context } from "../../types";
 import { CallbackResult } from "../../types/proxy";
 import { TelegramBotSingleton } from "../../types/telegram-bot-single";
 import { logger } from "../../utils/logger";
 
-export async function reviewNotification(
-  context: Context<"pull_request.review_requested", SupportedEvents["pull_request.review_requested"]>
-): Promise<CallbackResult> {
+export async function reviewNotification(context: Context<"pull_request.review_requested">): Promise<CallbackResult> {
   const {
     adapters: { storage },
     payload,
@@ -44,7 +42,7 @@ async function handleReviewNotification(
   telegramId: number,
   ownerRepo: string,
   issueNumber: number,
-  context: Context<"pull_request.review_requested", SupportedEvents["pull_request.review_requested"]>
+  context: Context<"pull_request.review_requested">
 ) {
   const prAuthor = context.payload.pull_request.user?.login;
   const message = `<b>Hello ${username.charAt(0).toUpperCase() + username.slice(1)}</b>,

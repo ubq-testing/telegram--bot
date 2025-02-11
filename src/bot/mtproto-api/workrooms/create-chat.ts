@@ -1,10 +1,10 @@
-import { Context, SupportedEvents } from "../../../types";
+import { Context } from "../../../types";
 import { CallbackResult } from "../../../types/proxy";
 import { addCommentToIssue } from "../../../utils/add-comment-to-issues";
 import { MtProto } from "../bot/mtproto";
 import bigInt from "big-integer";
 
-export async function createChat(context: Context<"issues.assigned", SupportedEvents["issues.assigned"]>): Promise<CallbackResult> {
+export async function createChat(context: Context<"issues.assigned">): Promise<CallbackResult> {
   const { payload, config, logger } = context;
 
   console.log("createChat: ", payload);

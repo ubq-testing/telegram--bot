@@ -1,9 +1,9 @@
-import { Context, SupportedEvents } from "../../types";
+import { Context } from "../../types";
 import { CallbackResult } from "../../types/proxy";
 import { TelegramBotSingleton } from "../../types/telegram-bot-single";
 import { logger } from "../../utils/logger";
 
-export async function disqualificationNotification(context: Context<"issues.unassigned", SupportedEvents["issues.unassigned"]>): Promise<CallbackResult> {
+export async function disqualificationNotification(context: Context<"issues.unassigned">): Promise<CallbackResult> {
   const {
     adapters: { storage },
     payload,
@@ -42,7 +42,7 @@ async function handleDisqualificationNotification(
   telegramId: number,
   ownerRepo: string,
   issueNumber: number,
-  context: Context<"issues.unassigned", SupportedEvents["issues.unassigned"]>
+  context: Context<"issues.unassigned">
 ) {
   const message = `<b>Hello ${username.charAt(0).toUpperCase() + username.slice(1)}</b>,
 

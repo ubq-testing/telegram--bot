@@ -1,10 +1,10 @@
 import { MtProto } from "../bot/mtproto";
 import { Api } from "telegram";
 import bigInt from "big-integer";
-import { Context, SupportedEvents } from "../../../types";
+import { Context } from "../../../types";
 import { CallbackResult } from "../../../types/proxy";
 
-export async function closeChat(context: Context<"issues.closed", SupportedEvents["issues.closed"]>): Promise<CallbackResult> {
+export async function closeChat(context: Context<"issues.closed">): Promise<CallbackResult> {
   const {
     payload,
     adapters: { storage },
