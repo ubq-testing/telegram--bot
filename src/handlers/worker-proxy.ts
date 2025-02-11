@@ -6,18 +6,16 @@ import { disqualificationNotification } from "./private-notifications/disqualifi
 import { reviewNotification } from "./private-notifications/review-trigger";
 import { closeWorkroom, createWorkroom, reOpenWorkroom } from "./workflow-functions";
 
-/**
- * The `callbacks` object defines an array of callback functions for each supported event type.
- *
- * Since multiple callbacks might need to be executed for a single event, we store each
- * callback in an array. This design allows for extensibility and flexibility, enabling
- * us to add more callbacks for a particular event without modifying the core logic.
- */
 const callbacks = {
   "issue_comment.created": [notificationsRequiringComments],
   "issue_comment.edited": [notificationsRequiringComments],
   "issues.unassigned": [disqualificationNotification],
   "pull_request.review_requested": [reviewNotification],
+
+  /**
+   * Workflow functions below - first routed through the worker
+   * which uses repositoryDispatch to fire the workflows.
+   */
   "issues.closed": [closeWorkroom],
   "issues.reopened": [reOpenWorkroom],
   "issues.assigned": [createWorkroom],
