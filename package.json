@@ -30,13 +30,13 @@
     "open-source"
   ],
   "dependencies": {
-    "@actions/core": "1.10.1",
+    "@actions/core": "^1.11.1",
     "@actions/github": "6.0.0",
     "@grammyjs/auto-chat-action": "^0.1.1",
     "@grammyjs/hydrate": "^1.4.1",
     "@grammyjs/parse-mode": "^1.10.0",
     "@grammyjs/types": "^3.16.0",
-    "@octokit/rest": "20.1.1",
+    "@octokit/rest": "^21.0.2",
     "@octokit/webhooks": "^13.3.0",
     "@sinclair/typebox": "0.32.33",
     "@supabase/supabase-js": "^2.45.6",

@@ -32,7 +32,7 @@ export function cors(options = { origin: "*", methods: "GET,POST,OPTIONS", heade
     c.res.headers.set("Access-Control-Allow-Methods", options.methods);
     c.res.headers.set("Access-Control-Allow-Headers", options.headers);
     if (c.req.method === "OPTIONS") {
-      return c.text("", 204);
+      return new Response(null, { status: 204 });
     }
     await next();
   };

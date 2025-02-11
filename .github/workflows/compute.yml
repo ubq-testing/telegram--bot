@@ -17,8 +17,6 @@ on:
         description: "Ref"
       signature:
         description: "Signature to identify the Kernel"
-      command:
-        description: "Command"
 
 jobs:
   compute:
