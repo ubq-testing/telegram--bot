@@ -7,7 +7,7 @@ import bigInt from "big-integer";
 export async function createChat(context: Context<"issues.assigned">): Promise<CallbackResult> {
   const { payload, config, logger } = context;
 
-  console.log("createChat: ", payload);
+  logger.info("Creating chat for issue: ", { chatName: payload.issue.title });
 
   const chatName = "@" + payload.repository.full_name + "#" + payload.issue.number;
 

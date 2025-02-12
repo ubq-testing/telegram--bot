@@ -78,21 +78,3 @@ run()
 
     process.exit(0);
   });
-
-// export default createActionsPlugin(
-//   (context) => {
-//     const ctx = context as Context;
-//     ctx.adapters = createAdapters(ctx);
-//     return runPlugin(ctx);
-//   },
-//   {
-//     logLevel: (process.env.LOG_LEVEL as LogLevel) ?? "debug",
-//     settingsSchema: pluginSettingsSchema,
-//     envSchema: envValidator.schema,
-//     ...(process.env.KERNEL_PUBLIC_KEY && { kernelPublicKey: process.env.KERNEL_PUBLIC_KEY }),
-//     postCommentOnError: true,
-//   }
-// ).catch((error) => {
-//   console.error(error);
-//   process.exit(1);
-// });

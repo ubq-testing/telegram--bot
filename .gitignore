@@ -16,8 +16,6 @@ cypress/screenshots
 script.ts
 .wrangler
 test-dashboard.md
-t.ts
-ncc-build
 
 # prod
 dist/
