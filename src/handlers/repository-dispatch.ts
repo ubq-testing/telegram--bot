@@ -6,8 +6,12 @@ export async function repositoryDispatch(context: Context, workflow: string) {
   const inputs = PluginContext.getInstance().getInputs();
   const { logger } = context;
 
-  const repository = "telegram--bot";
-  const owner = "ubq-testing";
+  /**
+   * These should probably remain hardcoded so that it is not
+   * possible to dispatch workflows to other repositories.
+   */
+  const repository = "ubiquity-os-kernel-telegram";
+  const owner = "ubiquity-os-marketplace";
   const branch = "development";
 
   const {

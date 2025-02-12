@@ -21,7 +21,11 @@ export const pluginSettingsSchema = T.Object({
     .Decode((value) => Number(value))
     .Encode((value) => value.toString()),
   shouldUseGithubStorage: T.Boolean({ default: false, description: "Activates the GitHub storage module." }),
-  storageOwner: T.String({ default: "ubiquity-os-marketplace", description: "Determines where the storage location of this plugin should be." }),
+  storageOwner: T.String({
+    default: "ubiquity-os-marketplace",
+    description:
+      "Determines the correct UbiquityOS install-authenticated Octokit instance to use and the storage location for this plugin (Required: GitHub Storage layer).",
+  }),
   fuzzySearchThreshold: T.Number({ default: 0.2, description: "The threshold for fuzzy search when invoking the `/newtask` command (0 is a perfect match)." }),
   aiConfig: T.Union(
     [

@@ -275,27 +275,28 @@ The worker runtime (`worker.ts`) serves as the main entry point and implements:
 4. **Error Boundaries**: Implements comprehensive error handling
 
 Key implementation from worker.ts:
+
 ```typescript
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const path = url.pathname;
-    
+
     // Environment validation
     let envSettings = Value.Decode(envValidator.schema, Value.Default(envValidator.schema, env));
-    
+
     // Context initialization
     const payload = (await request.clone().json()) as PluginInputs;
     PluginContext.initialize(payload, envSettings);
-    
+
     // Route handling
     if (["/telegram", "/telegram/"].includes(path)) {
       return await handleTelegramWebhook(request, envSettings);
     } else {
       return await handleGithubWebhook(request, envSettings);
     }
-  }
-}
+  },
+};
 ```
 
 #### GitHub Actions Runtime
@@ -311,6 +312,7 @@ The Actions runtime handles:
 The system uses multiple storage adapters:
 
 1. **Supabase Adapter** (`src/adapters/supabase/`):
+
    - Handles user sessions and preferences
    - Manages embeddings for AI features
    - Provides real-time capabilities
@@ -324,18 +326,20 @@ The system uses multiple storage adapters:
 The system implements comprehensive error handling:
 
 1. **Structured Logging**:
+
 ```typescript
-logger.error("Operation failed", { 
+logger.error("Operation failed", {
   err,
   context,
   additionalInfo: {
     timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV
-  }
+    environment: process.env.NODE_ENV,
+  },
 });
 ```
 
 2. **Error Boundaries**:
+
 ```typescript
 try {
   // Operation code
