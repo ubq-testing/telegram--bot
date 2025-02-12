@@ -41,7 +41,7 @@
     "@octokit/webhooks": "13.2.7",
     "@sinclair/typebox": "0.32.33",
     "@supabase/supabase-js": "^2.45.6",
-    "@ubiquity-os/plugin-sdk": "^2.0.6",
+    "@ubiquity-os/plugin-sdk": "^3.0.0",
     "@ubiquity-os/ubiquity-os-logger": "^1.4.0",
     "big-integer": "^1.6.52",
     "dotenv": "16.4.5",
