@@ -24,7 +24,7 @@
       },
       "storageOwner": {
         "default": "ubiquity-os-marketplace",
-        "description": "Determines where the storage location of this plugin should be.",
+        "description": "Determines the correct UbiquityOS install-authenticated Octokit instance to use and the storage location for this plugin (Required: GitHub Storage layer).",
         "type": "string"
       },
       "fuzzySearchThreshold": {
