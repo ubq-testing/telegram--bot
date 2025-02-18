@@ -40,7 +40,6 @@ export class TelegramBotSingleton {
       throw new Error("Octokit not initialized");
     }
 
-
     if (!TelegramBotSingleton._instance) {
       TelegramBotSingleton._instance = new TelegramBotSingleton();
       try {

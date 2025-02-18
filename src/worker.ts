@@ -43,7 +43,7 @@ async function initPluginContext(payload: PluginInputs, env: Env): Promise<Plugi
   return {
     pluginCtx,
     envSettings,
-  }
+  };
 }
 
 /**
@@ -51,12 +51,12 @@ async function initPluginContext(payload: PluginInputs, env: Env): Promise<Plugi
  *
  * Handles any github-sided events.
  */
-async function githubRoute(request: Request, ctx_: PluginContextAndEnv, executionCtx?: ExecutionContext) {
+async function githubRoute(request: Request, pluginCtxAndEnv: PluginContextAndEnv, executionCtx?: ExecutionContext) {
   return createPlugin<Context>(
     (context) => {
       const ctx = context as unknown as Context;
       ctx.adapters = createAdapters(ctx);
-      return runPlugin(ctx, ctx_.pluginCtx);
+      return runPlugin(ctx, pluginCtxAndEnv.pluginCtx);
     },
     manifest as Manifest,
     {
@@ -64,10 +64,10 @@ async function githubRoute(request: Request, ctx_: PluginContextAndEnv, executio
       postCommentOnError: true,
       settingsSchema: pluginSettingsValidator.schema,
       logLevel: "debug",
-      kernelPublicKey: ctx_.envSettings.KERNEL_PUBLIC_KEY,
+      kernelPublicKey: pluginCtxAndEnv.envSettings.KERNEL_PUBLIC_KEY,
       bypassSignatureVerification: process.env.NODE_ENV === "local",
     }
-  ).fetch(request, ctx_.envSettings, executionCtx);
+  ).fetch(request, pluginCtxAndEnv.envSettings, executionCtx);
 }
 
 /**

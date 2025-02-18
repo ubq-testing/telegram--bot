@@ -1,9 +1,7 @@
-import { Bot } from "../../bot";
 import { Context, SharedCtx } from "../../types";
 import { StorageUser } from "../../types/storage";
 import { CallbackResult } from "../../types/proxy";
 import { logger } from "../../utils/logger";
-import { PluginContext } from "../../types/plugin-context-single";
 
 const reminderCommentRegex = /@(\w+), this task has been idle for a while/gi;
 // eslint-disable-next-line sonarjs/duplicates-in-character-class
@@ -79,7 +77,10 @@ async function fetchUsers(usernames: string[], context: Context<"issue_comment.c
   return users;
 }
 
-export async function notificationsRequiringComments(context: Context<"issue_comment.created" | "issue_comment.edited">, sharedCtx: SharedCtx): Promise<CallbackResult> {
+export async function notificationsRequiringComments(
+  context: Context<"issue_comment.created" | "issue_comment.edited">,
+  sharedCtx: SharedCtx
+): Promise<CallbackResult> {
   const { payload } = context;
   const { body } = payload.comment;
   const { results, users } = await getUsersFromStorage(context, body);

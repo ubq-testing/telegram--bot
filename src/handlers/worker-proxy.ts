@@ -39,7 +39,7 @@ const callbacks = {
  * callbacks based on the event type, ensuring that the correct context is passed to
  * each callback.
  */
-export function proxyCallbacks(context: Context, sharedCtx: { bot: Bot, pluginCtx: PluginContext }): ProxyCallbacks {
+export function proxyCallbacks(context: Context, sharedCtx: { bot: Bot; pluginCtx: PluginContext }): ProxyCallbacks {
   return new Proxy(callbacks, {
     get(target, prop: SupportedEventsU) {
       if (!target[prop]) {
@@ -70,6 +70,6 @@ export function proxyCallbacks(context: Context, sharedCtx: { bot: Bot, pluginCt
  * flexible way to handle callbacks without introducing type or logic errors.
  */
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-export function handleCallback(callback: Function, context: Context, sharedCtx?: { bot: Bot, pluginCtx: PluginContext }) {
+export function handleCallback(callback: Function, context: Context, sharedCtx?: { bot: Bot; pluginCtx: PluginContext }) {
   return callback(context, sharedCtx);
 }

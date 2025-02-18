@@ -1,4 +1,3 @@
-import { Bot } from "../../bot";
 import { Context, SharedCtx } from "../../types";
 import { CallbackResult } from "../../types/proxy";
 import { logger } from "../../utils/logger";

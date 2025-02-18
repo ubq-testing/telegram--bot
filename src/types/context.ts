@@ -12,7 +12,7 @@ export type SupportedEvents = {
   [K in SupportedEventsU]: K extends WebhookEventName ? WebhookEvent<K> : never;
 };
 
-// @ts-ignore - octokit type mismatch - doesn't affect runtime
+// @ts-expect-error - octokit type mismatch - doesn't affect runtime
 interface ExtendedContext<T extends SupportedEventsU> extends _Context<PluginSettings, Env, null, T> {
   adapters: ReturnType<typeof createAdapters>;
 }
@@ -22,6 +22,6 @@ export type Context<T extends SupportedEventsU = SupportedEventsU> = ExtendedCon
 export type PluginContextAndEnv = {
   pluginCtx: PluginContext;
   envSettings: Env;
-}
+};
 
-export type SharedCtx = { bot: Bot, pluginCtx: PluginContext }
+export type SharedCtx = { bot: Bot; pluginCtx: PluginContext };

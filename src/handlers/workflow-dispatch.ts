@@ -1,14 +1,15 @@
 import { App } from "octokit";
-import { Context, PluginContextAndEnv } from "../types";
+import { Context } from "../types";
 import { PluginContext } from "../types/plugin-context-single";
 
 export async function workflowDispatch(context: Context, workflowFunctionName: string, pluginCtx: PluginContext) {
   const inputs = pluginCtx.getInputs();
-  const { logger, config: { workflowfunctions: {
-    targetBranch,
-    sourceRepoOwner,
-    sourceRepository
-  } } } = context;
+  const {
+    logger,
+    config: {
+      workflowfunctions: { targetBranch, sourceRepoOwner, sourceRepository },
+    },
+  } = context;
 
   const {
     env: { APP_ID, APP_PRIVATE_KEY },

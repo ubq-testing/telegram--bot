@@ -1,4 +1,4 @@
-import { Env, PluginContextAndEnv } from "../types";
+import { PluginContextAndEnv } from "../types";
 import { TelegramBotSingleton } from "../types/telegram-bot-single";
 import { logger } from "../utils/logger";
 

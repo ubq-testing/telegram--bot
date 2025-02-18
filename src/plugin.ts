@@ -5,6 +5,6 @@ import { PluginContext } from "./types/plugin-context-single";
 
 export async function runPlugin(context: Context, pluginCtx: PluginContext) {
   const { eventName } = context;
-  const bot = (await TelegramBotSingleton.initialize({ envSettings: context.env, pluginCtx })).getBot()
+  const bot = (await TelegramBotSingleton.initialize({ envSettings: context.env, pluginCtx })).getBot();
   await Promise.resolve(proxyCallbacks(context, { bot, pluginCtx })[eventName]);
 }

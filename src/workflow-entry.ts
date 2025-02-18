@@ -54,8 +54,8 @@ async function run() {
 
   const ctx: PluginContextAndEnv = {
     envSettings: env,
-    pluginCtx: PluginContext.initialize(inputs, env)
-  }
+    pluginCtx: PluginContext.initialize(inputs, env),
+  };
 
   const context = await ctx.pluginCtx.getContext();
   return proxyWorkflowCallbacks(context)[inputs.eventName];
