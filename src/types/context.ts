@@ -4,6 +4,7 @@ import { PluginSettings } from "./plugin-inputs";
 import { Env } from "./env";
 import { createAdapters } from "../adapters";
 import { PluginContext } from "./plugin-context-single";
+import { Bot } from "../bot";
 
 export type SupportedEventsU = WebhookEventName;
 
@@ -22,3 +23,5 @@ export type PluginContextAndEnv = {
   pluginCtx: PluginContext;
   envSettings: Env;
 }
+
+export type SharedCtx = { bot: Bot, pluginCtx: PluginContext }

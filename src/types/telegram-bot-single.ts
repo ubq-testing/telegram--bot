@@ -4,6 +4,7 @@ import { PluginContextAndEnv } from ".";
 import { Bot, createBot } from "../bot";
 import { createServer } from "../server";
 import { logger } from "../utils/logger";
+import { PluginContext } from "./plugin-context-single";
 
 /**
  * Singleton for the worker instance of the telegram bot
@@ -14,6 +15,7 @@ export class TelegramBotSingleton {
   private static _instance: TelegramBotSingleton;
   private static _bot: Bot;
   private static _server: ReturnType<typeof createServer>;
+  private static _pluginCtx: PluginContext;
 
   static async initialize(ctx: PluginContextAndEnv): Promise<TelegramBotSingleton> {
     const {
@@ -24,10 +26,12 @@ export class TelegramBotSingleton {
       },
     } = ctx;
 
+    this._pluginCtx = ctx.pluginCtx;
+
     let octokit: Octokit | OctokitRest | null = null;
 
     try {
-      octokit = await ctx.pluginCtx.getTelegramEventOctokit();
+      octokit = await this._pluginCtx.getTelegramEventOctokit();
     } catch (er) {
       logger.error("Error initializing octokit in TelegramBotSingleton", { er });
     }
@@ -35,6 +39,7 @@ export class TelegramBotSingleton {
     if (!octokit) {
       throw new Error("Octokit not initialized");
     }
+
 
     if (!TelegramBotSingleton._instance) {
       TelegramBotSingleton._instance = new TelegramBotSingleton();

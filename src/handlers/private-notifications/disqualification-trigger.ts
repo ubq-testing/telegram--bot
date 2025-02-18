@@ -1,9 +1,9 @@
-import { Context } from "../../types";
+import { Bot } from "../../bot";
+import { Context, SharedCtx } from "../../types";
 import { CallbackResult } from "../../types/proxy";
-import { TelegramBotSingleton } from "../../types/telegram-bot-single";
 import { logger } from "../../utils/logger";
 
-export async function disqualificationNotification(context: Context<"issues.unassigned">): Promise<CallbackResult> {
+export async function disqualificationNotification(context: Context<"issues.unassigned">, sharedCtx: SharedCtx): Promise<CallbackResult> {
   const {
     adapters: { storage },
     payload,
@@ -29,7 +29,7 @@ export async function disqualificationNotification(context: Context<"issues.unas
   }
 
   if (dbUser.listening_to["disqualification"]) {
-    await handleDisqualificationNotification(dbUser.github_username, dbUser.telegram_id, ownerRepo, issueNumber, context);
+    await handleDisqualificationNotification(dbUser.github_username, dbUser.telegram_id, ownerRepo, issueNumber, context, sharedCtx);
   } else {
     return { status: 200, reason: "skipped" };
   }
@@ -42,7 +42,8 @@ async function handleDisqualificationNotification(
   telegramId: number,
   ownerRepo: string,
   issueNumber: number,
-  context: Context<"issues.unassigned">
+  context: Context<"issues.unassigned">,
+  sharedCtx: SharedCtx
 ) {
   const message = `<b>Hello ${username.charAt(0).toUpperCase() + username.slice(1)}</b>,
 
@@ -53,19 +54,12 @@ You will not be able to self-assign this task again.
 
   let userPrivateChat;
 
-  let bot;
-  try {
-    bot = (await TelegramBotSingleton.initialize(context.env)).getBot();
-  } catch (er) {
-    logger.error(`Error getting bot instance`, { er });
-  }
-
-  if (!bot) {
+  if (!sharedCtx.bot) {
     throw new Error("Bot instance not found");
   }
 
   try {
-    userPrivateChat = await bot?.api.getChat(telegramId);
+    userPrivateChat = await sharedCtx.bot?.api.getChat(telegramId);
   } catch (er) {
     logger.error(`Error getting chat for ${telegramId}`, { er });
   }
@@ -76,7 +70,7 @@ You will not be able to self-assign this task again.
   }
 
   try {
-    await bot?.api.sendMessage(telegramId, message, { parse_mode: "HTML" });
+    await sharedCtx.bot?.api.sendMessage(telegramId, message, { parse_mode: "HTML" });
   } catch (er) {
     logger.error(`Error sending message to ${telegramId}`, { er });
   }

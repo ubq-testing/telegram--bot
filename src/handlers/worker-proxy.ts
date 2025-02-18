@@ -1,4 +1,6 @@
+import { Bot } from "../bot";
 import { Context, SupportedEventsU } from "../types";
+import { PluginContext } from "../types/plugin-context-single";
 import { ProxyCallbacks } from "../types/proxy";
 import { bubbleUpErrorComment } from "../utils/errors";
 import { notificationsRequiringComments } from "./private-notifications/comment-triggers";
@@ -37,7 +39,7 @@ const callbacks = {
  * callbacks based on the event type, ensuring that the correct context is passed to
  * each callback.
  */
-export function proxyCallbacks(context: Context): ProxyCallbacks {
+export function proxyCallbacks(context: Context, sharedCtx: { bot: Bot, pluginCtx: PluginContext }): ProxyCallbacks {
   return new Proxy(callbacks, {
     get(target, prop: SupportedEventsU) {
       if (!target[prop]) {
@@ -46,7 +48,7 @@ export function proxyCallbacks(context: Context): ProxyCallbacks {
       }
       return (async () => {
         try {
-          return await Promise.all(target[prop].map((callback) => handleCallback(callback, context)));
+          return await Promise.all(target[prop].map((callback) => handleCallback(callback, context, sharedCtx)));
         } catch (er) {
           await bubbleUpErrorComment(context, er);
           return { status: 500, reason: "failed" };
@@ -68,6 +70,6 @@ export function proxyCallbacks(context: Context): ProxyCallbacks {
  * flexible way to handle callbacks without introducing type or logic errors.
  */
 // eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
-export function handleCallback(callback: Function, context: Context) {
-  return callback(context);
+export function handleCallback(callback: Function, context: Context, sharedCtx?: { bot: Bot, pluginCtx: PluginContext }) {
+  return callback(context, sharedCtx);
 }

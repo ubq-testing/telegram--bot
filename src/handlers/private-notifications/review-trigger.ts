@@ -1,9 +1,8 @@
-import { Context } from "../../types";
+import { Context, SharedCtx } from "../../types";
 import { CallbackResult } from "../../types/proxy";
-import { TelegramBotSingleton } from "../../types/telegram-bot-single";
 import { logger } from "../../utils/logger";
 
-export async function reviewNotification(context: Context<"pull_request.review_requested">): Promise<CallbackResult> {
+export async function reviewNotification(context: Context<"pull_request.review_requested">, sharedCtx: SharedCtx): Promise<CallbackResult> {
   const {
     adapters: { storage },
     payload,
@@ -29,7 +28,7 @@ export async function reviewNotification(context: Context<"pull_request.review_r
   }
 
   if (dbUser.listening_to["review"]) {
-    await handleReviewNotification(dbUser.github_username, dbUser.telegram_id, ownerRepo, issueNumber, context);
+    await handleReviewNotification(dbUser.github_username, dbUser.telegram_id, ownerRepo, issueNumber, context, sharedCtx);
   } else {
     return { status: 200, reason: "skipped" };
   }
@@ -42,7 +41,8 @@ async function handleReviewNotification(
   telegramId: number,
   ownerRepo: string,
   issueNumber: number,
-  context: Context<"pull_request.review_requested">
+  context: Context<"pull_request.review_requested">,
+  sharedCtx: SharedCtx
 ) {
   const prAuthor = context.payload.pull_request.user?.login;
   const message = `<b>Hello ${username.charAt(0).toUpperCase() + username.slice(1)}</b>,
@@ -51,19 +51,12 @@ ${prAuthor} has requested a review from you on <a href="${context.payload.pull_r
 
   let userPrivateChat;
 
-  let bot;
-  try {
-    bot = (await TelegramBotSingleton.initialize(context.env)).getBot();
-  } catch (er) {
-    logger.error(`Error getting bot instance`, { er });
-  }
-
-  if (!bot) {
+  if (!sharedCtx.bot) {
     throw new Error("Bot instance not found");
   }
 
   try {
-    userPrivateChat = await bot?.api.getChat(telegramId);
+    userPrivateChat = await sharedCtx.bot?.api.getChat(telegramId);
   } catch (er) {
     logger.error(`Error getting chat for ${telegramId}`, { er });
   }
@@ -74,7 +67,7 @@ ${prAuthor} has requested a review from you on <a href="${context.payload.pull_r
   }
 
   try {
-    await bot?.api.sendMessage(telegramId, message, { parse_mode: "HTML" });
+    await sharedCtx.bot?.api.sendMessage(telegramId, message, { parse_mode: "HTML" });
   } catch (er) {
     logger.error(`Error sending message to ${telegramId} `, { er });
   }
