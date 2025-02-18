@@ -14,7 +14,7 @@ const callbacks = {
 
   /**
    * Workflow functions below - first routed through the worker
-   * which uses repositoryDispatch to fire the workflows.
+   * which uses workflowDispatch to fire the workflows.
    */
   "issues.closed": [closeWorkroom],
   "issues.reopened": [reOpenWorkroom],

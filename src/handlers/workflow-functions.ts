@@ -1,19 +1,19 @@
 import { Context } from "../types";
 import { CallbackResult } from "../types/proxy";
-import { repositoryDispatch } from "./repository-dispatch";
+import { workflowDispatch } from "./repository-dispatch";
 
 /**
  * The logic for this function can be found in [../bot/mtproto-api/workrooms/create-chat.ts](../bot/mtproto-api/workrooms/create-chat.ts)
  */
 export async function createWorkroom(context: Context<"issues.assigned">): Promise<CallbackResult> {
-  await repositoryDispatch(context, "create-telegram-chat").catch(console.error);
+  await workflowDispatch(context, "create-telegram-chat").catch(console.error);
   return { status: 200, reason: "workflow_dispatched" };
 }
 /**
  * The logic for this function can be found in [../bot/mtproto-api/workrooms/close-chat.ts](../bot/mtproto-api/workrooms/close-chat.ts)
  */
 export async function closeWorkroom(context: Context<"issues.closed">): Promise<CallbackResult> {
-  await repositoryDispatch(context, "close-telegram-chat").catch(console.error);
+  await workflowDispatch(context, "close-telegram-chat").catch(console.error);
   return { status: 200, reason: "workflow_dispatched" };
 }
 
@@ -21,6 +21,6 @@ export async function closeWorkroom(context: Context<"issues.closed">): Promise<
  * The logic for this function can be found in [../bot/mtproto-api/workrooms/reopen-chat.ts](../bot/mtproto-api/workrooms/reopen-chat.ts)
  */
 export async function reOpenWorkroom(context: Context<"issues.reopened">): Promise<CallbackResult> {
-  await repositoryDispatch(context, "reopen-telegram-chat").catch(console.error);
+  await workflowDispatch(context, "reopen-telegram-chat").catch(console.error);
   return { status: 200, reason: "workflow_dispatched" };
 }

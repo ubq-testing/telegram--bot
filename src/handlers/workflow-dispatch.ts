@@ -2,7 +2,7 @@ import { App } from "octokit";
 import { Context } from "../types";
 import { PluginContext } from "../types/plugin-context-single";
 
-export async function repositoryDispatch(context: Context, workflow: string) {
+export async function workflowDispatch(context: Context, workflow: string) {
   const inputs = PluginContext.getInstance().getInputs();
   const { logger } = context;
 
