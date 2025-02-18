@@ -2,7 +2,7 @@ import { App } from "octokit";
 import { Context } from "../types";
 import { PluginContext } from "../types/plugin-context-single";
 
-export async function workflowDispatch(context: Context, workflow: string) {
+export async function workflowDispatch(context: Context, workflowFunctionName: string) {
   const inputs = PluginContext.getInstance().getInputs();
   const { logger } = context;
 
@@ -26,7 +26,7 @@ export async function workflowDispatch(context: Context, workflow: string) {
     repository,
     owner,
     branch,
-    workflow,
+    workflowFunctionName,
   });
 
   Reflect.deleteProperty(inputs, "signature");
