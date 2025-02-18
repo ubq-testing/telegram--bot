@@ -1,6 +1,6 @@
 import { Context } from "../types";
 import { CallbackResult } from "../types/proxy";
-import { workflowDispatch } from "./repository-dispatch";
+import { workflowDispatch } from "./workflow-dispatch";
 
 /**
  * The logic for this function can be found in [../bot/mtproto-api/workrooms/create-chat.ts](../bot/mtproto-api/workrooms/create-chat.ts)

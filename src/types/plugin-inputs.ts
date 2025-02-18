@@ -52,6 +52,11 @@ export const pluginSettingsSchema = T.Object({
     ],
     { default: { kind: "OpenAi", model: "o1-mini", baseUrl: "https://api.openai.com/v1" } }
   ),
+  workflowfunctions: T.Object({
+    sourceRepository: T.String({ default: "ubiquity-os-kernel-telegram", description: "The repository where the workflow functions are located." }),
+    sourceRepoOwner: T.String({ default: "ubiquity-os-marketplace", description: "The owner of the repository where the workflow functions are located." }),
+    targetBranch: T.String({ default: "development", description: "The target branch for the workflow functions." }),
+  }, { description: "The repository and branch where the workflow functions are located. Forks need to target themselves." }),
 });
 
 export const pluginSettingsValidator = new StandardValidator(pluginSettingsSchema);
