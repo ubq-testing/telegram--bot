@@ -8,6 +8,7 @@ import { Octokit } from "@octokit/rest";
 import dotenv from "dotenv";
 import { appendFile, writeFile } from "node:fs/promises";
 import { logger } from "../../../../../utils/logger";
+import { optional } from "voyageai/core/schemas";
 dotenv.config();
 /**
  * This script is used to help guide the user through setting up the environment variables.
@@ -152,6 +153,7 @@ class SetUpHandler {
           type: "input",
           name: "KERNEL_PUBLIC_KEY",
           message: "Enter your Kernel public key. This can be obtained from your Kernel private key.",
+          optional: true,
         },
       ],
     },
@@ -219,7 +221,7 @@ class SetUpHandler {
   async handleQuestions(
     answers: Record<string, Record<string, string>>,
     step: { title: string; questions: { type: string; name: string; message: string }[] },
-    question: { name: string; message: string }
+    question: { name: string; message: string, optional?: boolean }
   ) {
     answers[step.title] ??= {};
 
@@ -248,6 +250,13 @@ class SetUpHandler {
       "OPENROUTER_API_KEY",
     ];
     let answer;
+
+    if (question.optional) {
+      const shouldSet = await input.confirm(`Do you want to set ${question.name}?\n>  `);
+      if (!shouldSet) {
+        return;
+      }
+    }
 
     if (passwords.includes(question.name)) {
       answer = await input.password(`  ${question.message}\n>  `);
