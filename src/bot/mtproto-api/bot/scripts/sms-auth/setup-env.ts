@@ -8,7 +8,6 @@ import { Octokit } from "@octokit/rest";
 import dotenv from "dotenv";
 import { appendFile, writeFile } from "node:fs/promises";
 import { logger } from "../../../../../utils/logger";
-import { optional } from "voyageai/core/schemas";
 dotenv.config();
 /**
  * This script is used to help guide the user through setting up the environment variables.
@@ -221,7 +220,7 @@ class SetUpHandler {
   async handleQuestions(
     answers: Record<string, Record<string, string>>,
     step: { title: string; questions: { type: string; name: string; message: string }[] },
-    question: { name: string; message: string, optional?: boolean }
+    question: { name: string; message: string; optional?: boolean }
   ) {
     answers[step.title] ??= {};
 

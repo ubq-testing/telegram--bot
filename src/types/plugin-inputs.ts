@@ -60,7 +60,7 @@ export const pluginSettingsSchema = T.Object({
     },
     {
       description: "Self-dispatched workflow settings. Forks need to target themselves.",
-      default: { sourceRepository: "telegram--bot", sourceRepoOwner: "ubq-testing", targetBranch: "development" },
+      default: { sourceRepository: "ubiquity-os-kernel-telegram", sourceRepoOwner: "ubiquity-os-marketplace", targetBranch: "development" },
     }
   ),
 });
