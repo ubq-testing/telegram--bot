@@ -1,8 +1,8 @@
-import { Context, SharedCtx } from "../../types";
+import { Context } from "../../types";
 import { CallbackResult } from "../../types/proxy";
 import { logger } from "../../utils/logger";
 
-export async function disqualificationNotification(context: Context<"issues.unassigned">, sharedCtx: SharedCtx): Promise<CallbackResult> {
+export async function disqualificationNotification(context: Context<"issues.unassigned">): Promise<CallbackResult> {
   const {
     adapters: { storage },
     payload,
@@ -28,7 +28,7 @@ export async function disqualificationNotification(context: Context<"issues.unas
   }
 
   if (dbUser.listening_to["disqualification"]) {
-    await handleDisqualificationNotification(dbUser.github_username, dbUser.telegram_id, ownerRepo, issueNumber, context, sharedCtx);
+    await handleDisqualificationNotification(dbUser.github_username, dbUser.telegram_id, ownerRepo, issueNumber, context);
   } else {
     return { status: 200, reason: "skipped" };
   }
@@ -41,8 +41,7 @@ async function handleDisqualificationNotification(
   telegramId: number,
   ownerRepo: string,
   issueNumber: number,
-  context: Context<"issues.unassigned">,
-  sharedCtx: SharedCtx
+  context: Context<"issues.unassigned">
 ) {
   const message = `<b>Hello ${username.charAt(0).toUpperCase() + username.slice(1)}</b>,
 
@@ -53,12 +52,12 @@ You will not be able to self-assign this task again.
 
   let userPrivateChat;
 
-  if (!sharedCtx.bot) {
+  if (!context.bot) {
     throw new Error("Bot instance not found");
   }
 
   try {
-    userPrivateChat = await sharedCtx.bot?.api.getChat(telegramId);
+    userPrivateChat = await context.bot?.api.getChat(telegramId);
   } catch (er) {
     logger.error(`Error getting chat for ${telegramId}`, { er });
   }
@@ -69,7 +68,7 @@ You will not be able to self-assign this task again.
   }
 
   try {
-    await sharedCtx.bot?.api.sendMessage(telegramId, message, { parse_mode: "HTML" });
+    await context.bot?.api.sendMessage(telegramId, message, { parse_mode: "HTML" });
   } catch (er) {
     logger.error(`Error sending message to ${telegramId}`, { er });
   }

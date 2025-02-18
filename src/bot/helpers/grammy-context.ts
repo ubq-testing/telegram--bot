@@ -30,14 +30,9 @@ interface ExtendedContextFlavor extends Dependencies {
 export type GrammyContext = ParseModeFlavor<HydrateFlavor<DefaultContext & ExtendedContextFlavor & SessionFlavor<SessionData> & AutoChatActionFlavor>>;
 
 export async function createContextConstructor({ logger, config, octokit, pluginCtx }: Dependencies) {
-  let adapters: ReturnType<typeof createAdapters> | undefined;
+  const adapters = (await pluginCtx.getContext()).adapters;
 
-  try {
-    adapters = createAdapters(await pluginCtx.getContext());
-  } catch (er) {
-    logger.error("createAdapters in Grammy Context failed", { er });
-  }
-
+  console.log("adapters", adapters);
   if (!adapters) {
     throw new Error("Adapters not initialized");
   }

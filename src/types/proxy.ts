@@ -1,4 +1,4 @@
-import { Context, SharedCtx, SupportedEventsU } from "./context";
+import { Context, SupportedEventsU } from "./context";
 
 export type CallbackResult = { status: 200 | 201 | 204 | 404 | 500; reason: string; content?: string | Record<string, unknown> };
 
@@ -14,5 +14,5 @@ export type CallbackResult = { status: 200 | 201 | 204 | 404 | 500; reason: stri
  */
 
 export type ProxyCallbacks = {
-  [K in SupportedEventsU]: Array<(context: Context<K>, sharedCtx?: SharedCtx) => Promise<CallbackResult>>;
+  [K in SupportedEventsU]: Array<(context: Context<K>) => Promise<CallbackResult>>;
 };

@@ -1,17 +1,17 @@
-import { SharedCtx } from "../types";
+import { PluginContext } from "../types/plugin-context-single";
 import { TelegramBotSingleton } from "../types/telegram-bot-single";
 import { logger } from "../utils/logger";
 
-export async function handleTelegramWebhook(request: Request, ctx: SharedCtx): Promise<Response> {
-  const botInstance = await initializeBotInstance(ctx);
+export async function handleTelegramWebhook(request: Request, pluginCtx: PluginContext): Promise<Response> {
+  const botInstance = await initializeBotInstance(pluginCtx);
 
   if (botInstance) {
-    ctx.bot = botInstance.getBot();
+    pluginCtx._bot = botInstance.getBot();
   }
 
   const { server } = getServerFromBot(botInstance);
 
-  const res = await makeServerRequest(server, request, ctx);
+  const res = await makeServerRequest(server, request, pluginCtx);
 
   const body = await readResponseBody(res);
 
@@ -20,13 +20,12 @@ export async function handleTelegramWebhook(request: Request, ctx: SharedCtx): P
   return response;
 }
 
-async function initializeBotInstance(ctx: SharedCtx) {
+async function initializeBotInstance(pluginCtx: PluginContext) {
   try {
-    const botInstance = await TelegramBotSingleton.initialize(ctx);
-    return botInstance;
+    return await TelegramBotSingleton.initialize(pluginCtx);
   } catch (er) {
     const errorInfo = {
-      message: "Error initializing TelegramBotSingleton",
+      message: "initializeBotInstance Error",
       error: er instanceof Error ? er.message : String(er),
       stack: er instanceof Error ? er.stack : undefined,
     };
@@ -49,17 +48,17 @@ function getServerFromBot(botInstance: TelegramBotSingleton | null) {
       error: er instanceof Error ? er.message : String(er),
       stack: er instanceof Error ? er.stack : undefined,
     };
-    logger.error(errorInfo.message, { error: er as Error });
+    logger.error(errorInfo.message, { error: er as Error, botInstance });
     return { server: null, bot: null };
   }
 }
 
-async function makeServerRequest(server: ReturnType<TelegramBotSingleton["getServer"]> | null, request: Request, ctx: SharedCtx): Promise<Response> {
+async function makeServerRequest(server: ReturnType<TelegramBotSingleton["getServer"]> | null, request: Request, pluginCtx: PluginContext): Promise<Response> {
   try {
     if (!server) {
       throw new Error("Server is null");
     }
-    return await server.fetch(request, ctx.envSettings);
+    return await server.fetch(request, pluginCtx.env);
   } catch (er) {
     const errorInfo = {
       message: "Error fetching request from hono server",

@@ -56,6 +56,18 @@ const mtProtoSettings = T.Object({
   TELEGRAM_API_HASH: T.String(),
 });
 
+const workflowFunctions = T.Object(
+  {
+    SOURCE_REPOSITORY: T.String({ description: "The repository where the workflow functions are located." }),
+    SOURCE_REPO_OWNER: T.String({ description: "The owner of the repository where the workflow functions are located." }),
+    TARGET_BRANCH: T.String({ description: "The target branch for the workflow functions." }),
+  },
+  {
+    description: "Self-dispatched workflow settings. Forks need to target themselves.",
+    default: { SOURCE_REPOSITORY: "ubiquity-os-kernel-telegram", SOURCE_REPO_OWNER: "ubiquity-os-marketplace", TARGET_BRANCH: "development" },
+  }
+);
+
 const storageSettings = T.Object({
   /**
    * The supabase instance url for storing chats, sessions, etc.
@@ -71,6 +83,7 @@ const TELEGRAM_BOT_ENV = T.Object({
   botSettings,
   mtProtoSettings,
   storageSettings,
+  workflowFunctions,
 });
 
 const botEnvValidator = new StandardValidator(TELEGRAM_BOT_ENV);

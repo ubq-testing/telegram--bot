@@ -1,4 +1,4 @@
-import { Context, SharedCtx } from "../../types";
+import { Context } from "../../types";
 import { StorageUser } from "../../types/storage";
 import { CallbackResult } from "../../types/proxy";
 import { logger } from "../../utils/logger";
@@ -77,10 +77,7 @@ async function fetchUsers(usernames: string[], context: Context<"issue_comment.c
   return users;
 }
 
-export async function notificationsRequiringComments(
-  context: Context<"issue_comment.created" | "issue_comment.edited">,
-  sharedCtx: SharedCtx
-): Promise<CallbackResult> {
+export async function notificationsRequiringComments(context: Context<"issue_comment.created" | "issue_comment.edited">): Promise<CallbackResult> {
   const { payload } = context;
   const { body } = payload.comment;
   const { results, users } = await getUsersFromStorage(context, body);
@@ -98,7 +95,7 @@ export async function notificationsRequiringComments(
       if (!isActive || !commentDependantTriggers.includes(trigger)) {
         continue;
       }
-      await handleCommentNotificationTrigger({ trigger, user, telegramId: user.telegram_id, sharedCtx, context, claimUrl: results[i]?.claimUrl });
+      await handleCommentNotificationTrigger({ trigger, user, telegramId: user.telegram_id, context, claimUrl: results[i]?.claimUrl });
     }
     i++;
   }
@@ -110,30 +107,23 @@ async function handleCommentNotificationTrigger({
   trigger,
   user,
   telegramId,
-  sharedCtx,
   context,
   claimUrl,
 }: {
   trigger: string;
   user: StorageUser;
   telegramId: number | string;
-  sharedCtx: SharedCtx;
   context: Context<"issue_comment.created" | "issue_comment.edited">;
   claimUrl?: string;
 }) {
   if (trigger === "reminder" && !claimUrl) {
-    return handleReminderNotification(user.github_username, telegramId, sharedCtx, context);
+    return handleReminderNotification(user.github_username, telegramId, context);
   } else if (trigger === "payment" && claimUrl) {
-    return handlePaymentNotification(user, claimUrl, telegramId, sharedCtx, context);
+    return handlePaymentNotification(user, claimUrl, telegramId, context);
   }
 }
 
-async function handleReminderNotification(
-  username: string,
-  telegramId: string | number,
-  sharedCtx: SharedCtx,
-  context: Context<"issue_comment.created" | "issue_comment.edited">
-) {
+async function handleReminderNotification(username: string, telegramId: string | number, context: Context<"issue_comment.created" | "issue_comment.edited">) {
   const message = `<b>Hello ${username.charAt(0).toUpperCase() + username.slice(1)}</b>,
 
 This task has been idle for a while, please provide an update on <a href="${context.payload.issue.html_url}">${context.payload.repository.full_name}#${context.payload.issue.number}</a>.`;
@@ -141,7 +131,7 @@ This task has been idle for a while, please provide an update on <a href="${cont
   let userPrivateChat;
 
   try {
-    userPrivateChat = await sharedCtx.bot?.api.getChat(telegramId);
+    userPrivateChat = await context.bot?.api.getChat(telegramId);
   } catch (er) {
     logger.error(`Error getting chat for ${telegramId}`, { er });
   }
@@ -152,7 +142,7 @@ This task has been idle for a while, please provide an update on <a href="${cont
   }
 
   try {
-    await sharedCtx.bot?.api.sendMessage(Number(telegramId), message, { parse_mode: "HTML" });
+    await context.bot?.api.sendMessage(Number(telegramId), message, { parse_mode: "HTML" });
   } catch (er) {
     logger.error(`Error sending message to ${telegramId}`, { er });
   }
@@ -164,7 +154,6 @@ async function handlePaymentNotification(
   user: StorageUser,
   claimUrlBase64String: string | undefined,
   telegramId: string | number,
-  sharedCtx: SharedCtx,
   context: Context<"issue_comment.created" | "issue_comment.edited">
 ) {
   const { wallet_address, github_username: username } = user;
@@ -180,7 +169,7 @@ You can view the comment <a href="${context.payload.comment.html_url}">here</a>.
 `;
 
     try {
-      await sharedCtx.bot?.api.sendMessage(Number(telegramId), noWalletMessage, { parse_mode: "HTML" });
+      await context.bot?.api.sendMessage(Number(telegramId), noWalletMessage, { parse_mode: "HTML" });
     } catch (er) {
       logger.error(`Error sending message to ${telegramId}`, { er });
     }
@@ -190,7 +179,7 @@ You can view the comment <a href="${context.payload.comment.html_url}">here</a>.
   let userPrivateChat;
 
   try {
-    userPrivateChat = await sharedCtx.bot?.api.getChat(telegramId);
+    userPrivateChat = await context.bot?.api.getChat(telegramId);
   } catch (er) {
     logger.error(`Error getting chat for ${telegramId}`, { er });
   }
@@ -211,7 +200,7 @@ You can view the comment <a href="${context.payload.comment.html_url}">here</a>.
   Thank you for your contribution.`;
 
   try {
-    await sharedCtx.bot?.api.sendMessage(Number(telegramId), notificationMessage, { parse_mode: "HTML" });
+    await context.bot?.api.sendMessage(Number(telegramId), notificationMessage, { parse_mode: "HTML" });
   } catch (er) {
     logger.error(`Error sending message to ${telegramId}`, { er });
   }

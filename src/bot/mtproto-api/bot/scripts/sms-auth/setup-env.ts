@@ -18,7 +18,7 @@ dotenv.config();
 
 class SetUpHandler {
   private _env = {
-    REPO_ADMIN_ACCESS_TOKEN: null,
+    REPO_ADMIN_ACCESS_TOKEN: "",
     TELEGRAM_BOT_ENV: {
       botSettings: {
         TELEGRAM_BOT_ADMINS: [],
@@ -30,7 +30,23 @@ class SetUpHandler {
         TELEGRAM_API_HASH: null,
         TELEGRAM_APP_ID: 0,
       },
+      storageSettings: {
+        SUPABASE_SERVICE_KEY: null,
+        SUPABASE_URL: null,
+      },
+      workflowFunctions: {
+        SOURCE_REPOSITORY: null,
+        SOURCE_REPO_OWNER: null,
+        TARGET_BRANCH: null,
+      },
     },
+    APP_ID: "",
+    APP_PRIVATE_KEY: "",
+    VOYAGEAI_API_KEY: "",
+    KERNEL_PUBLIC_KEY: undefined,
+    OPENAI_API_KEY: undefined,
+    OPENROUTER_API_KEY: undefined,
+    TEMP_SAFE_PAT: undefined,
   } as unknown as Context["env"];
 
   get env() {
@@ -130,6 +146,27 @@ class SetUpHandler {
         },
       ],
     },
+
+    {
+      title: "Workflow Functions",
+      questions: [
+        {
+          type: "input",
+          name: "SOURCE_REPOSITORY",
+          message: "Enter the repository where the workflow functions are located.",
+        },
+        {
+          type: "input",
+          name: "SOURCE_REPO_OWNER",
+          message: "Enter the owner of the repository where the workflow functions are located.",
+        },
+        {
+          type: "input",
+          name: "TARGET_BRANCH",
+          message: "Enter the target branch for the workflow functions.",
+        },
+      ],
+    },
     {
       title: "API keys",
       questions: [
@@ -206,6 +243,11 @@ class SetUpHandler {
         storageSettings: {
           SUPABASE_SERVICE_KEY: answers["Storage settings"]["SUPABASE_SERVICE_KEY"],
           SUPABASE_URL: answers["Storage settings"]["SUPABASE_URL"],
+        },
+        workflowFunctions: {
+          SOURCE_REPOSITORY: answers["Workflow Functions"]["SOURCE_REPOSITORY"],
+          SOURCE_REPO_OWNER: answers["Workflow Functions"]["SOURCE_REPO_OWNER"],
+          TARGET_BRANCH: answers["Workflow Functions"]["TARGET_BRANCH"],
         },
       },
       VOYAGEAI_API_KEY: answers["Storage settings"]["VOYAGEAI_API_KEY"],

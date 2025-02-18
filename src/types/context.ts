@@ -15,8 +15,8 @@ export type SupportedEvents = {
 // @ts-expect-error - octokit type mismatch - doesn't affect runtime
 interface ExtendedContext<T extends SupportedEventsU> extends _Context<PluginSettings, Env, null, T> {
   adapters: ReturnType<typeof createAdapters>;
+  bot: Bot;
+  pluginCtx: PluginContext;
 }
 
 export type Context<T extends SupportedEventsU = SupportedEventsU> = ExtendedContext<T>;
-
-export type SharedCtx = { envSettings: Env; bot: Bot; pluginCtx: PluginContext };

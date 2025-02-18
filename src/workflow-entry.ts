@@ -1,12 +1,12 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
 import { Value } from "@sinclair/typebox/value";
-import { envValidator, pluginSettingsSchema, PluginInputs, pluginSettingsValidator, SharedCtx } from "./types";
+import { envValidator, pluginSettingsSchema, PluginInputs, pluginSettingsValidator } from "./types";
 import { PluginContext } from "./types/plugin-context-single";
 import { logger } from "./utils/logger";
 import { proxyWorkflowCallbacks } from "./handlers/workflow-proxy";
 import dotenv from "dotenv";
-import { Bot } from "./bot";
+import { createAdapters } from "./adapters";
 dotenv.config();
 
 async function run() {
@@ -53,14 +53,12 @@ async function run() {
     signature: payload.signature,
   };
 
-  const ctx: SharedCtx = {
-    envSettings: env,
-    pluginCtx: PluginContext.initialize(inputs, env),
-    bot: {} as Bot,
-  };
+  const pluginCtx = PluginContext.initialize(inputs, env);
+  const ctx = await pluginCtx.getContext();
+  ctx.pluginCtx = pluginCtx;
+  ctx.adapters = createAdapters(ctx);
 
-  const context = await ctx.pluginCtx.getContext();
-  return proxyWorkflowCallbacks(context)[inputs.eventName];
+  return proxyWorkflowCallbacks(ctx)[inputs.eventName];
 }
 
 run()

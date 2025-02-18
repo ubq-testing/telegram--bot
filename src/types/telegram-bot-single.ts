@@ -1,6 +1,5 @@
 import { Octokit as OctokitRest } from "@octokit/rest";
 import { Octokit } from "octokit";
-import { SharedCtx } from ".";
 import { Bot, createBot } from "../bot";
 import { createServer } from "../server";
 import { logger } from "../utils/logger";
@@ -17,16 +16,19 @@ export class TelegramBotSingleton {
   private static _server: ReturnType<typeof createServer>;
   private static _pluginCtx: PluginContext;
 
-  static async initialize(ctx: SharedCtx): Promise<TelegramBotSingleton> {
+  static async initialize(pluginCtx: PluginContext): Promise<TelegramBotSingleton> {
+    if (!pluginCtx) {
+      throw new Error("PluginContext not initialized");
+    }
     const {
-      envSettings: {
+      env: {
         TELEGRAM_BOT_ENV: {
           botSettings: { TELEGRAM_BOT_TOKEN, TELEGRAM_BOT_WEBHOOK, ALLOWED_UPDATES, TELEGRAM_BOT_WEBHOOK_SECRET },
         },
       },
-    } = ctx;
+    } = pluginCtx;
 
-    this._pluginCtx = ctx.pluginCtx;
+    this._pluginCtx = pluginCtx;
 
     let octokit: Octokit | OctokitRest | null = null;
 
@@ -44,13 +46,13 @@ export class TelegramBotSingleton {
       TelegramBotSingleton._instance = new TelegramBotSingleton();
       try {
         TelegramBotSingleton._bot = await createBot(TELEGRAM_BOT_TOKEN, {
-          config: ctx.envSettings,
+          config: pluginCtx.env,
           logger,
           octokit,
-          pluginCtx: ctx.pluginCtx,
+          pluginCtx,
         });
       } catch (er) {
-        logger.error("Error initializing TelegramBotSingleton", { er });
+        logger.error("Error initializing TelegramBotSingleton", { er: String(er) });
       }
 
       try {
@@ -59,13 +61,13 @@ export class TelegramBotSingleton {
           secret_token: TELEGRAM_BOT_WEBHOOK_SECRET,
         });
       } catch (er) {
-        logger.error("Error setting webhook in TelegramBotSingleton", { er });
+        logger.error("Error setting webhook in TelegramBotSingleton", { er: String(er) });
       }
 
       try {
         TelegramBotSingleton._server = createServer({
           bot: TelegramBotSingleton._bot,
-          env: ctx.envSettings,
+          env: pluginCtx.env,
           logger,
         });
       } catch (er) {

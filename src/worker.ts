@@ -1,4 +1,4 @@
-import { Context, Env, envValidator, SharedCtx, PluginInputs, pluginSettingsValidator } from "./types";
+import { Context, Env, envValidator, PluginInputs, pluginSettingsValidator } from "./types";
 import { handleTelegramWebhook } from "./handlers/telegram-webhook";
 import manifest from "../manifest.json";
 import { PluginContext } from "./types/plugin-context-single";
@@ -10,7 +10,6 @@ import { decodeEnvSettings } from "./utils/env-parsing";
 import { logger } from "./utils/logger";
 import { handleUncaughtError } from "./utils/errors";
 import { createAdapters } from "./adapters";
-import { Bot } from "./bot";
 
 export default {
   async fetch(request: Request, env: Env, executionCtx?: ExecutionContext) {
@@ -21,8 +20,7 @@ export default {
       });
     }
 
-    const payload = (await request.clone().json()) as PluginInputs; // required cast
-    const envSettings = await initPluginContext(payload, env);
+    const envSettings = await initPluginContext(request, env);
 
     await Promise.all([telegramRoute(request, envSettings), githubRoute(request, envSettings, executionCtx)]);
 
@@ -30,8 +28,8 @@ export default {
   },
 };
 
-async function initPluginContext(payload: PluginInputs, env: Env): Promise<SharedCtx> {
-  // the sdk parses the env but we need to pass it to the plugin context
+async function initPluginContext(request: Request, env: Env) {
+  const payload = (await request.clone().json()) as PluginInputs; // required cast
   const envSettings = await decodeEnvSettings(env);
   let pluginCtx: PluginContext;
 
@@ -41,24 +39,24 @@ async function initPluginContext(payload: PluginInputs, env: Env): Promise<Share
     throw handleUncaughtError(er);
   }
 
-  return {
-    pluginCtx,
-    envSettings,
-    bot: {} as Bot,
-  };
+  return pluginCtx;
 }
 
 /**
- * Plugins are required (I think) to use the SDK to interact with the kernel.
+ * This route handles any GitHub-sided updates which the kernel sends.
  *
- * Handles any github-sided events.
+ * - `issues.assigned` => kernel sends webhook to the worker > worker fires off the action
+ *
+ * Any requests passing through here need to conform to [`input-schema`](https://github.com/ubiquity-os/plugin-sdk/blob/development/src/types/input-schema.ts#L5)
+ * otherwise the SDK will throw an error `Invalid Body`.
  */
-async function githubRoute(request: Request, pluginCtxAndEnv: SharedCtx, executionCtx?: ExecutionContext) {
+async function githubRoute(request: Request, pluginCtx: PluginContext, executionCtx?: ExecutionContext) {
   return createPlugin<Context>(
     (context) => {
       const ctx = context as unknown as Context;
       ctx.adapters = createAdapters(ctx);
-      return runPlugin(ctx, pluginCtxAndEnv.pluginCtx);
+      ctx.pluginCtx = pluginCtx;
+      return runPlugin(ctx);
     },
     manifest as Manifest,
     {
@@ -66,22 +64,25 @@ async function githubRoute(request: Request, pluginCtxAndEnv: SharedCtx, executi
       postCommentOnError: true,
       settingsSchema: pluginSettingsValidator.schema,
       logLevel: "debug",
-      kernelPublicKey: pluginCtxAndEnv.envSettings.KERNEL_PUBLIC_KEY,
+      kernelPublicKey: pluginCtx.env.KERNEL_PUBLIC_KEY,
       bypassSignatureVerification: process.env.NODE_ENV === "local",
     }
-  ).fetch(request, pluginCtxAndEnv.envSettings, executionCtx);
+  ).fetch(request, pluginCtx.env, executionCtx);
 }
 
 /**
- * Afaik, the sdk does not support route handling out of the box and
- * so hybrids are required to handle routes manually.
+ * This route handles updates directly from Telegram and so it's a separate route
+ * because the payloads are different which would cause the SDK to throw an error.
  *
- * This route handles any Telegram-sided updates.
+ * - This route is used for the Telegram bot commands like `/register` etc.
+ *
+ * Because the kernel is _not_ forwarding the payload, we need to rely on
+ * `Value.Default` to populate the `env` and `config` properties.
  */
-async function telegramRoute(request: Request, ctx: SharedCtx) {
+async function telegramRoute(request: Request, pluginCtx: PluginContext) {
   if (["/telegram", "/telegram/"].includes(new URL(request.url).pathname)) {
     try {
-      return await handleTelegramWebhook(request, ctx);
+      return await handleTelegramWebhook(request, pluginCtx);
     } catch (err) {
       logger.error("handleTelegramWebhook failed", { err });
       return handleUncaughtError(err);

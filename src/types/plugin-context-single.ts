@@ -8,16 +8,12 @@ import { logger } from "../utils/logger";
 import { Octokit } from "@octokit/rest";
 import { Octokit as RestOctokitFromApp } from "octokit";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
+import { Bot } from "../bot";
 
-/**
- * Singleton for the plugin context making accessing it throughout
- * the "two branches" of the codebase easier.
- *
- * This is used with both the worker and the workflows.
- */
 export class PluginContext {
   private static _instance: PluginContext;
   public _config: Context["config"];
+  public _bot: Bot | null = null;
 
   private constructor(
     public readonly inputs: PluginInputs,
@@ -139,6 +135,8 @@ export class PluginContext {
       octokit: !this.inputs.authToken ? octokit : this.getGitHubEventOctokit(),
       env: this.env,
       logger: logger as Logs,
+      bot: this._bot,
+      pluginCtx: this,
     } as unknown as Context;
 
     return {

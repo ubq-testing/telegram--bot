@@ -1,8 +1,8 @@
-import { Context, SharedCtx } from "../../types";
+import { Context } from "../../types";
 import { CallbackResult } from "../../types/proxy";
 import { logger } from "../../utils/logger";
 
-export async function reviewNotification(context: Context<"pull_request.review_requested">, sharedCtx: SharedCtx): Promise<CallbackResult> {
+export async function reviewNotification(context: Context<"pull_request.review_requested">): Promise<CallbackResult> {
   const {
     adapters: { storage },
     payload,
@@ -28,7 +28,7 @@ export async function reviewNotification(context: Context<"pull_request.review_r
   }
 
   if (dbUser.listening_to["review"]) {
-    await handleReviewNotification(dbUser.github_username, dbUser.telegram_id, ownerRepo, issueNumber, context, sharedCtx);
+    await handleReviewNotification(dbUser.github_username, dbUser.telegram_id, ownerRepo, issueNumber, context);
   } else {
     return { status: 200, reason: "skipped" };
   }
@@ -41,8 +41,7 @@ async function handleReviewNotification(
   telegramId: number,
   ownerRepo: string,
   issueNumber: number,
-  context: Context<"pull_request.review_requested">,
-  sharedCtx: SharedCtx
+  context: Context<"pull_request.review_requested">
 ) {
   const prAuthor = context.payload.pull_request.user?.login;
   const message = `<b>Hello ${username.charAt(0).toUpperCase() + username.slice(1)}</b>,
@@ -51,12 +50,12 @@ ${prAuthor} has requested a review from you on <a href="${context.payload.pull_r
 
   let userPrivateChat;
 
-  if (!sharedCtx.bot) {
+  if (!context.bot) {
     throw new Error("Bot instance not found");
   }
 
   try {
-    userPrivateChat = await sharedCtx.bot?.api.getChat(telegramId);
+    userPrivateChat = await context.bot?.api.getChat(telegramId);
   } catch (er) {
     logger.error(`Error getting chat for ${telegramId}`, { er });
   }
@@ -67,7 +66,7 @@ ${prAuthor} has requested a review from you on <a href="${context.payload.pull_r
   }
 
   try {
-    await sharedCtx.bot?.api.sendMessage(telegramId, message, { parse_mode: "HTML" });
+    await context.bot?.api.sendMessage(telegramId, message, { parse_mode: "HTML" });
   } catch (er) {
     logger.error(`Error sending message to ${telegramId} `, { er });
   }
