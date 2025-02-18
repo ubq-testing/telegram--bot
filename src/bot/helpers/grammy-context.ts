@@ -20,6 +20,7 @@ interface Dependencies {
   logger: Logger;
   config: UbiquityOsContext["env"];
   octokit: RestOctokitFromApp | Octokit;
+  pluginCtx: PluginContext;
 }
 
 interface ExtendedContextFlavor extends Dependencies {
@@ -28,11 +29,11 @@ interface ExtendedContextFlavor extends Dependencies {
 
 export type GrammyContext = ParseModeFlavor<HydrateFlavor<DefaultContext & ExtendedContextFlavor & SessionFlavor<SessionData> & AutoChatActionFlavor>>;
 
-export async function createContextConstructor({ logger, config, octokit }: Dependencies) {
+export async function createContextConstructor({ logger, config, octokit, pluginCtx }: Dependencies) {
   let adapters: ReturnType<typeof createAdapters> | undefined;
 
   try {
-    adapters = createAdapters(await PluginContext.getInstance().getContext());
+    adapters = createAdapters(await pluginCtx.getContext());
   } catch (er) {
     logger.error("createAdapters in Grammy Context failed", { er });
   }
@@ -46,6 +47,7 @@ export async function createContextConstructor({ logger, config, octokit }: Depe
     octokit: RestOctokitFromApp | Octokit = octokit;
     config: UbiquityOsContext["env"];
     adapters: ReturnType<typeof createAdapters>;
+    pluginCtx: PluginContext = pluginCtx;
 
     constructor(update: GrammyTelegramUpdate, api: Api, me: UserFromGetMe) {
       super(update, api, me);

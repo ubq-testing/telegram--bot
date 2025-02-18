@@ -25,11 +25,13 @@ import { Context } from "../types";
 import { session } from "./middlewares/session";
 import { askFeature } from "./features/commands/shared/ask-command";
 import { newTaskFeature } from "./features/commands/shared/task-creation";
+import { PluginContext } from "../types/plugin-context-single";
 
 interface Dependencies {
   config: Context["env"];
   logger: Logger;
   octokit: RestOctokitFromApp | Octokit;
+  pluginCtx: PluginContext;
 }
 
 interface Options {

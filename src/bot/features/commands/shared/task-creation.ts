@@ -6,7 +6,6 @@ import { isAdmin } from "../../../filters/is-admin";
 import { logger } from "../../../../utils/logger";
 import { RestEndpointMethodTypes } from "@octokit/rest";
 import Fuse from "fuse.js";
-import { PluginContext } from "../../../../types/plugin-context-single";
 
 const composer = new Composer<GrammyContext>();
 
@@ -62,7 +61,7 @@ feature.command("newtask", logHandle("task-creation"), chatAction("typing"), asy
     )
   );
 
-  const context = await PluginContext.getInstance().getContext();
+  const context = await ctx.pluginCtx.getContext();
 
   const options = {
     includeScore: true,

@@ -1,17 +1,17 @@
-import { Env } from "../types";
+import { Env, PluginContextAndEnv } from "../types";
 import { TelegramBotSingleton } from "../types/telegram-bot-single";
 import { logger } from "../utils/logger";
 
-export async function handleTelegramWebhook(request: Request, env: Env): Promise<Response> {
+export async function handleTelegramWebhook(request: Request, ctx: PluginContextAndEnv): Promise<Response> {
   const failures: unknown[] = [];
   // Initialize bot instance
-  const botInstance = await initializeBotInstance(env, failures);
+  const botInstance = await initializeBotInstance(ctx, failures);
 
   // Get server and bot from botInstance
   const { server } = getServerFromBot(botInstance, failures);
 
   // Make server request even if server is null to collect all failures
-  const res = await makeServerRequest(server, request, env, failures);
+  const res = await makeServerRequest(server, request, ctx, failures);
 
   // Read response body even if res is null to collect all failures
   const body = await readResponseBody(res, failures);
@@ -22,7 +22,7 @@ export async function handleTelegramWebhook(request: Request, env: Env): Promise
   return response;
 }
 
-async function initializeBotInstance(env: Env, failures: unknown[]) {
+async function initializeBotInstance(env: PluginContextAndEnv, failures: unknown[]) {
   try {
     const botInstance = await TelegramBotSingleton.initialize(env);
     return botInstance;
@@ -61,14 +61,14 @@ function getServerFromBot(botInstance: TelegramBotSingleton | null, failures: un
 async function makeServerRequest(
   server: ReturnType<TelegramBotSingleton["getServer"]> | null,
   request: Request,
-  env: Env,
+  ctx: PluginContextAndEnv,
   failures: unknown[]
 ): Promise<Response> {
   try {
     if (!server) {
       throw new Error("Server is null");
     }
-    return await server.fetch(request, env);
+    return await server.fetch(request, ctx.envSettings);
   } catch (er) {
     const errorInfo = {
       message: "Error fetching request from hono server",

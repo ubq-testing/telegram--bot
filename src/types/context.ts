@@ -3,6 +3,7 @@ import { Context as _Context } from "@ubiquity-os/plugin-sdk";
 import { PluginSettings } from "./plugin-inputs";
 import { Env } from "./env";
 import { createAdapters } from "../adapters";
+import { PluginContext } from "./plugin-context-single";
 
 export type SupportedEventsU = WebhookEventName;
 
@@ -16,3 +17,8 @@ interface ExtendedContext<T extends SupportedEventsU> extends _Context<PluginSet
 }
 
 export type Context<T extends SupportedEventsU = SupportedEventsU> = ExtendedContext<T>;
+
+export type PluginContextAndEnv = {
+  pluginCtx: PluginContext;
+  envSettings: Env;
+}

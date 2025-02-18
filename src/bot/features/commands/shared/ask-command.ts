@@ -3,7 +3,6 @@ import { Composer } from "grammy";
 import { GrammyContext } from "../../../helpers/grammy-context";
 import { logHandle } from "../../../helpers/logging";
 import { logger } from "../../../../utils/logger";
-import { PluginContext } from "../../../../types/plugin-context-single";
 import { CommentSimilaritySearchResult, IssueSimilaritySearchResult } from "../../../../types/ai";
 
 const composer = new Composer<GrammyContext>();
@@ -35,7 +34,7 @@ feature.command("ubiquityos", logHandle("command-ubiquityos"), chatAction("typin
     return ctx.reply("Please provide a question to ask UbiquityOS.");
   }
 
-  const { similarityThreshold, model } = PluginContext.getInstance().config.aiConfig;
+  const { similarityThreshold, model } = ctx.pluginCtx.config.aiConfig;
   const similarText = await Promise.all([
     embeddings.findSimilarComments(question, 1 - similarityThreshold),
     embeddings.findSimilarIssues(question, 1 - similarityThreshold),

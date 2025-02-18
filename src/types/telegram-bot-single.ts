@@ -1,10 +1,9 @@
 import { Octokit as OctokitRest } from "@octokit/rest";
 import { Octokit } from "octokit";
-import { Env } from ".";
+import { PluginContextAndEnv } from ".";
 import { Bot, createBot } from "../bot";
 import { createServer } from "../server";
 import { logger } from "../utils/logger";
-import { PluginContext } from "./plugin-context-single";
 
 /**
  * Singleton for the worker instance of the telegram bot
@@ -16,17 +15,19 @@ export class TelegramBotSingleton {
   private static _bot: Bot;
   private static _server: ReturnType<typeof createServer>;
 
-  static async initialize(env: Env): Promise<TelegramBotSingleton> {
+  static async initialize(ctx: PluginContextAndEnv): Promise<TelegramBotSingleton> {
     const {
-      TELEGRAM_BOT_ENV: {
-        botSettings: { TELEGRAM_BOT_TOKEN, TELEGRAM_BOT_WEBHOOK, ALLOWED_UPDATES, TELEGRAM_BOT_WEBHOOK_SECRET },
+      envSettings: {
+        TELEGRAM_BOT_ENV: {
+          botSettings: { TELEGRAM_BOT_TOKEN, TELEGRAM_BOT_WEBHOOK, ALLOWED_UPDATES, TELEGRAM_BOT_WEBHOOK_SECRET },
+        },
       },
-    } = env;
+    } = ctx;
 
     let octokit: Octokit | OctokitRest | null = null;
 
     try {
-      octokit = await PluginContext.getInstance().getTelegramEventOctokit();
+      octokit = await ctx.pluginCtx.getTelegramEventOctokit();
     } catch (er) {
       logger.error("Error initializing octokit in TelegramBotSingleton", { er });
     }
@@ -39,9 +40,10 @@ export class TelegramBotSingleton {
       TelegramBotSingleton._instance = new TelegramBotSingleton();
       try {
         TelegramBotSingleton._bot = await createBot(TELEGRAM_BOT_TOKEN, {
-          config: env,
+          config: ctx.envSettings,
           logger,
           octokit,
+          pluginCtx: ctx.pluginCtx,
         });
       } catch (er) {
         logger.error("Error initializing TelegramBotSingleton", { er });
@@ -59,7 +61,7 @@ export class TelegramBotSingleton {
       try {
         TelegramBotSingleton._server = createServer({
           bot: TelegramBotSingleton._bot,
-          env,
+          env: ctx.envSettings,
           logger,
         });
       } catch (er) {
