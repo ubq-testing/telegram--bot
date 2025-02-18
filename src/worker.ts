@@ -1,4 +1,4 @@
-import { Context, Env, envValidator, PluginContextAndEnv, PluginInputs, pluginSettingsValidator } from "./types";
+import { Context, Env, envValidator, SharedCtx, PluginInputs, pluginSettingsValidator } from "./types";
 import { handleTelegramWebhook } from "./handlers/telegram-webhook";
 import manifest from "../manifest.json";
 import { PluginContext } from "./types/plugin-context-single";
@@ -10,6 +10,7 @@ import { decodeEnvSettings } from "./utils/env-parsing";
 import { logger } from "./utils/logger";
 import { handleUncaughtError } from "./utils/errors";
 import { createAdapters } from "./adapters";
+import { Bot } from "./bot";
 
 export default {
   async fetch(request: Request, env: Env, executionCtx?: ExecutionContext) {
@@ -29,7 +30,7 @@ export default {
   },
 };
 
-async function initPluginContext(payload: PluginInputs, env: Env): Promise<PluginContextAndEnv> {
+async function initPluginContext(payload: PluginInputs, env: Env): Promise<SharedCtx> {
   // the sdk parses the env but we need to pass it to the plugin context
   const envSettings = await decodeEnvSettings(env);
   let pluginCtx: PluginContext;
@@ -43,6 +44,7 @@ async function initPluginContext(payload: PluginInputs, env: Env): Promise<Plugi
   return {
     pluginCtx,
     envSettings,
+    bot: {} as Bot,
   };
 }
 
@@ -51,7 +53,7 @@ async function initPluginContext(payload: PluginInputs, env: Env): Promise<Plugi
  *
  * Handles any github-sided events.
  */
-async function githubRoute(request: Request, pluginCtxAndEnv: PluginContextAndEnv, executionCtx?: ExecutionContext) {
+async function githubRoute(request: Request, pluginCtxAndEnv: SharedCtx, executionCtx?: ExecutionContext) {
   return createPlugin<Context>(
     (context) => {
       const ctx = context as unknown as Context;
@@ -76,7 +78,7 @@ async function githubRoute(request: Request, pluginCtxAndEnv: PluginContextAndEn
  *
  * This route handles any Telegram-sided updates.
  */
-async function telegramRoute(request: Request, ctx: PluginContextAndEnv) {
+async function telegramRoute(request: Request, ctx: SharedCtx) {
   if (["/telegram", "/telegram/"].includes(new URL(request.url).pathname)) {
     try {
       return await handleTelegramWebhook(request, ctx);

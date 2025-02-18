@@ -19,9 +19,4 @@ interface ExtendedContext<T extends SupportedEventsU> extends _Context<PluginSet
 
 export type Context<T extends SupportedEventsU = SupportedEventsU> = ExtendedContext<T>;
 
-export type PluginContextAndEnv = {
-  pluginCtx: PluginContext;
-  envSettings: Env;
-};
-
-export type SharedCtx = { bot: Bot; pluginCtx: PluginContext };
+export type SharedCtx = { envSettings: Env; bot: Bot; pluginCtx: PluginContext };

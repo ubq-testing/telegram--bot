@@ -1,10 +1,9 @@
-import { Context } from "./types";
+import { Context, Env } from "./types";
 import { proxyCallbacks } from "./handlers/worker-proxy";
-import { TelegramBotSingleton } from "./types/telegram-bot-single";
 import { PluginContext } from "./types/plugin-context-single";
+import { Bot } from "./bot";
 
 export async function runPlugin(context: Context, pluginCtx: PluginContext) {
   const { eventName } = context;
-  const bot = (await TelegramBotSingleton.initialize({ envSettings: context.env, pluginCtx })).getBot();
-  await Promise.resolve(proxyCallbacks(context, { bot, pluginCtx })[eventName]);
+  await Promise.resolve(proxyCallbacks(context, { pluginCtx, bot: {} as Bot, envSettings: {} as Env })[eventName]);
 }

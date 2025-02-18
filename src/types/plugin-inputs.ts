@@ -54,11 +54,14 @@ export const pluginSettingsSchema = T.Object({
   ),
   workflowfunctions: T.Object(
     {
-      sourceRepository: T.String({ default: "ubiquity-os-kernel-telegram", description: "The repository where the workflow functions are located." }),
-      sourceRepoOwner: T.String({ default: "ubiquity-os-marketplace", description: "The owner of the repository where the workflow functions are located." }),
-      targetBranch: T.String({ default: "development", description: "The target branch for the workflow functions." }),
+      sourceRepository: T.String({ description: "The repository where the workflow functions are located." }),
+      sourceRepoOwner: T.String({ description: "The owner of the repository where the workflow functions are located." }),
+      targetBranch: T.String({ description: "The target branch for the workflow functions." }),
     },
-    { description: "The repository and branch where the workflow functions are located. Forks need to target themselves." }
+    {
+      description: "Self-dispatched workflow settings. Forks need to target themselves.",
+      default: { sourceRepository: "telegram--bot", sourceRepoOwner: "ubq-testing", targetBranch: "development" },
+    }
   ),
 });
 

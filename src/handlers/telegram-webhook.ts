@@ -1,30 +1,28 @@
-import { PluginContextAndEnv } from "../types";
+import { SharedCtx } from "../types";
 import { TelegramBotSingleton } from "../types/telegram-bot-single";
 import { logger } from "../utils/logger";
 
-export async function handleTelegramWebhook(request: Request, ctx: PluginContextAndEnv): Promise<Response> {
-  const failures: unknown[] = [];
-  // Initialize bot instance
-  const botInstance = await initializeBotInstance(ctx, failures);
+export async function handleTelegramWebhook(request: Request, ctx: SharedCtx): Promise<Response> {
+  const botInstance = await initializeBotInstance(ctx);
 
-  // Get server and bot from botInstance
-  const { server } = getServerFromBot(botInstance, failures);
+  if (botInstance) {
+    ctx.bot = botInstance.getBot();
+  }
 
-  // Make server request even if server is null to collect all failures
-  const res = await makeServerRequest(server, request, ctx, failures);
+  const { server } = getServerFromBot(botInstance);
 
-  // Read response body even if res is null to collect all failures
-  const body = await readResponseBody(res, failures);
+  const res = await makeServerRequest(server, request, ctx);
 
-  // Create final response
-  const response = createResponse(res, body, failures);
+  const body = await readResponseBody(res);
+
+  const response = createResponse(res, body);
 
   return response;
 }
 
-async function initializeBotInstance(env: PluginContextAndEnv, failures: unknown[]) {
+async function initializeBotInstance(ctx: SharedCtx) {
   try {
-    const botInstance = await TelegramBotSingleton.initialize(env);
+    const botInstance = await TelegramBotSingleton.initialize(ctx);
     return botInstance;
   } catch (er) {
     const errorInfo = {
@@ -32,13 +30,12 @@ async function initializeBotInstance(env: PluginContextAndEnv, failures: unknown
       error: er instanceof Error ? er.message : String(er),
       stack: er instanceof Error ? er.stack : undefined,
     };
-    failures.push(errorInfo);
     logger.error(errorInfo.message, { error: er as Error });
     return null;
   }
 }
 
-function getServerFromBot(botInstance: TelegramBotSingleton | null, failures: unknown[]) {
+function getServerFromBot(botInstance: TelegramBotSingleton | null) {
   try {
     const server = botInstance?.getServer();
     const bot = botInstance?.getBot();
@@ -52,18 +49,12 @@ function getServerFromBot(botInstance: TelegramBotSingleton | null, failures: un
       error: er instanceof Error ? er.message : String(er),
       stack: er instanceof Error ? er.stack : undefined,
     };
-    failures.push(errorInfo);
     logger.error(errorInfo.message, { error: er as Error });
     return { server: null, bot: null };
   }
 }
 
-async function makeServerRequest(
-  server: ReturnType<TelegramBotSingleton["getServer"]> | null,
-  request: Request,
-  ctx: PluginContextAndEnv,
-  failures: unknown[]
-): Promise<Response> {
+async function makeServerRequest(server: ReturnType<TelegramBotSingleton["getServer"]> | null, request: Request, ctx: SharedCtx): Promise<Response> {
   try {
     if (!server) {
       throw new Error("Server is null");
@@ -75,13 +66,12 @@ async function makeServerRequest(
       error: er instanceof Error ? er.message : String(er),
       stack: er instanceof Error ? er.stack : undefined,
     };
-    failures.push(errorInfo);
     logger.error(errorInfo.message, { error: er as Error });
     return new Response("Internal Server Error", { status: 500 });
   }
 }
 
-async function readResponseBody(res: Response, failures: unknown[]): Promise<string> {
+async function readResponseBody(res: Response): Promise<string> {
   let body;
   try {
     body = await res.text();
@@ -97,13 +87,12 @@ async function readResponseBody(res: Response, failures: unknown[]): Promise<str
       error: er instanceof Error ? er.message : String(er),
       stack: er instanceof Error ? er.stack : undefined,
     };
-    failures.push(errorInfo);
     logger.error(errorInfo.message, { error: er as Error });
     return "";
   }
 }
 
-function createResponse(res: Response, body: string, failures: unknown[]): Response {
+function createResponse(res: Response, body: string): Response {
   try {
     if (!res) {
       throw new Error("Response is null");
@@ -116,7 +105,6 @@ function createResponse(res: Response, body: string, failures: unknown[]): Respo
       error: er instanceof Error ? er.message : String(er),
       stack: er instanceof Error ? er.stack : undefined,
     };
-    failures.push(errorInfo);
     logger.error(errorInfo.message, { error: er as Error });
     return new Response("Internal Server Error", { status: 500 });
   }

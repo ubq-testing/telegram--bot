@@ -1,11 +1,12 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
 import { Value } from "@sinclair/typebox/value";
-import { envValidator, pluginSettingsSchema, PluginInputs, pluginSettingsValidator, PluginContextAndEnv } from "./types";
+import { envValidator, pluginSettingsSchema, PluginInputs, pluginSettingsValidator, SharedCtx } from "./types";
 import { PluginContext } from "./types/plugin-context-single";
 import { logger } from "./utils/logger";
 import { proxyWorkflowCallbacks } from "./handlers/workflow-proxy";
 import dotenv from "dotenv";
+import { Bot } from "./bot";
 dotenv.config();
 
 async function run() {
@@ -52,9 +53,10 @@ async function run() {
     signature: payload.signature,
   };
 
-  const ctx: PluginContextAndEnv = {
+  const ctx: SharedCtx = {
     envSettings: env,
     pluginCtx: PluginContext.initialize(inputs, env),
+    bot: {} as Bot,
   };
 
   const context = await ctx.pluginCtx.getContext();

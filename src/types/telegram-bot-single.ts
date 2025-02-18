@@ -1,6 +1,6 @@
 import { Octokit as OctokitRest } from "@octokit/rest";
 import { Octokit } from "octokit";
-import { PluginContextAndEnv } from ".";
+import { SharedCtx } from ".";
 import { Bot, createBot } from "../bot";
 import { createServer } from "../server";
 import { logger } from "../utils/logger";
@@ -17,7 +17,7 @@ export class TelegramBotSingleton {
   private static _server: ReturnType<typeof createServer>;
   private static _pluginCtx: PluginContext;
 
-  static async initialize(ctx: PluginContextAndEnv): Promise<TelegramBotSingleton> {
+  static async initialize(ctx: SharedCtx): Promise<TelegramBotSingleton> {
     const {
       envSettings: {
         TELEGRAM_BOT_ENV: {
