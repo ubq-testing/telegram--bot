@@ -98,30 +98,6 @@
             "required": ["kind"]
           }
         ]
-      },
-      "workflowfunctions": {
-        "description": "Self-dispatched workflow settings. Forks need to target themselves.",
-        "default": {
-          "sourceRepository": "ubiquity-os-kernel-telegram",
-          "sourceRepoOwner": "ubiquity-os-marketplace",
-          "targetBranch": "development"
-        },
-        "type": "object",
-        "properties": {
-          "sourceRepository": {
-            "description": "The repository where the workflow functions are located.",
-            "type": "string"
-          },
-          "sourceRepoOwner": {
-            "description": "The owner of the repository where the workflow functions are located.",
-            "type": "string"
-          },
-          "targetBranch": {
-            "description": "The target branch for the workflow functions.",
-            "type": "string"
-          }
-        },
-        "required": ["sourceRepository", "sourceRepoOwner", "targetBranch"]
       }
     }
   }
