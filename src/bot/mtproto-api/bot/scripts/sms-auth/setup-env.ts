@@ -360,7 +360,16 @@ class SetUpHandler {
     const openrouterApiKey = `OPENROUTER_API_KEY=${this.env.OPENROUTER_API_KEY}`;
     const kernelPublicKey = `KERNEL_PUBLIC_KEY=${this.env.KERNEL_PUBLIC_KEY}`;
 
-    const envVars = [telegramBotEnv, repositoryEnv, storageAppId, storageAppPrivateKey, voyageaiApiKey, openaiApiKey, openrouterApiKey, kernelPublicKey];
+    const envVars = [
+      telegramBotEnv,
+      repositoryEnv,
+      storageAppId,
+      storageAppPrivateKey,
+      voyageaiApiKey,
+      openaiApiKey,
+      openrouterApiKey,
+      this.env.KERNEL_PUBLIC_KEY ? kernelPublicKey : "",
+    ];
 
     for (const path of paths) {
       await writeFile(path, envVars.join("\n"), "utf-8");

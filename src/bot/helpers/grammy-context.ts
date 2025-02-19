@@ -32,7 +32,6 @@ export type GrammyContext = ParseModeFlavor<HydrateFlavor<DefaultContext & Exten
 export async function createContextConstructor({ logger, config, octokit, pluginCtx }: Dependencies) {
   const adapters = (await pluginCtx.getContext()).adapters;
 
-  console.log("adapters", adapters);
   if (!adapters) {
     throw new Error("Adapters not initialized");
   }
