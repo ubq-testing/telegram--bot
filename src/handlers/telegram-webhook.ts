@@ -22,7 +22,7 @@ export async function handleTelegramWebhook(request: Request, pluginCtx: PluginC
 
 async function initializeBotInstance(pluginCtx: PluginContext) {
   try {
-    return await TelegramBotSingleton.initialize(pluginCtx);
+    return new TelegramBotSingleton(pluginCtx).initialize();
   } catch (er) {
     const errorInfo = {
       message: "initializeBotInstance Error",

@@ -53,7 +53,7 @@ async function run() {
     signature: payload.signature,
   };
 
-  const pluginCtx = PluginContext.initialize(inputs, env);
+  const pluginCtx = new PluginContext(inputs, env);
   const ctx = await pluginCtx.getContext();
   ctx.pluginCtx = pluginCtx;
   ctx.adapters = createAdapters(ctx);

@@ -11,13 +11,16 @@ import { PluginContext } from "./plugin-context-single";
  * This is for use with the BotFather bot and not the "user" account.
  */
 export class TelegramBotSingleton {
-  private static _instance: TelegramBotSingleton;
-  private static _bot: Bot;
-  private static _server: ReturnType<typeof createServer>;
-  private static _pluginCtx: PluginContext;
+  bot: Bot | null = null;
+  server: ReturnType<typeof createServer> | null = null;
+  pluginCtx: PluginContext | null = null;
 
-  static async initialize(pluginCtx: PluginContext): Promise<TelegramBotSingleton> {
-    if (!pluginCtx) {
+  constructor(pluginCtx: PluginContext) {
+    this.pluginCtx = pluginCtx;
+  }
+
+  async initialize(): Promise<TelegramBotSingleton> {
+    if (!this.pluginCtx) {
       throw new Error("PluginContext not initialized");
     }
     const {
@@ -26,14 +29,12 @@ export class TelegramBotSingleton {
           botSettings: { TELEGRAM_BOT_TOKEN, TELEGRAM_BOT_WEBHOOK, ALLOWED_UPDATES, TELEGRAM_BOT_WEBHOOK_SECRET },
         },
       },
-    } = pluginCtx;
-
-    this._pluginCtx = pluginCtx;
+    } = this.pluginCtx;
 
     let octokit: Octokit | OctokitRest | null = null;
 
     try {
-      octokit = await this._pluginCtx.getTelegramEventOctokit();
+      octokit = await this.pluginCtx.getTelegramEventOctokit();
     } catch (er) {
       logger.error("Error initializing octokit in TelegramBotSingleton", { er });
     }
@@ -42,53 +43,53 @@ export class TelegramBotSingleton {
       throw new Error("Octokit not initialized");
     }
 
-    if (!TelegramBotSingleton._instance) {
-      TelegramBotSingleton._instance = new TelegramBotSingleton();
-      try {
-        TelegramBotSingleton._bot = await createBot(TELEGRAM_BOT_TOKEN, {
-          config: pluginCtx.env,
-          logger,
-          octokit,
-          pluginCtx,
-        });
-      } catch (er) {
-        logger.error("Error initializing TelegramBotSingleton", { er: String(er) });
-      }
-
-      try {
-        await TelegramBotSingleton._bot.api.setWebhook(TELEGRAM_BOT_WEBHOOK, {
-          allowed_updates: ALLOWED_UPDATES,
-          secret_token: TELEGRAM_BOT_WEBHOOK_SECRET,
-        });
-      } catch (er) {
-        logger.error("Error setting webhook in TelegramBotSingleton", { er: String(er) });
-      }
-
-      try {
-        TelegramBotSingleton._server = createServer({
-          bot: TelegramBotSingleton._bot,
-          env: pluginCtx.env,
-          logger,
-        });
-      } catch (er) {
-        logger.error("Error initializing server in TelegramBotSingleton", { er });
-      }
+    try {
+      this.bot = await createBot(TELEGRAM_BOT_TOKEN, {
+        config: this.pluginCtx.env,
+        logger,
+        octokit,
+        pluginCtx: this.pluginCtx,
+      });
+    } catch (er) {
+      logger.error("Error initializing TelegramBotSingleton", { er: String(er) });
     }
-    return TelegramBotSingleton._instance;
-  }
 
-  static getInstance(): TelegramBotSingleton {
-    if (!TelegramBotSingleton._instance) {
-      throw new Error("TelegramBotSingleton is not initialized. Call initialize() first.");
+    if (!this.bot) {
+      throw new Error("Bot not initialized");
     }
-    return TelegramBotSingleton._instance;
+
+    try {
+      await this.bot.api.setWebhook(TELEGRAM_BOT_WEBHOOK, {
+        allowed_updates: ALLOWED_UPDATES,
+        secret_token: TELEGRAM_BOT_WEBHOOK_SECRET,
+      });
+    } catch (er) {
+      logger.error("Error setting webhook in TelegramBotSingleton", { er: String(er) });
+    }
+
+    try {
+      this.server = createServer({
+        bot: this.bot,
+        env: this.pluginCtx.env,
+        logger,
+      });
+    } catch (er) {
+      logger.error("Error initializing server in TelegramBotSingleton", { er });
+    }
+    return this;
   }
 
   getBot(): Bot {
-    return TelegramBotSingleton._bot;
+    if (!this.bot) {
+      throw new Error("Bot not initialized");
+    }
+    return this.bot;
   }
 
-  getServer(): ReturnType<typeof createServer> {
-    return TelegramBotSingleton._server;
+  getServer(): TelegramBotSingleton["server"] {
+    if (!this.server) {
+      throw new Error("Server not initialized");
+    }
+    return this.server;
   }
 }

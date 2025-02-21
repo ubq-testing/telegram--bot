@@ -11,15 +11,13 @@ import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import { Bot } from "../bot";
 
 export class PluginContext {
-  private static _instance: PluginContext;
   public _config: Context["config"];
   public _bot: Bot | null = null;
 
-  private constructor(
+  constructor(
     public readonly inputs: PluginInputs,
     public _env: Env
   ) {
-    // this will fallback to defaults if it's a telegram bot command
     this._config = this.inputs.settings;
     this._env = _env;
   }
@@ -38,18 +36,6 @@ export class PluginContext {
 
   set config(config: Context["config"]) {
     this._config = config;
-  }
-
-  static initialize(inputs: PluginInputs, env: Env): PluginContext {
-    PluginContext._instance = new PluginContext(inputs, env);
-    return PluginContext._instance;
-  }
-
-  static getInstance(): PluginContext {
-    if (!PluginContext._instance) {
-      throw new Error("PluginContext not initialized");
-    }
-    return PluginContext._instance;
   }
 
   getInputs(): PluginInputs {

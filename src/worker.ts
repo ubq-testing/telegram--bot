@@ -34,7 +34,7 @@ async function initPluginContext(request: Request, env: Env) {
   let pluginCtx: PluginContext;
 
   try {
-    pluginCtx = PluginContext.initialize(payload, envSettings);
+    pluginCtx = new PluginContext(payload, envSettings);
   } catch (er) {
     throw handleUncaughtError(er);
   }
