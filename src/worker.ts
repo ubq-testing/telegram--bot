@@ -1,7 +1,7 @@
 import { Context, Env, envValidator, PluginInputs, pluginSettingsValidator } from "./types";
 import { handleTelegramWebhook } from "./handlers/telegram-webhook";
 import manifest from "../manifest.json";
-import { PluginContext } from "./types/plugin-context-single";
+import { PluginEnvContext } from "./types/plugin-env-context";
 import { ExecutionContext } from "hono";
 import { createPlugin } from "@ubiquity-os/plugin-sdk";
 import { runPlugin } from "./plugin";
@@ -31,15 +31,15 @@ export default {
 async function initPluginContext(request: Request, env: Env) {
   const payload = (await request.clone().json()) as PluginInputs; // required cast
   const envSettings = await decodeEnvSettings(env);
-  let pluginCtx: PluginContext;
+  let pluginEnvCtx: PluginEnvContext;
 
   try {
-    pluginCtx = new PluginContext(payload, envSettings);
+    pluginEnvCtx = new PluginEnvContext(payload, envSettings);
   } catch (er) {
     throw handleUncaughtError(er);
   }
 
-  return pluginCtx;
+  return pluginEnvCtx;
 }
 
 /**
@@ -50,12 +50,12 @@ async function initPluginContext(request: Request, env: Env) {
  * Any requests passing through here need to conform to [`input-schema`](https://github.com/ubiquity-os/plugin-sdk/blob/development/src/types/input-schema.ts#L5)
  * otherwise the SDK will throw an error `Invalid Body`.
  */
-async function githubRoute(request: Request, pluginCtx: PluginContext, executionCtx?: ExecutionContext) {
+async function githubRoute(request: Request, pluginEnvCtx: PluginEnvContext, executionCtx?: ExecutionContext) {
   return createPlugin<Context>(
     (context) => {
       const ctx = context as unknown as Context;
       ctx.adapters = createAdapters(ctx);
-      ctx.pluginCtx = pluginCtx;
+      ctx.pluginEnvCtx = pluginEnvCtx;
       return runPlugin(ctx);
     },
     manifest as Manifest,
@@ -64,10 +64,10 @@ async function githubRoute(request: Request, pluginCtx: PluginContext, execution
       postCommentOnError: true,
       settingsSchema: pluginSettingsValidator.schema,
       logLevel: "debug",
-      kernelPublicKey: pluginCtx.env.KERNEL_PUBLIC_KEY,
+      kernelPublicKey: pluginEnvCtx.env.KERNEL_PUBLIC_KEY,
       bypassSignatureVerification: process.env.NODE_ENV === "local",
     }
-  ).fetch(request, pluginCtx.env, executionCtx);
+  ).fetch(request, pluginEnvCtx.env, executionCtx);
 }
 
 /**
@@ -79,10 +79,10 @@ async function githubRoute(request: Request, pluginCtx: PluginContext, execution
  * Because the kernel is _not_ forwarding the payload, we need to rely on
  * `Value.Default` to populate the `env` and `config` properties.
  */
-async function telegramRoute(request: Request, pluginCtx: PluginContext) {
+async function telegramRoute(request: Request, pluginEnvCtx: PluginEnvContext) {
   if (["/telegram", "/telegram/"].includes(new URL(request.url).pathname)) {
     try {
-      return await handleTelegramWebhook(request, pluginCtx);
+      return await handleTelegramWebhook(request, pluginEnvCtx);
     } catch (err) {
       logger.error("handleTelegramWebhook failed", { err });
       return handleUncaughtError(err);

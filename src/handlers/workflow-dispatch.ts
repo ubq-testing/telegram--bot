@@ -2,7 +2,7 @@ import { App } from "octokit";
 import { Context } from "../types";
 
 export async function workflowDispatch(context: Context, workflowFunctionName: string) {
-  const inputs = context.pluginCtx.getInputs();
+  const inputs = context.pluginEnvCtx.getInputs();
   const {
     logger,
     env: {

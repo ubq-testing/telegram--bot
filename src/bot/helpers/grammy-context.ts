@@ -7,7 +7,7 @@ import type { ParseModeFlavor } from "@grammyjs/parse-mode";
 import { Context as UbiquityOsContext } from "../../types";
 import { Logger } from "../../utils/logger";
 import { createAdapters } from "../../adapters";
-import { PluginContext } from "../../types/plugin-context-single";
+import { PluginEnvContext } from "../../types/plugin-env-context";
 import { Octokit as RestOctokitFromApp } from "octokit";
 
 export type GrammyTelegramUpdate = Update;
@@ -20,7 +20,7 @@ interface Dependencies {
   logger: Logger;
   config: UbiquityOsContext["env"];
   octokit: RestOctokitFromApp | Octokit;
-  pluginCtx: PluginContext;
+  pluginEnvCtx: PluginEnvContext;
 }
 
 interface ExtendedContextFlavor extends Dependencies {
@@ -29,8 +29,8 @@ interface ExtendedContextFlavor extends Dependencies {
 
 export type GrammyContext = ParseModeFlavor<HydrateFlavor<DefaultContext & ExtendedContextFlavor & SessionFlavor<SessionData> & AutoChatActionFlavor>>;
 
-export async function createContextConstructor({ logger, config, octokit, pluginCtx }: Dependencies) {
-  const adapters = (await pluginCtx.getContext()).adapters;
+export async function createContextConstructor({ logger, config, octokit, pluginEnvCtx }: Dependencies) {
+  const adapters = (await pluginEnvCtx.getContext()).adapters;
 
   if (!adapters) {
     throw new Error("Adapters not initialized");
@@ -41,7 +41,7 @@ export async function createContextConstructor({ logger, config, octokit, plugin
     octokit: RestOctokitFromApp | Octokit = octokit;
     config: UbiquityOsContext["env"];
     adapters: ReturnType<typeof createAdapters>;
-    pluginCtx: PluginContext = pluginCtx;
+    pluginEnvCtx: PluginEnvContext = pluginEnvCtx;
 
     constructor(update: GrammyTelegramUpdate, api: Api, me: UserFromGetMe) {
       super(update, api, me);

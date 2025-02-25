@@ -287,7 +287,7 @@ export default {
 
     // Context initialization
     const payload = (await request.clone().json()) as PluginInputs;
-    PluginContext.initialize(payload, envSettings);
+    PluginEnvContext.initialize(payload, envSettings);
 
     // Route handling
     if (["/telegram", "/telegram/"].includes(path)) {

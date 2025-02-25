@@ -62,7 +62,7 @@ export class GithubStorage implements Storage {
  *
 import { logger } from "../../utils/logger";
 import { Chat, ChatAction, ChatStorage, HandleChatParams, RetrievalHelper, StorageTypes, UserBaseStorage, SessionStorage, Withsha } from "../../types/storage";
-import { PluginContext } from "../../types/plugin-context-single";
+import { PluginEnvContext } from "../../types/plugin-context-single";
 import { getPluginManifestDetails } from "./utils";
 import { RequestError } from "octokit";
 import { Storage } from "../supabase/supabase";
@@ -169,7 +169,7 @@ export class GithubStorage implements Storage {
     }
 
     try {
-      this.octokit = await PluginContext.getInstance().getTelegramEventOctokit();
+      this.octokit = await PluginEnvContext.getInstance().getTelegramEventOctokit();
 
       if (!this.payloadRepoOwner) {
         throw new Error("Unable to initialize storage octokit: owner not found");
@@ -182,7 +182,7 @@ export class GithubStorage implements Storage {
         throw new Error("Unable to initialize storage octokit: installation not found");
       }
 
-      return await PluginContext.getInstance().getApp()?.getInstallationOctokit(thisInstall.id);
+      return await PluginEnvContext.getInstance().getApp()?.getInstallationOctokit(thisInstall.id);
     } catch (er) {
       throw this.logger.error("Failed to get install octokit", { er });
     }

@@ -3,7 +3,7 @@ import { Octokit } from "octokit";
 import { Bot, createBot } from "../bot";
 import { createServer } from "../server";
 import { logger } from "../utils/logger";
-import { PluginContext } from "./plugin-context-single";
+import { PluginEnvContext } from "./plugin-env-context";
 
 /**
  * Singleton for the worker instance of the telegram bot
@@ -13,15 +13,15 @@ import { PluginContext } from "./plugin-context-single";
 export class TelegramBotSingleton {
   bot: Bot | null = null;
   server: ReturnType<typeof createServer> | null = null;
-  pluginCtx: PluginContext | null = null;
+  pluginEnvCtx: PluginEnvContext | null = null;
 
-  constructor(pluginCtx: PluginContext) {
-    this.pluginCtx = pluginCtx;
+  constructor(pluginEnvCtx: PluginEnvContext) {
+    this.pluginEnvCtx = pluginEnvCtx;
   }
 
   async initialize(): Promise<TelegramBotSingleton> {
-    if (!this.pluginCtx) {
-      throw new Error("PluginContext not initialized");
+    if (!this.pluginEnvCtx) {
+      throw new Error("PluginEnvContext not initialized");
     }
     const {
       env: {
@@ -29,12 +29,12 @@ export class TelegramBotSingleton {
           botSettings: { TELEGRAM_BOT_TOKEN, TELEGRAM_BOT_WEBHOOK, ALLOWED_UPDATES, TELEGRAM_BOT_WEBHOOK_SECRET },
         },
       },
-    } = this.pluginCtx;
+    } = this.pluginEnvCtx;
 
     let octokit: Octokit | OctokitRest | null = null;
 
     try {
-      octokit = await this.pluginCtx.getTelegramEventOctokit();
+      octokit = await this.pluginEnvCtx.getTelegramEventOctokit();
     } catch (er) {
       logger.error("Error initializing octokit in TelegramBotSingleton", { er });
     }
@@ -45,10 +45,10 @@ export class TelegramBotSingleton {
 
     try {
       this.bot = await createBot(TELEGRAM_BOT_TOKEN, {
-        config: this.pluginCtx.env,
+        config: this.pluginEnvCtx.env,
         logger,
         octokit,
-        pluginCtx: this.pluginCtx,
+        pluginEnvCtx: this.pluginEnvCtx,
       });
     } catch (er) {
       logger.error("Error initializing TelegramBotSingleton", { er: String(er) });
@@ -70,7 +70,7 @@ export class TelegramBotSingleton {
     try {
       this.server = createServer({
         bot: this.bot,
-        env: this.pluginCtx.env,
+        env: this.pluginEnvCtx.env,
         logger,
       });
     } catch (er) {

@@ -3,7 +3,7 @@ import { Context as _Context } from "@ubiquity-os/plugin-sdk";
 import { PluginSettings } from "./plugin-inputs";
 import { Env } from "./env";
 import { createAdapters } from "../adapters";
-import { PluginContext } from "./plugin-context-single";
+import { PluginEnvContext } from "./plugin-env-context";
 import { Bot } from "../bot";
 
 export type SupportedEventsU = WebhookEventName;
@@ -16,7 +16,7 @@ export type SupportedEvents = {
 interface ExtendedContext<T extends SupportedEventsU> extends _Context<PluginSettings, Env, null, T> {
   adapters: ReturnType<typeof createAdapters>;
   bot: Bot;
-  pluginCtx: PluginContext;
+  pluginEnvCtx: PluginEnvContext;
 }
 
 export type Context<T extends SupportedEventsU = SupportedEventsU> = ExtendedContext<T>;

@@ -1,17 +1,17 @@
-import { PluginContext } from "../types/plugin-context-single";
+import { PluginEnvContext } from "../types/plugin-env-context";
 import { TelegramBotSingleton } from "../types/telegram-bot-single";
 import { logger } from "../utils/logger";
 
-export async function handleTelegramWebhook(request: Request, pluginCtx: PluginContext): Promise<Response> {
-  const botInstance = await initializeBotInstance(pluginCtx);
+export async function handleTelegramWebhook(request: Request, pluginEnvCtx: PluginEnvContext): Promise<Response> {
+  const botInstance = await initializeBotInstance(pluginEnvCtx);
 
   if (botInstance) {
-    pluginCtx._bot = botInstance.getBot();
+    pluginEnvCtx._bot = botInstance.getBot();
   }
 
   const { server } = getServerFromBot(botInstance);
 
-  const res = await makeServerRequest(server, request, pluginCtx);
+  const res = await makeServerRequest(server, request, pluginEnvCtx);
 
   const body = await readResponseBody(res);
 
@@ -20,9 +20,9 @@ export async function handleTelegramWebhook(request: Request, pluginCtx: PluginC
   return response;
 }
 
-async function initializeBotInstance(pluginCtx: PluginContext) {
+async function initializeBotInstance(pluginEnvCtx: PluginEnvContext) {
   try {
-    return new TelegramBotSingleton(pluginCtx).initialize();
+    return new TelegramBotSingleton(pluginEnvCtx).initialize();
   } catch (er) {
     const errorInfo = {
       message: "initializeBotInstance Error",
@@ -53,12 +53,16 @@ function getServerFromBot(botInstance: TelegramBotSingleton | null) {
   }
 }
 
-async function makeServerRequest(server: ReturnType<TelegramBotSingleton["getServer"]> | null, request: Request, pluginCtx: PluginContext): Promise<Response> {
+async function makeServerRequest(
+  server: ReturnType<TelegramBotSingleton["getServer"]> | null,
+  request: Request,
+  pluginEnvCtx: PluginEnvContext
+): Promise<Response> {
   try {
     if (!server) {
       throw new Error("Server is null");
     }
-    return await server.fetch(request, pluginCtx.env);
+    return await server.fetch(request, pluginEnvCtx.env);
   } catch (er) {
     const errorInfo = {
       message: "Error fetching request from hono server",

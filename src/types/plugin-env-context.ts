@@ -10,7 +10,7 @@ import { Octokit as RestOctokitFromApp } from "octokit";
 import { Logs } from "@ubiquity-os/ubiquity-os-logger";
 import { Bot } from "../bot";
 
-export class PluginContext {
+export class PluginEnvContext {
   public _config: Context["config"];
   public _bot: Bot | null = null;
 
@@ -122,7 +122,7 @@ export class PluginContext {
       env: this.env,
       logger: logger as Logs,
       bot: this._bot,
-      pluginCtx: this,
+      pluginEnvCtx: this,
     } as unknown as Context;
 
     return {

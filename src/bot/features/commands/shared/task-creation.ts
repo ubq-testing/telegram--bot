@@ -61,7 +61,7 @@ feature.command("newtask", logHandle("task-creation"), chatAction("typing"), asy
     )
   );
 
-  const context = await ctx.pluginCtx.getContext();
+  const context = await ctx.pluginEnvCtx.getContext();
 
   const options = {
     includeScore: true,
