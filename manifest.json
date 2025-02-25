@@ -23,7 +23,7 @@
         "type": "boolean"
       },
       "storageOwner": {
-        "default": "ubq-testing",
+        "default": "ubiquity-os-marketplace",
         "description": "Determines the correct UbiquityOS install-authenticated Octokit instance to use and the storage location for this plugin (Required: GitHub Storage layer).",
         "type": "string"
       },
