@@ -4,10 +4,9 @@ import { Value } from "@sinclair/typebox/value";
 import { envValidator, pluginSettingsSchema, PluginInputs, pluginSettingsValidator, Env } from "./types";
 import { PluginEnvContext } from "./types/plugin-env-context";
 import { logger } from "./utils/logger";
-import { proxyWorkflowCallbacks } from "./github-handlers/workflow-proxy";
 import dotenv from "dotenv";
-import { initializeBotFatherInstance } from "./handle-telegram-webhook";
 import { runGitHubWorkflowEntry } from "./plugin";
+import { initializeBotFatherInstance } from "./botfather-bot/initialize-botfather-instance";
 dotenv.config();
 
 async function initWorkerPluginContext(inputs: PluginInputs, env: Env) {
@@ -32,6 +31,7 @@ async function run() {
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     VOYAGEAI_API_KEY: process.env.VOYAGEAI_API_KEY ?? "", // not used through workflows
   };
+
 
   try {
     env = Value.Decode(envValidator.schema, payloadEnv);

@@ -1,14 +1,14 @@
 import { Context, Env, envValidator, PluginInputs, pluginSettingsValidator } from "./types";
-import { initializeBotFatherInstance, sendBotFatherRequest } from "./handle-telegram-webhook";
 import { PluginEnvContext } from "./types/plugin-env-context";
 import { ExecutionContext } from "hono";
 import { createPlugin } from "@ubiquity-os/plugin-sdk";
-import { runGithubWorkerEntry } from "./plugin";
+import { runGithubWorkerEntry, runTelegramBotEntry } from "./plugin";
 import { Manifest } from "@ubiquity-os/plugin-sdk/manifest";
 import { logger } from "./utils/logger";
 import { handleUncaughtError } from "./utils/errors";
 import { createAdapters } from "./adapters";
 import manifest from "../manifest.json";
+import { initializeBotFatherInstance } from "./botfather-bot/initialize-botfather-instance";
 
 export default {
   async fetch(request: Request, env: Env, executionCtx?: ExecutionContext) {
@@ -20,8 +20,14 @@ export default {
     }
 
     const pluginEnvContext = await initWorkerPluginContext(request, env);
-    await Promise.all([telegramRoute(request, pluginEnvContext), githubRoute(request, pluginEnvContext, executionCtx)]);
-    return new Response("OK", { status: 200 });
+    const results = await Promise.all([
+      telegramRoute(request, pluginEnvContext),
+      githubRoute(request, pluginEnvContext, executionCtx)
+    ]);
+
+    return new Response(JSON.stringify(results), {
+      headers: { "Content-Type": "application/json" },
+    });
   },
 };
 
@@ -69,7 +75,7 @@ async function githubRoute(request: Request, pluginEnvCtx: PluginEnvContext, exe
 async function telegramRoute(request: Request, pluginEnvCtx: PluginEnvContext) {
   if (["/telegram", "/telegram/"].includes(new URL(request.url).pathname)) {
     try {
-      return await sendBotFatherRequest(request, pluginEnvCtx);
+      return await runTelegramBotEntry(request, pluginEnvCtx)
     } catch (err) {
       logger.error("handleTelegramWebhook failed", { err });
       return handleUncaughtError(err);
