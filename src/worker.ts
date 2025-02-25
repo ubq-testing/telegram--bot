@@ -1,6 +1,5 @@
 import { Context, Env, envValidator, PluginInputs, pluginSettingsValidator } from "./types";
-import { handleTelegramWebhook } from "./handlers/telegram-webhook";
-import manifest from "../manifest.json";
+import { handleTelegramWebhook, initializeBotFatherInstance } from "./github-handlers/telegram-webhook";
 import { PluginEnvContext } from "./types/plugin-env-context";
 import { ExecutionContext } from "hono";
 import { createPlugin } from "@ubiquity-os/plugin-sdk";
@@ -9,11 +8,7 @@ import { Manifest } from "@ubiquity-os/plugin-sdk/manifest";
 import { logger } from "./utils/logger";
 import { handleUncaughtError } from "./utils/errors";
 import { createAdapters } from "./adapters";
-
-async function initPluginContext(request: Request, env: Env) {
-  const payload = (await request.clone().json()) as PluginInputs; // required cast
-  return new PluginEnvContext(payload, env);
-}
+import manifest from "../manifest.json";
 
 export default {
   async fetch(request: Request, env: Env, executionCtx?: ExecutionContext) {
@@ -25,11 +20,22 @@ export default {
     }
 
     const pluginEnvContext = await initPluginContext(request, env);
-    await Promise.all([telegramRoute(request, pluginEnvContext), githubRoute(request, pluginEnvContext, executionCtx)]);
 
+    await Promise.all([telegramRoute(request, pluginEnvContext), githubRoute(request, pluginEnvContext, executionCtx)]);
     return new Response("OK", { status: 200 });
   },
 };
+
+async function initPluginContext(request: Request, env: Env) {
+  const payload = (await request.clone().json()) as PluginInputs; // required cast
+  const pluginEnvContext = new PluginEnvContext(payload, env);
+  const botFatherInstance = await initializeBotFatherInstance(pluginEnvContext);
+  if (!botFatherInstance) {
+    throw new Error("BotFatherInstance not initialized");
+  }
+  pluginEnvContext.setBotFatherContext(botFatherInstance)
+  return pluginEnvContext;
+}
 
 /**
  * This route handles any GitHub-sided updates which the kernel sends.
@@ -45,6 +51,7 @@ async function githubRoute(request: Request, pluginEnvCtx: PluginEnvContext, exe
       const ctx = context as unknown as Context;
       ctx.adapters = createAdapters(ctx);
       ctx.pluginEnvCtx = pluginEnvCtx;
+
       return runPlugin(ctx);
     },
     manifest as Manifest,

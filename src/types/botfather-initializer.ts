@@ -1,6 +1,6 @@
 import { Octokit as OctokitRest } from "@octokit/rest";
 import { Octokit } from "octokit";
-import { Bot, createBot } from "../bot";
+import { Bot, createBot } from "../botfather-bot";
 import { logger } from "../utils/logger";
 import { PluginEnvContext } from "./plugin-env-context";
 import { Hono } from "hono";
@@ -9,9 +9,9 @@ import { webhookCallback } from "grammy";
 import { Context as UbiquityOsContext } from "../types";
 import { Logger } from "../utils/logger";
 import type { Env } from "hono";
-import { setLogger } from "../botfather-server/middlewares/logger";
-import { requestLogger } from "../botfather-server/middlewares/request-logger";
-import { cors, jsonErrorHandler, rateLimit, securityHeaders } from "../botfather-server/middlewares/wares";
+import { setLogger } from "../botfather-bot/middlewares/logger";
+import { requestLogger } from "../botfather-bot/middlewares/request-logger";
+import { cors, jsonErrorHandler, rateLimit, securityHeaders } from "../botfather-bot/middlewares/wares";
 
 interface Dependencies {
   bot: Bot;
@@ -29,13 +29,12 @@ interface HonoEnv extends Env {
 export class BotFatherInitializer {
   private _bot: Bot | null = null;
   private _server: Hono<HonoEnv> | null = null;
-  private _pluginEnvCtx: PluginEnvContext | null = null;
 
-  constructor(pluginEnvCtx: PluginEnvContext) {
-    this._pluginEnvCtx = pluginEnvCtx;
-  }
+  constructor(
+    private _pluginEnvCtx: PluginEnvContext | null = null,
+  ) { }
 
-  async initialize(): Promise<BotFatherInitializer["_server"]> {
+  async initialize(): Promise<{ bot: Bot, server: Hono<HonoEnv> }> {
     if (!this._pluginEnvCtx) {
       throw new Error("PluginEnvContext not initialized");
     }
@@ -90,10 +89,17 @@ export class BotFatherInitializer {
       logger.error("Error initializing server in BotFatherInitializer", { er });
     }
 
-    return this._getServer();
+    if (!this._server) {
+      throw new Error(`[BotFatherInitializer] Server not initialized`);
+    }
+
+    return {
+      bot: this._bot,
+      server: this._server,
+    }
   }
 
-  private async _createBotfatherHonoApp(dependencies: Dependencies) {
+  private async _createBotfatherHonoApp(dependencies: Dependencies): Promise<Hono<HonoEnv>> {
     const { bot, env, logger } = dependencies;
     const {
       TELEGRAM_BOT_ENV: {
@@ -172,5 +178,9 @@ export class BotFatherInitializer {
       throw new Error("Server not initialized");
     }
     return this._server;
+  }
+
+  getBotFatherBot(): BotFatherInitializer["_bot"] {
+    return this._bot;
   }
 }

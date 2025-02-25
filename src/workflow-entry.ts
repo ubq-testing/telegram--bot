@@ -1,13 +1,23 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
 import { Value } from "@sinclair/typebox/value";
-import { envValidator, pluginSettingsSchema, PluginInputs, pluginSettingsValidator } from "./types";
+import { envValidator, pluginSettingsSchema, PluginInputs, pluginSettingsValidator, Env } from "./types";
 import { PluginEnvContext } from "./types/plugin-env-context";
 import { logger } from "./utils/logger";
-import { proxyWorkflowCallbacks } from "./handlers/workflow-proxy";
+import { proxyWorkflowCallbacks } from "./github-handlers/workflow-proxy";
 import dotenv from "dotenv";
-import { createAdapters } from "./adapters";
+import { initializeBotFatherInstance } from "./github-handlers/telegram-webhook";
 dotenv.config();
+
+async function initWorkerPluginContext(inputs: PluginInputs, env: Env) {
+  const pluginEnvContext = new PluginEnvContext(inputs, env);
+  const botFatherInstance = await initializeBotFatherInstance(pluginEnvContext);
+  if (!botFatherInstance) {
+    throw new Error("BotFatherInstance not initialized");
+  }
+  pluginEnvContext.setBotFatherContext(botFatherInstance)
+  return pluginEnvContext;
+}
 
 async function run() {
   const payload = github.context.payload.inputs;
@@ -53,7 +63,8 @@ async function run() {
     signature: payload.signature,
   };
 
-  const context = await (new PluginEnvContext(inputs, env)).createFullPluginInputsContext(inputs);
+  const pluginEnvContext = await initWorkerPluginContext(inputs, env);
+  const context = await pluginEnvContext.createFullPluginInputsContext(inputs);
   return proxyWorkflowCallbacks(context)[inputs.eventName];
 }
 

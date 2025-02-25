@@ -7,13 +7,19 @@ import { Octokit } from "@octokit/rest";
 import { Octokit as RestOctokitFromApp } from "octokit";
 import { Value } from "@sinclair/typebox/value";
 import { createAdapters } from "../adapters";
+import { BotFatherInitializer } from "./botfather-initializer";
+import { Bot } from "../botfather-bot";
+import { GrammyContext } from "../botfather-bot/helpers/grammy-context";
+import { Api, RawApi } from "grammy";
 
 export class PluginEnvContext {
   private _config: Context["config"];
+  private _botFatherHonoApp: BotFatherInitializer["_server"] | null = null;
+  private _BotFatherBot: Bot | null = null;
 
   constructor(
     private readonly inputs: PluginInputs,
-    private _env: Env
+    private _env: Env,
   ) {
     this._config = this.inputs.settings;
   }
@@ -31,9 +37,9 @@ export class PluginEnvContext {
     const ctx = {
       eventName: inputs?.eventName || this.inputs.eventName,
       payload,
-      config: this.config,
+      config: this._config,
       octokit: new Octokit({ auth: inputs?.authToken || this.inputs.authToken }),
-      env: this.env,
+      env: this._env,
       logger: logger,
       pluginEnvCtx: this,
     } as unknown as Context;
@@ -44,12 +50,35 @@ export class PluginEnvContext {
     };
   }
 
+  setBotFatherContext({ bot, server }: { server: BotFatherInitializer["_server"], bot: Bot }) {
+    this._BotFatherBot = bot;
+    this._botFatherHonoApp = server;
+  }
+
+  getBotFatherHonoApp(): BotFatherInitializer["_server"] {
+    if (!this._botFatherHonoApp) {
+      throw new Error("BotFatherHonoApp not initialized");
+    }
+    return this._botFatherHonoApp;
+  }
+
+  getBotFatherBot(): Bot {
+    if (!this._BotFatherBot) {
+      throw new Error("BotFatherBot not initialized");
+    }
+    return this._BotFatherBot;
+  }
+
   getInputs(): PluginInputs {
     return this.inputs;
   }
 
   getEnv(): Env {
-    return this.env;
+    return Value.Decode(envValidator.schema, Value.Default(envValidator.schema, this._env));
+  }
+
+  getPluginConfigSettings(): Context["config"] {
+    return Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, this._config ?? {}));
   }
 
   /**
@@ -101,25 +130,4 @@ export class PluginEnvContext {
       throw logger.error("Error initializing storage app", { er });
     }
   }
-
-  getPluginConfigSettings(): Context["config"] {
-    return this.config;
-  }
-
-  get env() {
-    return Value.Decode(envValidator.schema, Value.Default(envValidator.schema, this._env));
-  }
-
-  set env(env: Env) {
-    this._env = env;
-  }
-
-  get config() {
-    return Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, this._config ?? {}));
-  }
-
-  set config(config: Context["config"]) {
-    this._config = config;
-  }
-
 }
