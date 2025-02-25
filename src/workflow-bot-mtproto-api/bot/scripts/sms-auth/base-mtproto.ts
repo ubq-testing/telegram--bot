@@ -22,6 +22,11 @@ export class BaseMtProto {
     this._api = Api;
     this._session = new StringSession(session);
     this._client = await this._mtProtoInit(env, this._session);
+
+    return {
+      client: this.getMtProtoClient(),
+      api: this.getMtProtoApi(),
+    };
   }
 
   getMtProtoClient() {

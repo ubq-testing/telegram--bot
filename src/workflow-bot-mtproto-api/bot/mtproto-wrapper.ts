@@ -4,6 +4,8 @@ import { Context } from "../../types";
 import { SessionManager, SessionManagerFactory } from "./session/session-manager";
 import bigInt from "big-integer";
 import dotenv from "dotenv";
+import { addCommentToIssue } from "../../utils/add-comment-to-issues";
+import { CommentHandler } from "@ubiquity-os/plugin-sdk";
 dotenv.config();
 
 /**
@@ -16,6 +18,7 @@ dotenv.config();
 export class MtProtoWrapper extends BaseMtProto {
   private _context: Context;
   private _sessionManager: SessionManager;
+  private _botIdString: string | null = null;
 
   constructor(context: Context) {
     super();
@@ -25,7 +28,10 @@ export class MtProtoWrapper extends BaseMtProto {
 
   async initialize() {
     const session = await this._sessionManager.getSession();
-    await super.initialize(this._context.env.TELEGRAM_BOT_ENV.mtProtoSettings, session);
+    const initialized = await super.initialize(this._context.env.TELEGRAM_BOT_ENV.mtProtoSettings, session);
+    await initialized.client.getDialogs();
+    this._botIdString = await initialized.client.getPeerId(this._context.config.botId, true);
+    return initialized;
   }
 
   async fetchTelegramChat(
@@ -95,5 +101,118 @@ export class MtProtoWrapper extends BaseMtProto {
     }
 
     return creator
+  }
+
+  async createChat(
+    chatName: string,
+  ) {
+    const api = this.getMtProtoApi();
+    if (!this._botIdString) {
+      throw new Error("Bot ID is not available when creating chat");
+    }
+
+    return await this.getMtProtoClient().invoke(
+      new api.messages.CreateChat({
+        title: chatName,
+        users: [this._botIdString],
+      })
+    );
+  }
+
+  async createChatInviteLink(
+    chat: Api.messages.InvitedUsers,
+  ) {
+    let inviteLink, chatId, chatIdBigInt;
+
+    if ("chats" in chat.updates) {
+      chatId = chat.updates.chats[0].id.toJSNumber();
+      chatIdBigInt = chat.updates.chats[0].id;
+    } else {
+      throw new Error("Failed to create chat");
+    }
+
+    const mtProtoClient = this.getMtProtoClient();
+    const mtProtoApi = this.getMtProtoApi();
+
+    if (chat.updates.chats[0].className === "Chat") {
+      inviteLink = await mtProtoClient.invoke(
+        new mtProtoApi.messages.ExportChatInvite({
+          peer: new mtProtoApi.InputPeerChat({ chatId: chatIdBigInt }),
+        })
+      );
+    }
+
+    return {
+      inviteLink,
+      chatId,
+      chatIdBigInt
+    }
+  }
+
+  async editChatDescription(
+    chatIdBigInt: bigInt.BigInteger,
+    description: string
+  ) {
+    const mtProtoClient = this.getMtProtoClient();
+    const mtProtoApi = this.getMtProtoApi();
+
+    try {
+      await mtProtoClient.invoke(
+        new mtProtoApi.messages.EditChatAbout({
+          peer: new mtProtoApi.InputPeerChat({ chatId: chatIdBigInt }),
+          about: description,
+        })
+      );
+    } catch (er) {
+      throw new Error("Failed to edit chat description");
+    }
+  }
+
+  async postChatInviteLinkToIssue(
+    payload: { issue: { html_url: string, number: number, node_id: string }, repository: { full_name: string } },
+    chatIdBigInt: bigInt.BigInteger,
+    inviteLink: Api.TypeExportedChatInvite | undefined,
+    chatName: string
+  ) {
+    const mtProtoClient = this.getMtProtoClient();
+    const mtProtoApi = this.getMtProtoApi();
+    const logger = this._context.logger;
+
+    if (inviteLink) {
+      const [owner, repo] = payload.repository.full_name.split("/");
+      if ("link" in inviteLink) {
+        await addCommentToIssue(
+          this._context,
+          logger.ok(`A new workroom has been created for this task. [Join chat](${inviteLink.link})`).logMessage.raw,
+          owner,
+          repo,
+          payload.issue.number
+        );
+      } else {
+        throw new Error(logger.error(`Failed to create chat invite link for the workroom: ${chatName}`).logMessage.raw);
+      }
+
+
+      await this.editChatDescription(chatIdBigInt, `${payload.issue.html_url}`);
+
+      const isBotPromotedToAdmin = await mtProtoClient.invoke(
+        new mtProtoApi.messages.EditChatAdmin({
+          chatId: chatIdBigInt,
+          isAdmin: true,
+          userId: this.getBotIdString(),
+        })
+      );
+
+      if (!isBotPromotedToAdmin) {
+        throw new Error("Failed to promote bot to admin");
+      }
+    }
+  }
+
+  getBotIdString() {
+    if (!this._botIdString) {
+      throw new Error("Bot ID is not available");
+    }
+    return this._botIdString;
   }
 }

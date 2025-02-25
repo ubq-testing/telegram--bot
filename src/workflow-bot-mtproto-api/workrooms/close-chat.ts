@@ -23,7 +23,6 @@ export async function closeChat(context: Context<"issues.closed">): Promise<Call
 
   logger.info("Chat found: ", { dbChat });
 
-  await mtProtoWrapper.getMtProtoClient().getDialogs();
   const chatParticipants = await mtProtoWrapper.getChatParticipants(dbChat);
 
   await mtProtoWrapper.updateChatArchiveStatus({ archive: true, dbChat });
