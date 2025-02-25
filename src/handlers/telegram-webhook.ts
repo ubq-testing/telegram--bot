@@ -1,28 +1,17 @@
 import { PluginEnvContext } from "../types/plugin-env-context";
-import { TelegramBotSingleton } from "../types/telegram-bot-single";
+import { BotFatherInitializer } from "../types/botfather-initializer";
 import { logger } from "../utils/logger";
 
 export async function handleTelegramWebhook(request: Request, pluginEnvCtx: PluginEnvContext): Promise<Response> {
-  const botInstance = await initializeBotInstance(pluginEnvCtx);
-
-  if (botInstance) {
-    pluginEnvCtx._bot = botInstance.getBot();
-  }
-
-  const { server } = getServerFromBot(botInstance);
-
-  const res = await makeServerRequest(server, request, pluginEnvCtx);
-
+  const botFatherInstance = await initializeBotInstance(pluginEnvCtx);
+  const res = await makeServerRequest(botFatherInstance, request, pluginEnvCtx);
   const body = await readResponseBody(res);
-
-  const response = createResponse(res, body);
-
-  return response;
+  return createResponse(res, body);
 }
 
 async function initializeBotInstance(pluginEnvCtx: PluginEnvContext) {
   try {
-    return new TelegramBotSingleton(pluginEnvCtx).initialize();
+    return await (new BotFatherInitializer(pluginEnvCtx)).initialize();
   } catch (er) {
     const errorInfo = {
       message: "initializeBotInstance Error",
@@ -34,34 +23,15 @@ async function initializeBotInstance(pluginEnvCtx: PluginEnvContext) {
   }
 }
 
-function getServerFromBot(botInstance: TelegramBotSingleton | null) {
-  try {
-    const server = botInstance?.getServer();
-    const bot = botInstance?.getBot();
-    if (!server || !bot) {
-      throw new Error("Server or bot is undefined");
-    }
-    return { server, bot };
-  } catch (er) {
-    const errorInfo = {
-      message: "Error getting server from bot",
-      error: er instanceof Error ? er.message : String(er),
-      stack: er instanceof Error ? er.stack : undefined,
-    };
-    logger.error(errorInfo.message, { error: er as Error, botInstance });
-    return { server: null, bot: null };
-  }
-}
-
 async function makeServerRequest(
-  server: ReturnType<TelegramBotSingleton["getServer"]> | null,
+  server: BotFatherInitializer["_server"],
   request: Request,
   pluginEnvCtx: PluginEnvContext
 ): Promise<Response> {
+  if (!server) {
+    throw new Error("Server is null");
+  }
   try {
-    if (!server) {
-      throw new Error("Server is null");
-    }
     return await server.fetch(request, pluginEnvCtx.env);
   } catch (er) {
     const errorInfo = {
