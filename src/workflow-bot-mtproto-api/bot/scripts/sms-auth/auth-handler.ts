@@ -79,7 +79,7 @@ export class AuthHandler {
 
     await mtProto.initialize(this._env, "");
     try {
-      await mtProto.client?.start({
+      await mtProto.getMtProtoClient().start({
         phoneNumber: async () => await input.text("Enter your phone number:"),
         password: async () => await input.password("Enter your password if required:"),
         phoneCode: async () => await input.text("Enter the code you received:"),
@@ -102,7 +102,7 @@ export class AuthHandler {
         }
       }
 
-      const { error } = await this._supabase.from("tg-bot-sessions").insert([{ session_data: mtProto.session?.save() }]);
+      const { error } = await this._supabase.from("tg-bot-sessions").insert([{ session_data: mtProto.getStringSessionObject()?.save() }]);
 
       if (error) {
         throw new Error("Failed to save session data to Supabase.");
