@@ -61,11 +61,11 @@ feature.command("newtask", logHandle("task-creation"), chatAction("typing"), asy
     )
   );
 
-  const context = await ctx.pluginEnvCtx.getContext();
+  const { fuzzySearchThreshold } = ctx.pluginEnvCtx.getPluginConfigSettings();
 
   const options = {
     includeScore: true,
-    threshold: context.config.fuzzySearchThreshold,
+    threshold: fuzzySearchThreshold,
   };
 
   const fuse = new Fuse(repoNames, options);

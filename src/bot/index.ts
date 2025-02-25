@@ -21,14 +21,12 @@ import { walletFeature } from "./features/commands/private-chat/wallet";
 import { banCommand } from "./features/commands/groups/ban";
 import { welcomeFeature } from "./features/start-command";
 import { unhandledFeature } from "./features/helpers/unhandled";
-import { Context } from "../types";
 import { session } from "./middlewares/session";
 import { askFeature } from "./features/commands/shared/ask-command";
 import { newTaskFeature } from "./features/commands/shared/task-creation";
 import { PluginEnvContext } from "../types/plugin-env-context";
 
 interface Dependencies {
-  config: Context["env"];
   logger: Logger;
   octokit: RestOctokitFromApp | Octokit;
   pluginEnvCtx: PluginEnvContext;

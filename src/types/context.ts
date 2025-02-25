@@ -4,7 +4,6 @@ import { PluginSettings } from "./plugin-inputs";
 import { Env } from "./env";
 import { createAdapters } from "../adapters";
 import { PluginEnvContext } from "./plugin-env-context";
-import { Bot } from "../bot";
 
 export type SupportedEventsU = WebhookEventName;
 
@@ -15,7 +14,6 @@ export type SupportedEvents = {
 // @ts-expect-error - octokit type mismatch - doesn't affect runtime
 interface ExtendedContext<T extends SupportedEventsU> extends _Context<PluginSettings, Env, null, T> {
   adapters: ReturnType<typeof createAdapters>;
-  bot: Bot;
   pluginEnvCtx: PluginEnvContext;
 }
 
