@@ -1,8 +1,9 @@
 import bigInt from "big-integer";
 import { Context } from "../../types";
 import { CallbackResult } from "../../types/proxy";
-import { MtProto } from "../bot/mtproto";
+import { MtProtoWrapper } from "../bot/mtproto-wrapper";
 import { Api } from "telegram";
+import { Chat } from "../../types/storage";
 
 export async function reopenChat(context: Context<"issues.reopened">): Promise<CallbackResult> {
   const {
@@ -15,99 +16,82 @@ export async function reopenChat(context: Context<"issues.reopened">): Promise<C
     return { status: 200, reason: "skipped" };
   }
 
-  const mtProto = new MtProto(context);
-  await mtProto.initialize();
+  const mtProtoWrapper = new MtProtoWrapper(context);
+  const { client } = await mtProtoWrapper.initialize();
 
   logger.info("Reopening chat with name: ", { chatName: payload.issue.title });
   const dbChat = await storage.retrieveChatByTaskNodeId(payload.issue.node_id);
 
   if (!dbChat) {
     logger.error("Chat not found in database", { chatName: payload.issue.title });
-    // no need to create one if it doesn't exist, this really only affects backwards compatibility
     return { status: 200, reason: "chat_not_found" };
   }
 
-  const chatIdBigInt = bigInt(dbChat.chat_id);
-
-  const fetchedChat = await mtProto.client.invoke(
-    new mtProto.api.messages.GetFullChat({
-      chatId: chatIdBigInt,
-    })
-  );
-
-  if (!fetchedChat) {
-    throw new Error("Failed to fetch chat");
-  }
-
-  // unarchive
-  await mtProto.client.invoke(
-    new mtProto.api.folders.EditPeerFolders({
-      folderPeers: [
-        new mtProto.api.InputFolderPeer({
-          peer: new mtProto.api.InputPeerChat({ chatId: chatIdBigInt }),
-          folderId: 0,
-        }),
-      ],
-    })
-  );
-
-  const chatFull = fetchedChat.fullChat as Api.ChatFull;
-  const participants = chatFull.participants as Api.ChatParticipantsForbidden;
-
-  const chatCreator = participants.selfParticipant?.userId;
-  if (!chatCreator) {
-    throw new Error("Failed to get chat creator");
-  }
-
-  // add the creator back to obtain control of the chat
-  await mtProto.client.invoke(
-    new mtProto.api.messages.AddChatUser({
-      chatId: chatIdBigInt,
-      userId: chatCreator,
-      fwdLimit: 50,
-    })
-  );
+  const { chatCreatorId, chatIdBigInt } = await fetchChatAndAddCreator(mtProtoWrapper, dbChat);
 
   await storage.handleChat({
     action: "reopen",
     chat: dbChat,
   });
 
-  const { user_ids } = dbChat;
-  const chatInput = await mtProto.client.getInputEntity(chatIdBigInt);
+  await inviteUsersBackToChat({ client, context, chatIdBigInt, chatCreatorId, mtProtoWrapper, dbChat });
 
-  for (const userId of user_ids) {
-    /**
-     * Dialogs are all of the chats, channels, and users that the account has interacted with.
-     * By obtaining the dialogs, we guarantee our client (that's what we are considered to be by the MTProto API)
-     * has up to date context otherwise these operations seem to fail.
-     *
-     * There is likely a better way to handle this, but this works for now.
-     */
-    await mtProto.client.getDialogs();
-    try {
-      // don't add the bot or the chat creator, as they are already in the chat
-      if (userId === context.config.botId || userId === chatCreator.toJSNumber()) {
-        continue;
-      }
+  await mtProtoWrapper.sendMessageToChat(dbChat, "This task has been reopened and this chat has been unarchived.");
+  return { status: 200, reason: "chat_reopened" };
+}
 
-      await mtProto.client.invoke(
-        new mtProto.api.messages.AddChatUser({
-          chatId: chatInput.className === "InputPeerChat" ? chatInput.chatId : undefined,
-          userId: userId,
-          fwdLimit: 50,
-        })
-      );
-    } catch (er) {
-      logger.error("Failed to add chat users", { er });
-    }
+async function fetchChatAndAddCreator(
+  mtProtoWrapper: MtProtoWrapper,
+  dbChat: Chat
+) {
+  const chatIdBigInt = bigInt(dbChat.chat_id);
+  const fetchedChat = await mtProtoWrapper.fetchTelegramChat(dbChat);
+
+  if (!fetchedChat) {
+    throw new Error("Failed to fetch chat");
   }
 
-  await mtProto.client.invoke(
-    new mtProto.api.messages.SendMessage({
-      message: "This task has been reopened and this chat has been unarchived.",
-      peer: new mtProto.api.InputPeerChat({ chatId: chatIdBigInt }),
-    })
-  );
-  return { status: 200, reason: "chat_reopened" };
+  await mtProtoWrapper.updateChatArchiveStatus({ dbChat, archive: false });
+
+  const chatFull = fetchedChat.fullChat as Api.ChatFull;
+  const participants = chatFull.participants as Api.ChatParticipantsForbidden;
+
+  const chatCreatorId = participants.selfParticipant?.userId;
+  if (!chatCreatorId) {
+    throw new Error("Failed to get chat creator");
+  }
+
+  // add the creator back to obtain control of the chat
+  await mtProtoWrapper.addUserToChat(chatIdBigInt, chatCreatorId.toJSNumber());
+
+  return {
+    chatCreatorId,
+    chatIdBigInt,
+  }
+}
+
+async function inviteUsersBackToChat({ client, context, chatIdBigInt, chatCreatorId, mtProtoWrapper, dbChat }: {
+  client: MtProtoWrapper["_client"],
+  context: Context<"issues.reopened">,
+  chatIdBigInt: bigInt.BigInteger,
+  chatCreatorId: bigInt.BigInteger,
+  mtProtoWrapper: MtProtoWrapper,
+  dbChat: Chat,
+}) {
+  const chatInput = await client.getInputEntity(chatIdBigInt);
+  const chatId = chatInput.className === "InputPeerChat" ? chatInput.chatId : null;
+
+  const { user_ids } = dbChat;
+
+  for (const userId of user_ids) {
+    try {
+      // don't add the bot or the chat creator, as they are already in the chat
+      if (userId === context.config.botId || userId === chatCreatorId.toJSNumber()) {
+        continue;
+      }
+      await mtProtoWrapper.addUserToChat(chatId, userId);
+    } catch (er) {
+      context.logger.error("Failed to add chat users", { er });
+    }
+  }
 }

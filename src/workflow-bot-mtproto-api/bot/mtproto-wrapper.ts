@@ -209,6 +209,24 @@ export class MtProtoWrapper extends BaseMtProto {
     }
   }
 
+  async addUserToChat(
+    chatIdBigInt: bigInt.BigInteger | null,
+    userId: number
+  ) {
+    if (!chatIdBigInt) {
+      throw new Error("Chat ID is not available");
+    }
+    const client = this.getMtProtoClient();
+    const api = this.getMtProtoApi();
+    await client.invoke(
+      new api.messages.AddChatUser({
+        chatId: chatIdBigInt,
+        userId: userId,
+        fwdLimit: 50,
+      })
+    );
+  }
+
   getBotIdString() {
     if (!this._botIdString) {
       throw new Error("Bot ID is not available");
