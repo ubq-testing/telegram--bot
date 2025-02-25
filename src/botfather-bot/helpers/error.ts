@@ -1,6 +1,6 @@
 import type { ErrorHandler } from "grammy";
-import { GrammyContext } from "../helpers/create-grammy-context";
 import { getUpdateInfo } from "../helpers/logging";
+import { GrammyContext } from "../create-grammy-context";
 
 export function errorHandler(): ErrorHandler<GrammyContext> {
   return (error) => {

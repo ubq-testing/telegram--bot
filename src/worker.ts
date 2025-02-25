@@ -1,9 +1,9 @@
 import { Context, Env, envValidator, PluginInputs, pluginSettingsValidator } from "./types";
-import { handleTelegramWebhook, initializeBotFatherInstance } from "./github-handlers/telegram-webhook";
+import { initializeBotFatherInstance, sendBotFatherRequest } from "./handle-telegram-webhook";
 import { PluginEnvContext } from "./types/plugin-env-context";
 import { ExecutionContext } from "hono";
 import { createPlugin } from "@ubiquity-os/plugin-sdk";
-import { runPlugin } from "./plugin";
+import { runGithubWorkerEntry } from "./plugin";
 import { Manifest } from "@ubiquity-os/plugin-sdk/manifest";
 import { logger } from "./utils/logger";
 import { handleUncaughtError } from "./utils/errors";
@@ -19,32 +19,23 @@ export default {
       });
     }
 
-    const pluginEnvContext = await initPluginContext(request, env);
-
+    const pluginEnvContext = await initWorkerPluginContext(request, env);
     await Promise.all([telegramRoute(request, pluginEnvContext), githubRoute(request, pluginEnvContext, executionCtx)]);
     return new Response("OK", { status: 200 });
   },
 };
 
-async function initPluginContext(request: Request, env: Env) {
+async function initWorkerPluginContext(request: Request, env: Env) {
   const payload = (await request.clone().json()) as PluginInputs; // required cast
   const pluginEnvContext = new PluginEnvContext(payload, env);
   const botFatherInstance = await initializeBotFatherInstance(pluginEnvContext);
   if (!botFatherInstance) {
     throw new Error("BotFatherInstance not initialized");
   }
-  pluginEnvContext.setBotFatherContext(botFatherInstance)
+  pluginEnvContext.setBotFatherContext(botFatherInstance);
   return pluginEnvContext;
 }
 
-/**
- * This route handles any GitHub-sided updates which the kernel sends.
- *
- * - `issues.assigned` => kernel sends webhook to the worker > worker fires off the action
- *
- * Any requests passing through here need to conform to [`input-schema`](https://github.com/ubiquity-os/plugin-sdk/blob/development/src/types/input-schema.ts#L5)
- * otherwise the SDK will throw an error `Invalid Body`.
- */
 async function githubRoute(request: Request, pluginEnvCtx: PluginEnvContext, executionCtx?: ExecutionContext) {
   return createPlugin<Context>(
     (context) => {
@@ -52,7 +43,7 @@ async function githubRoute(request: Request, pluginEnvCtx: PluginEnvContext, exe
       ctx.adapters = createAdapters(ctx);
       ctx.pluginEnvCtx = pluginEnvCtx;
 
-      return runPlugin(ctx);
+      return runGithubWorkerEntry(ctx);
     },
     manifest as Manifest,
     {
@@ -78,7 +69,7 @@ async function githubRoute(request: Request, pluginEnvCtx: PluginEnvContext, exe
 async function telegramRoute(request: Request, pluginEnvCtx: PluginEnvContext) {
   if (["/telegram", "/telegram/"].includes(new URL(request.url).pathname)) {
     try {
-      return await handleTelegramWebhook(request, pluginEnvCtx);
+      return await sendBotFatherRequest(request, pluginEnvCtx);
     } catch (err) {
       logger.error("handleTelegramWebhook failed", { err });
       return handleUncaughtError(err);

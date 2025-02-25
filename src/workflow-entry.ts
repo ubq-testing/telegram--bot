@@ -6,7 +6,8 @@ import { PluginEnvContext } from "./types/plugin-env-context";
 import { logger } from "./utils/logger";
 import { proxyWorkflowCallbacks } from "./github-handlers/workflow-proxy";
 import dotenv from "dotenv";
-import { initializeBotFatherInstance } from "./github-handlers/telegram-webhook";
+import { initializeBotFatherInstance } from "./handle-telegram-webhook";
+import { runGitHubWorkflowEntry } from "./plugin";
 dotenv.config();
 
 async function initWorkerPluginContext(inputs: PluginInputs, env: Env) {
@@ -15,7 +16,7 @@ async function initWorkerPluginContext(inputs: PluginInputs, env: Env) {
   if (!botFatherInstance) {
     throw new Error("BotFatherInstance not initialized");
   }
-  pluginEnvContext.setBotFatherContext(botFatherInstance)
+  pluginEnvContext.setBotFatherContext(botFatherInstance);
   return pluginEnvContext;
 }
 
@@ -65,7 +66,7 @@ async function run() {
 
   const pluginEnvContext = await initWorkerPluginContext(inputs, env);
   const context = await pluginEnvContext.createFullPluginInputsContext(inputs);
-  return proxyWorkflowCallbacks(context)[inputs.eventName];
+  return await runGitHubWorkflowEntry(context);
 }
 
 run()

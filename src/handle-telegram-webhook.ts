@@ -1,22 +1,11 @@
-import { PluginEnvContext } from "../types/plugin-env-context";
-import { BotFatherInitializer } from "../types/botfather-initializer";
-import { logger } from "../utils/logger";
-
-export async function handleTelegramWebhook(request: Request, pluginEnvCtx: PluginEnvContext): Promise<Response> {
-  const botFatherInstance = await initializeBotFatherInstance(pluginEnvCtx);
-
-  if (botFatherInstance) {
-    const res = await makeServerRequest(botFatherInstance.server, request, pluginEnvCtx);
-    const body = await readResponseBody(res);
-    return createResponse(res, body);
-  }
-
-  return new Response("Internal Server Error", { status: 500 });
-}
+import { PluginEnvContext } from "./types/plugin-env-context";
+import { BotFatherInitializer } from "./types/botfather-initializer";
+import { logger } from "./utils/logger";
 
 export async function initializeBotFatherInstance(pluginEnvCtx: PluginEnvContext) {
   try {
-    return await (new BotFatherInitializer(pluginEnvCtx)).initialize();
+    const botFatherInitializer = new BotFatherInitializer(pluginEnvCtx);
+    return await botFatherInitializer.initialize();
   } catch (er) {
     const errorInfo = {
       message: "initializeBotInstance Error",
@@ -28,11 +17,14 @@ export async function initializeBotFatherInstance(pluginEnvCtx: PluginEnvContext
   }
 }
 
-async function makeServerRequest(
-  server: BotFatherInitializer["_server"],
-  request: Request,
-  pluginEnvCtx: PluginEnvContext
-): Promise<Response> {
+export async function sendBotFatherRequest(request: Request, pluginEnvCtx: PluginEnvContext): Promise<Response> {
+  const botFatherHonoApp = pluginEnvCtx.getBotFatherHonoApp();
+  const res = await makeServerRequest(botFatherHonoApp, request, pluginEnvCtx);
+  const body = await readResponseBody(res);
+  return createResponse(res, body);
+}
+
+async function makeServerRequest(server: BotFatherInitializer["_server"], request: Request, pluginEnvCtx: PluginEnvContext): Promise<Response> {
   if (!server) {
     throw new Error("Server is null");
   }

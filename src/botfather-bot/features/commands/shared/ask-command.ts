@@ -34,7 +34,9 @@ feature.command("ubiquityos", logHandle("command-ubiquityos"), chatAction("typin
     return ctx.reply("Please provide a question to ask UbiquityOS.");
   }
 
-  const { aiConfig: { similarityThreshold, model } } = ctx.pluginEnvCtx.getPluginConfigSettings();
+  const {
+    aiConfig: { similarityThreshold, model },
+  } = ctx.pluginEnvCtx.getPluginConfigSettings();
 
   const similarText = await Promise.all([
     embeddings.findSimilarComments(question, 1 - similarityThreshold),

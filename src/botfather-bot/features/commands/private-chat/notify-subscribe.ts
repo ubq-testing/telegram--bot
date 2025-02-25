@@ -1,7 +1,7 @@
 import { chatAction } from "@grammyjs/auto-chat-action";
 import { Composer } from "grammy";
 import { logHandle } from "../../../helpers/logging";
-import { NotificationTriggers, notifyTriggers } from "../../../../constants";
+import { NotificationTriggers, notifyTriggers } from "../../../../github-handlers/private-notifications/constants";
 import { GrammyContext } from "../../../create-grammy-context";
 
 const composer = new Composer<GrammyContext>();

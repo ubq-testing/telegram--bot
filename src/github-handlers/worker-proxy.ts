@@ -37,7 +37,7 @@ const callbacks = {
  * callbacks based on the event type, ensuring that the correct context is passed to
  * each callback.
  */
-export function proxyCallbacks(context: Context): ProxyCallbacks {
+export function workerCallbacks(context: Context): ProxyCallbacks {
   return new Proxy(callbacks, {
     get(target, prop: SupportedEventsU) {
       if (!target[prop]) {

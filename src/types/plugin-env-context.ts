@@ -13,13 +13,13 @@ import { Bot } from "../botfather-bot/create-bot";
 export class PluginEnvContext {
   private _config: Context["config"];
   private _botFatherHonoApp: BotFatherInitializer["_server"] | null = null;
-  private _BotFatherBot: Bot | null = null;
+  private _botFatherBot: Bot | null = null;
 
   constructor(
-    private readonly inputs: PluginInputs,
-    private _env: Env,
+    private readonly _inputs: PluginInputs,
+    private _env: Env
   ) {
-    this._config = this.inputs.settings;
+    this._config = this._inputs.settings;
   }
 
   async createFullPluginInputsContext(inputs?: PluginInputs): Promise<Context> {
@@ -29,14 +29,14 @@ export class PluginEnvContext {
     if (inputs?.eventPayload) {
       payload = inputs.eventPayload;
     } else {
-      payload = this.inputs.eventPayload;
+      payload = this._inputs.eventPayload;
     }
 
     const ctx = {
-      eventName: inputs?.eventName || this.inputs.eventName,
+      eventName: inputs?.eventName ?? this._inputs.eventName,
       payload,
       config: this._config,
-      octokit: new Octokit({ auth: inputs?.authToken || this.inputs.authToken }),
+      octokit: new Octokit({ auth: inputs?.authToken ?? this._inputs.authToken }),
       env: this._env,
       logger: logger,
       pluginEnvCtx: this,
@@ -48,8 +48,8 @@ export class PluginEnvContext {
     };
   }
 
-  setBotFatherContext({ bot, server }: { server: BotFatherInitializer["_server"], bot: Bot }) {
-    this._BotFatherBot = bot;
+  setBotFatherContext({ bot, server }: { server: BotFatherInitializer["_server"]; bot: Bot }) {
+    this._botFatherBot = bot;
     this._botFatherHonoApp = server;
   }
 
@@ -61,14 +61,14 @@ export class PluginEnvContext {
   }
 
   getBotFatherBot(): Bot {
-    if (!this._BotFatherBot) {
+    if (!this._botFatherBot) {
       throw new Error("BotFatherBot not initialized");
     }
-    return this._BotFatherBot;
+    return this._botFatherBot;
   }
 
   getInputs(): PluginInputs {
-    return this.inputs;
+    return this._inputs;
   }
 
   getEnv(): Env {

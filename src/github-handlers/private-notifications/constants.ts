@@ -1,4 +1,4 @@
-import { SupportedEventsU } from "./types";
+import { SupportedEventsU } from "../../types";
 
 export type NotificationTriggers = "payment" | "review" | "disqualification" | "reminder";
 

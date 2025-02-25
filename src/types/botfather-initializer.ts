@@ -30,11 +30,9 @@ export class BotFatherInitializer {
   private _bot: Bot | null = null;
   private _server: Hono<HonoEnv> | null = null;
 
-  constructor(
-    private _pluginEnvCtx: PluginEnvContext | null = null,
-  ) { }
+  constructor(private _pluginEnvCtx: PluginEnvContext | null = null) {}
 
-  async initialize(): Promise<{ bot: Bot, server: Hono<HonoEnv> }> {
+  async initialize(): Promise<{ bot: Bot; server: Hono<HonoEnv> }> {
     if (!this._pluginEnvCtx) {
       throw new Error("PluginEnvContext not initialized");
     }
@@ -96,7 +94,7 @@ export class BotFatherInitializer {
     return {
       bot: this._bot,
       server: this._server,
-    }
+    };
   }
 
   private async _createBotfatherHonoApp(dependencies: Dependencies): Promise<Hono<HonoEnv>> {

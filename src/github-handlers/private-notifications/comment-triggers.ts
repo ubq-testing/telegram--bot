@@ -171,7 +171,6 @@ Please use the \`/wallet\` command to set your wallet address for future notific
 You can view the comment <a href="${context.payload.comment.html_url}">here</a>.
 `;
 
-
     try {
       await bot.api.sendMessage(Number(telegramId), noWalletMessage, { parse_mode: "HTML" });
     } catch (er) {
