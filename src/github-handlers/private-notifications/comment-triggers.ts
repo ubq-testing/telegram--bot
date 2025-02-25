@@ -129,9 +129,10 @@ async function handleReminderNotification(username: string, telegramId: string |
 This task has been idle for a while, please provide an update on <a href="${context.payload.issue.html_url}">${context.payload.repository.full_name}#${context.payload.issue.number}</a>.`;
 
   let userPrivateChat;
+  const bot = context.pluginEnvCtx.getBotFatherBot();
 
   try {
-    userPrivateChat = await context.bot?.api.getChat(telegramId);
+    userPrivateChat = await bot.api.getChat(telegramId);
   } catch (er) {
     logger.error(`Error getting chat for ${telegramId}`, { er });
   }
@@ -142,7 +143,7 @@ This task has been idle for a while, please provide an update on <a href="${cont
   }
 
   try {
-    await context.bot?.api.sendMessage(Number(telegramId), message, { parse_mode: "HTML" });
+    await bot.api.sendMessage(Number(telegramId), message, { parse_mode: "HTML" });
   } catch (er) {
     logger.error(`Error sending message to ${telegramId}`, { er });
   }
@@ -157,6 +158,8 @@ async function handlePaymentNotification(
   context: Context<"issue_comment.created" | "issue_comment.edited">
 ) {
   const { wallet_address, github_username: username } = user;
+  const bot = context.pluginEnvCtx.getBotFatherBot();
+
   if (!wallet_address) {
     logger.error(`Wallet address not found for ${username}`);
     const noWalletMessage = `<b>Hello ${username.charAt(0).toUpperCase() + username.slice(1)}</b>,
@@ -168,8 +171,9 @@ Please use the \`/wallet\` command to set your wallet address for future notific
 You can view the comment <a href="${context.payload.comment.html_url}">here</a>.
 `;
 
+
     try {
-      await context.bot?.api.sendMessage(Number(telegramId), noWalletMessage, { parse_mode: "HTML" });
+      await bot.api.sendMessage(Number(telegramId), noWalletMessage, { parse_mode: "HTML" });
     } catch (er) {
       logger.error(`Error sending message to ${telegramId}`, { er });
     }
@@ -179,7 +183,7 @@ You can view the comment <a href="${context.payload.comment.html_url}">here</a>.
   let userPrivateChat;
 
   try {
-    userPrivateChat = await context.bot?.api.getChat(telegramId);
+    userPrivateChat = await bot.api.getChat(telegramId);
   } catch (er) {
     logger.error(`Error getting chat for ${telegramId}`, { er });
   }
@@ -200,7 +204,7 @@ You can view the comment <a href="${context.payload.comment.html_url}">here</a>.
   Thank you for your contribution.`;
 
   try {
-    await context.bot?.api.sendMessage(Number(telegramId), notificationMessage, { parse_mode: "HTML" });
+    await bot.api.sendMessage(Number(telegramId), notificationMessage, { parse_mode: "HTML" });
   } catch (er) {
     logger.error(`Error sending message to ${telegramId}`, { er });
   }

@@ -1,6 +1,6 @@
-import { Context } from "../../../types";
-import { CallbackResult } from "../../../types/proxy";
-import { addCommentToIssue } from "../../../utils/add-comment-to-issues";
+import { Context } from "../../types";
+import { CallbackResult } from "../../types/proxy";
+import { addCommentToIssue } from "../../utils/add-comment-to-issues";
 import { MtProto } from "../bot/mtproto";
 import bigInt from "big-integer";
 

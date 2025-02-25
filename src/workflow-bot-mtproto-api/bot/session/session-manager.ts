@@ -1,6 +1,6 @@
-import { Context } from "../../../../types";
-import { GithubStorage } from "../../../../adapters/github/storage-layer";
-import { SuperbaseStorage } from "../../../../adapters/supabase/supabase";
+import { Context } from "../../../types";
+import { GithubStorage } from "../../../adapters/github/storage-layer";
+import { SuperbaseStorage } from "../../../adapters/supabase/supabase";
 import { GitHubSession } from "./github-session";
 import { SupabaseSession } from "./supabase-session";
 import { StringSession } from "telegram/sessions";

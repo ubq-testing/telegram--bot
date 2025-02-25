@@ -1,6 +1,6 @@
 import bigInt from "big-integer";
-import { Context } from "../../../types";
-import { CallbackResult } from "../../../types/proxy";
+import { Context } from "../../types";
+import { CallbackResult } from "../../types/proxy";
 import { MtProto } from "../bot/mtproto";
 import { Api } from "telegram";
 

@@ -51,13 +51,10 @@ You will not be able to self-assign this task again.
 `;
 
   let userPrivateChat;
-
-  if (!context.bot) {
-    throw new Error("Bot instance not found");
-  }
+  const bot = context.pluginEnvCtx.getBotFatherBot();
 
   try {
-    userPrivateChat = await context.bot?.api.getChat(telegramId);
+    userPrivateChat = await bot.api.getChat(telegramId);
   } catch (er) {
     logger.error(`Error getting chat for ${telegramId}`, { er });
   }
@@ -68,7 +65,7 @@ You will not be able to self-assign this task again.
   }
 
   try {
-    await context.bot?.api.sendMessage(telegramId, message, { parse_mode: "HTML" });
+    await bot.api.sendMessage(telegramId, message, { parse_mode: "HTML" });
   } catch (er) {
     logger.error(`Error sending message to ${telegramId}`, { er });
   }

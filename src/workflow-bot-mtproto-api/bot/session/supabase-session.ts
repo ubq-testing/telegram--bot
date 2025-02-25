@@ -1,8 +1,8 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import { StringSession } from "telegram/sessions";
-import { Context } from "../../../../types";
+import { Context } from "../../../types";
 import { SessionManager } from "./session-manager";
-import { SuperbaseStorage } from "../../../../adapters/supabase/supabase";
+import { SuperbaseStorage } from "../../../adapters/supabase/supabase";
 
 /**
  * This class extends the StringSession class from the Telegram library.

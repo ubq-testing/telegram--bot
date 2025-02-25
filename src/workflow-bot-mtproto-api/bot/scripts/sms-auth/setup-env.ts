@@ -2,12 +2,12 @@
 import input from "input";
 // @ts-expect-error no types
 import sodium from "libsodium-wrappers";
-import { Context } from "../../../../../types";
+import { Context } from "../../../../types";
 import { exit } from "node:process";
 import { Octokit } from "@octokit/rest";
 import dotenv from "dotenv";
 import { appendFile, writeFile } from "node:fs/promises";
-import { logger } from "../../../../../utils/logger";
+import { logger } from "../../../../utils/logger";
 dotenv.config();
 /**
  * This script is used to help guide the user through setting up the environment variables.

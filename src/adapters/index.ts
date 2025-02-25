@@ -1,5 +1,5 @@
 import { Context } from "../types";
-import { SessionManagerFactory } from "../bot/mtproto-api/bot/session/session-manager";
+import { SessionManagerFactory } from "../workflow-bot-mtproto-api/bot/session/session-manager";
 import { UserBaseStorage, ChatAction, HandleChatParams, StorageTypes, RetrievalHelper, Chat } from "../types/storage";
 import { Completions } from "./openai/openai";
 import { Embeddings } from "./supabase/embeddings";

@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import { BaseMtProto } from "./scripts/sms-auth/base-mtproto";
-import { Context } from "../../../types";
+import { Context } from "../../types";
 import { SessionManager, SessionManagerFactory } from "./session/session-manager";
 dotenv.config();
 

@@ -3,13 +3,18 @@ import { BotFatherInitializer } from "../types/botfather-initializer";
 import { logger } from "../utils/logger";
 
 export async function handleTelegramWebhook(request: Request, pluginEnvCtx: PluginEnvContext): Promise<Response> {
-  const botFatherInstance = await initializeBotInstance(pluginEnvCtx);
-  const res = await makeServerRequest(botFatherInstance, request, pluginEnvCtx);
-  const body = await readResponseBody(res);
-  return createResponse(res, body);
+  const botFatherInstance = await initializeBotFatherInstance(pluginEnvCtx);
+
+  if (botFatherInstance) {
+    const res = await makeServerRequest(botFatherInstance.server, request, pluginEnvCtx);
+    const body = await readResponseBody(res);
+    return createResponse(res, body);
+  }
+
+  return new Response("Internal Server Error", { status: 500 });
 }
 
-async function initializeBotInstance(pluginEnvCtx: PluginEnvContext) {
+export async function initializeBotFatherInstance(pluginEnvCtx: PluginEnvContext) {
   try {
     return await (new BotFatherInitializer(pluginEnvCtx)).initialize();
   } catch (er) {
@@ -32,7 +37,7 @@ async function makeServerRequest(
     throw new Error("Server is null");
   }
   try {
-    return await server.fetch(request, pluginEnvCtx.env);
+    return await server.fetch(request, pluginEnvCtx.getEnv());
   } catch (er) {
     const errorInfo = {
       message: "Error fetching request from hono server",
