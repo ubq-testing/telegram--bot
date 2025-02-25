@@ -53,12 +53,8 @@ async function run() {
     signature: payload.signature,
   };
 
-  const pluginEnvCtx = new PluginEnvContext(inputs, env);
-  const ctx = await pluginEnvCtx.getContext();
-  ctx.pluginEnvCtx = pluginEnvCtx;
-  ctx.adapters = createAdapters(ctx);
-
-  return proxyWorkflowCallbacks(ctx)[inputs.eventName];
+  const context = await (new PluginEnvContext(inputs, env)).createFullPluginInputsContext(inputs);
+  return proxyWorkflowCallbacks(context)[inputs.eventName];
 }
 
 run()

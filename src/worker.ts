@@ -6,10 +6,14 @@ import { ExecutionContext } from "hono";
 import { createPlugin } from "@ubiquity-os/plugin-sdk";
 import { runPlugin } from "./plugin";
 import { Manifest } from "@ubiquity-os/plugin-sdk/manifest";
-import { decodeEnvSettings } from "./utils/env-parsing";
 import { logger } from "./utils/logger";
 import { handleUncaughtError } from "./utils/errors";
 import { createAdapters } from "./adapters";
+
+async function initPluginContext(request: Request, env: Env) {
+  const payload = (await request.clone().json()) as PluginInputs; // required cast
+  return new PluginEnvContext(payload, env);
+}
 
 export default {
   async fetch(request: Request, env: Env, executionCtx?: ExecutionContext) {
@@ -20,27 +24,12 @@ export default {
       });
     }
 
-    const envSettings = await initPluginContext(request, env);
-
-    await Promise.all([telegramRoute(request, envSettings), githubRoute(request, envSettings, executionCtx)]);
+    const pluginEnvContext = await initPluginContext(request, env);
+    await Promise.all([telegramRoute(request, pluginEnvContext), githubRoute(request, pluginEnvContext, executionCtx)]);
 
     return new Response("OK", { status: 200 });
   },
 };
-
-async function initPluginContext(request: Request, env: Env) {
-  const payload = (await request.clone().json()) as PluginInputs; // required cast
-  const envSettings = await decodeEnvSettings(env);
-  let pluginEnvCtx: PluginEnvContext;
-
-  try {
-    pluginEnvCtx = new PluginEnvContext(payload, envSettings);
-  } catch (er) {
-    throw handleUncaughtError(er);
-  }
-
-  return pluginEnvCtx;
-}
 
 /**
  * This route handles any GitHub-sided updates which the kernel sends.
@@ -64,10 +53,10 @@ async function githubRoute(request: Request, pluginEnvCtx: PluginEnvContext, exe
       postCommentOnError: true,
       settingsSchema: pluginSettingsValidator.schema,
       logLevel: "debug",
-      kernelPublicKey: pluginEnvCtx.env.KERNEL_PUBLIC_KEY,
+      kernelPublicKey: pluginEnvCtx.getEnv().KERNEL_PUBLIC_KEY,
       bypassSignatureVerification: process.env.NODE_ENV === "local",
     }
-  ).fetch(request, pluginEnvCtx.env, executionCtx);
+  ).fetch(request, pluginEnvCtx.getEnv(), executionCtx);
 }
 
 /**
