@@ -1,7 +1,7 @@
 import { Composer } from "grammy";
-import { STRINGS } from "../../strings";
-import { GrammyContext } from "../../helpers/grammy-context";
+import { STRINGS } from "../../helpers/constants";
 import { logHandle } from "../../helpers/logging";
+import { GrammyContext } from "../../create-grammy-context";
 
 const composer = new Composer<GrammyContext>();
 

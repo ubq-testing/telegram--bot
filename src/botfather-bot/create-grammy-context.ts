@@ -4,10 +4,10 @@ import { type Api, Context as DefaultContext, type SessionFlavor } from "grammy"
 import type { AutoChatActionFlavor } from "@grammyjs/auto-chat-action";
 import type { HydrateFlavor } from "@grammyjs/hydrate";
 import type { ParseModeFlavor } from "@grammyjs/parse-mode";
-import { Logger } from "../../utils/logger";
-import { createAdapters } from "../../adapters";
-import { PluginEnvContext } from "../../types/plugin-env-context";
 import { Octokit as RestOctokitFromApp } from "octokit";
+import { PluginEnvContext } from "../types/plugin-env-context";
+import { Logger } from "../utils/logger";
+import { createAdapters } from "../adapters";
 
 export type GrammyTelegramUpdate = Update;
 

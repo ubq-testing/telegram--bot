@@ -1,7 +1,7 @@
 import type { BotCommand } from "@grammyjs/types";
 import type { CommandContext } from "grammy";
-import { GrammyContext } from "./helpers/grammy-context";
 import { logger } from "../utils/logger";
+import { GrammyContext } from "./create-grammy-context";
 
 export const BOT_COMMANDS = [
   {

@@ -7,11 +7,9 @@ import { Octokit as RestOctokitFromApp } from "octokit";
 import { Octokit } from "@octokit/rest";
 
 import { Logger } from "../utils/logger";
-import { createContextConstructor, SessionData } from "./helpers/grammy-context";
-import { errorHandler } from "./handlers/error";
 
-import { adminFeature } from "./features/admin/admin";
-import { setWebhookFeature } from "./features/admin/set-webhook";
+import { adminFeature } from "./features/admin-commands/admin";
+import { setWebhookFeature } from "./features/admin-commands/set-webhook";
 import { userIdFeature } from "./features/commands/private-chat/user-id";
 import { chatIdFeature } from "./features/commands/shared/chat-id";
 import { botIdFeature } from "./features/commands/private-chat/bot-id";
@@ -20,11 +18,13 @@ import { notifySubscribeFeature } from "./features/commands/private-chat/notify-
 import { walletFeature } from "./features/commands/private-chat/wallet";
 import { banCommand } from "./features/commands/groups/ban";
 import { welcomeFeature } from "./features/start-command";
-import { unhandledFeature } from "./features/helpers/unhandled";
+import { unhandledFeature } from "./features/commands/unhandled-commands";
 import { session } from "./middlewares/session";
 import { askFeature } from "./features/commands/shared/ask-command";
 import { newTaskFeature } from "./features/commands/shared/task-creation";
 import { PluginEnvContext } from "../types/plugin-env-context";
+import { errorHandler } from "./helpers/error";
+import { createContextConstructor, SessionData } from "./create-grammy-context";
 
 interface Dependencies {
   logger: Logger;
