@@ -1,5 +1,4 @@
 import { StringSession } from "telegram/sessions";
-import { Context } from "../../../../types";
 import { GithubStorage } from "../../../../adapters/github/storage-layer";
 import { SessionManager } from "./session-manager";
 
@@ -9,40 +8,42 @@ import { SessionManager } from "./session-manager";
  * It adds the ability to save and load the session data from GitHub storage.
  */
 export class GitHubSession extends StringSession implements SessionManager {
-  storage: GithubStorage;
-  context: Context;
-  session?: string;
+  private _storage: GithubStorage;
+  private _session?: string;
 
-  constructor(context: Context, session?: string) {
+  constructor(session?: string) {
     super(session);
-    this.storage = new GithubStorage();
-    this.context = context;
-    this.session = session;
+    this._storage = new GithubStorage();
+    this._session = session;
   }
 
   getClient() {
     return;
   }
 
+  getStorageHandler(): GithubStorage {
+    return this._storage;
+  }
+
   async saveSession(): Promise<void> {
-    if (!this.session) {
+    if (!this._session) {
       throw new Error("No session found. Please run the SMS Login script first.");
     }
-    await this.storage.handleSession(this.session, "create");
+    await this._storage.handleSession(this._session, "create");
   }
 
   async loadSession() {
-    const session = await this.storage.retrieveSession();
+    const session = await this._storage.retrieveSession();
 
     if (session) {
-      return new GitHubSession(this.context, session);
+      return new GitHubSession(session);
     } else {
       throw new Error("No session found. Please run the SMS Login script first.");
     }
   }
 
   async getSession(): Promise<string> {
-    const session = await this.storage.retrieveSession();
+    const session = await this._storage.retrieveSession();
 
     if (session) {
       return session;
@@ -52,9 +53,9 @@ export class GitHubSession extends StringSession implements SessionManager {
   }
 
   async deleteSession(): Promise<void> {
-    if (!this.session) {
+    if (!this._session) {
       throw new Error("No session found. Please run the SMS Login script first.");
     }
-    await this.storage.handleSession(this.session, "delete");
+    await this._storage.handleSession(this._session, "delete");
   }
 }

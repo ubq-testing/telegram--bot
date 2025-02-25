@@ -13,7 +13,7 @@ import { Chat, ChatAction, HandleChatParams, RetrievalHelper, StorageTypes, User
 import { Storage } from "../index";
 
 export class GithubStorage implements Storage {
-  constructor() {}
+  constructor() { }
   userSnapshot(chatId: number, userIds: number[]): Promise<void> {
     throw new Error("Method not implemented.");
   }
@@ -62,7 +62,7 @@ export class GithubStorage implements Storage {
  *
 import { logger } from "../../utils/logger";
 import { Chat, ChatAction, ChatStorage, HandleChatParams, RetrievalHelper, StorageTypes, UserBaseStorage, SessionStorage, Withsha } from "../../types/storage";
-import { PluginEnvContext } from "../../types/plugin-context-single";
+import { PluginEnvContext } from "../../types/plugin-env-context";
 import { getPluginManifestDetails } from "./utils";
 import { RequestError } from "octokit";
 import { Storage } from "../supabase/supabase";

@@ -4,12 +4,10 @@ import { SuperbaseStorage } from "../../../../adapters/supabase/supabase";
 import { GitHubSession } from "./github-session";
 import { SupabaseSession } from "./supabase-session";
 import { StringSession } from "telegram/sessions";
-import { SupabaseClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 export interface SessionManager extends StringSession {
-  storage: GithubStorage | SuperbaseStorage;
-  context: Context;
-  session?: string;
+  getStorageHandler(): GithubStorage | SuperbaseStorage;
   saveSession(): Promise<void>;
   loadSession(): Promise<GitHubSession | SupabaseSession>;
   getSession(): Promise<string>;
@@ -28,13 +26,16 @@ export class SessionManagerFactory {
       return this.sessionManager;
     }
 
+    const { SUPABASE_URL, SUPABASE_SERVICE_KEY } = context.env.TELEGRAM_BOT_ENV.storageSettings;
+    const { octokit } = context;
+
     if (context.config.shouldUseGithubStorage) {
-      this.sessionManager = new GitHubSession(context, session);
+      this.sessionManager = new GitHubSession(session);
     } else {
-      this.sessionManager = new SupabaseSession(context, session);
+      const supabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+      this.sessionManager = new SupabaseSession(supabaseClient, octokit, session);
     }
 
-    this.storage = this.sessionManager.storage;
     return this.sessionManager;
   }
 }
