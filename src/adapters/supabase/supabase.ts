@@ -11,10 +11,10 @@ export class SuperbaseStorage extends StorageGetters implements Storage {
   protected logger = logger;
   octokit: Context["octokit"];
 
-  constructor(ctx: Context, supabase: SupabaseClient) {
+  constructor(octokit: Context["octokit"], supabase: SupabaseClient) {
     super(supabase);
     this.supabase = supabase;
-    this.octokit = ctx.octokit;
+    this.octokit = octokit;
   }
 
   async userSnapshot(chatId: number, userIds: number[]) {
