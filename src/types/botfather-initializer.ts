@@ -1,6 +1,6 @@
 import { Octokit as OctokitRest } from "@octokit/rest";
 import { Octokit } from "octokit";
-import { Bot, createBot } from "../botfather-bot";
+import { Bot, createBot } from "../botfather-bot/create-bot";
 import { logger } from "../utils/logger";
 import { PluginEnvContext } from "./plugin-env-context";
 import { Hono } from "hono";

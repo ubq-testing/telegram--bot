@@ -1,5 +1,5 @@
 import { Context } from "./types";
-import { proxyCallbacks } from "./handlers/worker-proxy";
+import { proxyCallbacks } from "./github-handlers/worker-proxy";
 
 export async function runPlugin(context: Context) {
   const { eventName } = context;

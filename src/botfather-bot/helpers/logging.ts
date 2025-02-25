@@ -1,5 +1,5 @@
 import type { Middleware } from "grammy";
-import { GrammyContext, GrammyTelegramUpdate } from "./grammy-context";
+import { GrammyContext, GrammyTelegramUpdate } from "../create-grammy-context";
 
 export function getUpdateInfo(ctx: GrammyContext): Omit<GrammyTelegramUpdate, "update_id"> {
   const { update_id, ...update } = ctx.update;

@@ -1,7 +1,7 @@
 import { Composer } from "grammy";
-import { GrammyContext } from "../helpers/grammy-context";
 import { logHandle } from "../helpers/logging";
-import { BOT_COMMANDS } from "../setcommands";
+import { BOT_COMMANDS } from "../set-bot-commands";
+import { GrammyContext } from "../create-grammy-context";
 
 const composer = new Composer<GrammyContext>();
 

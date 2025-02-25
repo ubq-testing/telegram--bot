@@ -8,9 +8,7 @@ import { Octokit as RestOctokitFromApp } from "octokit";
 import { Value } from "@sinclair/typebox/value";
 import { createAdapters } from "../adapters";
 import { BotFatherInitializer } from "./botfather-initializer";
-import { Bot } from "../botfather-bot";
-import { GrammyContext } from "../botfather-bot/helpers/grammy-context";
-import { Api, RawApi } from "grammy";
+import { Bot } from "../botfather-bot/create-bot";
 
 export class PluginEnvContext {
   private _config: Context["config"];

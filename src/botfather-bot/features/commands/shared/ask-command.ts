@@ -1,9 +1,9 @@
 import { chatAction } from "@grammyjs/auto-chat-action";
 import { Composer } from "grammy";
-import { GrammyContext } from "../../../helpers/grammy-context";
 import { logHandle } from "../../../helpers/logging";
 import { logger } from "../../../../utils/logger";
 import { CommentSimilaritySearchResult, IssueSimilaritySearchResult } from "../../../../types/ai";
+import { GrammyContext } from "../../../create-grammy-context";
 
 const composer = new Composer<GrammyContext>();
 const feature = composer.chatType(["group", "private", "supergroup", "channel"]);

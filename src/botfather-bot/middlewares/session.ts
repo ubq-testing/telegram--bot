@@ -1,5 +1,5 @@
 import { type Middleware, type SessionOptions, session as createSession } from "grammy";
-import { GrammyContext, SessionData } from "../helpers/grammy-context";
+import { GrammyContext, SessionData } from "../create-grammy-context";
 
 type Options = Pick<SessionOptions<SessionData, GrammyContext>, "getSessionKey" | "storage">;
 

@@ -1,11 +1,11 @@
 import { chatAction } from "@grammyjs/auto-chat-action";
 import { Composer } from "grammy";
-import { GrammyContext } from "../../../helpers/grammy-context";
 import { logHandle } from "../../../helpers/logging";
-import { isAdmin } from "../../../filters/is-admin";
+import { isAdmin } from "../../../helpers/is-admin";
 import { logger } from "../../../../utils/logger";
 import { RestEndpointMethodTypes } from "@octokit/rest";
 import Fuse from "fuse.js";
+import { GrammyContext } from "../../../create-grammy-context";
 
 const composer = new Composer<GrammyContext>();
 
