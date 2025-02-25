@@ -4,7 +4,7 @@ import { Context } from "../../types";
 import { ChatAction, HandleChatParams, RetrievalHelper, StorageTypes, UserBaseStorage } from "../../types/storage";
 import { StorageGetters } from "./storage-getters";
 import { isChatsStorage, isUserBaseStorage, isSingleChatStorage, isSessionStorage } from "../storage-guards";
-import { Storage } from "..";
+import { Storage } from "../create-adapters";
 
 export class SuperbaseStorage extends StorageGetters implements Storage {
   protected supabase: SupabaseClient;

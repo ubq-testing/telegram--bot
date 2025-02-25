@@ -6,7 +6,7 @@ import { runGithubWorkerEntry, runTelegramBotEntry } from "./plugin";
 import { Manifest } from "@ubiquity-os/plugin-sdk/manifest";
 import { logger } from "./utils/logger";
 import { handleUncaughtError } from "./utils/errors";
-import { createAdapters } from "./adapters";
+import { createAdapters } from "./adapters/create-adapters";
 import manifest from "../manifest.json";
 import { initializeBotFatherInstance } from "./botfather-bot/initialize-botfather-instance";
 

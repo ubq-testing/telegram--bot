@@ -7,7 +7,7 @@ import type { ParseModeFlavor } from "@grammyjs/parse-mode";
 import { Octokit as RestOctokitFromApp } from "octokit";
 import { PluginEnvContext } from "../types/plugin-env-context";
 import { Logger } from "../utils/logger";
-import { createAdapters } from "../adapters";
+import { createAdapters } from "../adapters/create-adapters";
 
 export type GrammyTelegramUpdate = Update;
 

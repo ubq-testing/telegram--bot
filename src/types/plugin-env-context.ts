@@ -6,7 +6,7 @@ import { logger } from "../utils/logger";
 import { Octokit } from "@octokit/rest";
 import { Octokit as RestOctokitFromApp } from "octokit";
 import { Value } from "@sinclair/typebox/value";
-import { createAdapters } from "../adapters";
+import { createAdapters } from "../adapters/create-adapters";
 import { BotFatherInitializer } from "./botfather-initializer";
 import { Bot } from "../botfather-bot/create-bot";
 

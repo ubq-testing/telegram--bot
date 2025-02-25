@@ -2,7 +2,7 @@ import { EmitterWebhookEvent as WebhookEvent, EmitterWebhookEventName as Webhook
 import { Context as _Context } from "@ubiquity-os/plugin-sdk";
 import { PluginSettings } from "./plugin-inputs";
 import { Env } from "./env";
-import { createAdapters } from "../adapters";
+import { createAdapters } from "../adapters/create-adapters";
 import { PluginEnvContext } from "./plugin-env-context";
 
 export type SupportedEventsU = WebhookEventName;
