@@ -1,89 +1,24 @@
 import { Api } from "telegram";
-import { BaseMtProto } from "./scripts/sms-auth/base-mtproto";
 import { Context } from "../../types";
-import { SessionManager, SessionManagerFactory } from "./session/session-manager";
 import bigInt from "big-integer";
 import dotenv from "dotenv";
 import { addCommentToIssue } from "../../utils/add-comment-to-issues";
-import { CommentHandler } from "@ubiquity-os/plugin-sdk";
+import { MtProtoWrapper } from "./scripts/sms-auth/mtproto-wrapper";
 dotenv.config();
 
 /**
- * This class MUST ONLY be used in the context of workflows as
- * it requires a Node.js environment which is not available with Cloudflare Workers.
- *
- * An extension of the BaseMtProto class that integrates with the GitHub
- * storage based session management.
+ * Helper class for handling MTProto API calls
+ * 
+ * This class extends the MtProtoWrapper class and provides additional
+ * helper methods for interacting with the Telegram API.
+ * 
+ * Lower level interactions can still be done if need be.
+ * 
+ * TODO: more refactoring at a later date maybe?
  */
-export class MtProtoWrapper extends BaseMtProto {
-  private _context: Context;
-  private _sessionManager: SessionManager;
-  private _botIdString: string | null = null;
-
+export class MtProtoHelper extends MtProtoWrapper {
   constructor(context: Context) {
-    super();
-    this._context = context;
-    this._sessionManager = SessionManagerFactory.createSessionManager(context);
-  }
-
-  async initialize() {
-    const session = await this._sessionManager.getSession();
-    const initialized = await super.initialize(this._context.env.TELEGRAM_BOT_ENV.mtProtoSettings, session);
-    await initialized.client.getDialogs();
-    this._botIdString = await initialized.client.getPeerId(this._context.config.botId, true);
-    return initialized;
-  }
-
-  async fetchTelegramChat(
-    dbChat: { chat_id: number }
-  ): Promise<Api.messages.ChatFull> {
-    const api = this.getMtProtoApi();
-
-    const fetchedChat = await this.getMtProtoClient().invoke(
-      new api.messages.GetFullChat({
-        chatId: bigInt(dbChat.chat_id),
-      })
-    );
-
-    if (!fetchedChat || !("fullChat" in fetchedChat)) {
-      throw new Error("Failed to fetch chat");
-    }
-
-    return fetchedChat;
-  }
-
-  async updateChatArchiveStatus({ dbChat, archive }: { dbChat: { chat_id: number }, archive: boolean }) {
-    const api = this.getMtProtoApi();
-    await this.getMtProtoClient().invoke(
-      new api.folders.EditPeerFolders({
-        folderPeers: [
-          new api.InputFolderPeer({
-            peer: new api.InputPeerChat({ chatId: bigInt(dbChat.chat_id) }),
-            folderId: archive ? 1 : 0, // 0 is active, 1 is archived
-          }),
-        ],
-      })
-    );
-  }
-
-  async getChatParticipants(dbChat: { chat_id: number }, tgChat?: Api.messages.ChatFull) {
-    const fetchedChat = tgChat ?? await this.fetchTelegramChat(dbChat);
-
-    if ("participants" in fetchedChat.fullChat) {
-      return fetchedChat.fullChat.participants;
-    } else {
-      throw new Error("Failed to fetch chat participants");
-    }
-  }
-
-  async sendMessageToChat(dbChat: { chat_id: number }, message: string) {
-    const api = this.getMtProtoApi();
-    await this.getMtProtoClient().invoke(
-      new api.messages.SendMessage({
-        message,
-        peer: new api.InputPeerChat({ chatId: bigInt(dbChat.chat_id) }),
-      })
-    );
+    super(context);
   }
 
   async getChatCreatorFromParticipants(
@@ -103,18 +38,46 @@ export class MtProtoWrapper extends BaseMtProto {
     return creator
   }
 
+  async getTelegramChat(
+    dbChat: { chat_id: number }
+  ): Promise<Api.messages.ChatFull> {
+    const api = this.getMtProtoApi();
+
+    const fetchedChat = await this.getMtProtoClient().invoke(
+      new api.messages.GetFullChat({
+        chatId: bigInt(dbChat.chat_id),
+      })
+    );
+
+    if (!fetchedChat || !("fullChat" in fetchedChat)) {
+      throw new Error("Failed to fetch chat");
+    }
+
+    return fetchedChat;
+  }
+
+  async getChatParticipants(dbChat: { chat_id: number }, tgChat?: Api.messages.ChatFull) {
+    const fetchedChat = tgChat ?? await this.getTelegramChat(dbChat);
+
+    if ("participants" in fetchedChat.fullChat) {
+      return fetchedChat.fullChat.participants;
+    } else {
+      throw new Error("Failed to fetch chat participants");
+    }
+  }
+
   async createChat(
     chatName: string,
   ) {
     const api = this.getMtProtoApi();
-    if (!this._botIdString) {
+    if (!this.getBotIdString()) {
       throw new Error("Bot ID is not available when creating chat");
     }
 
     return await this.getMtProtoClient().invoke(
       new api.messages.CreateChat({
         title: chatName,
-        users: [this._botIdString],
+        users: [this.getBotIdString()],
       })
     );
   }
@@ -149,6 +112,30 @@ export class MtProtoWrapper extends BaseMtProto {
     }
   }
 
+  async updateChatArchiveStatus({ dbChat, archive }: { dbChat: { chat_id: number }, archive: boolean }) {
+    const api = this.getMtProtoApi();
+    await this.getMtProtoClient().invoke(
+      new api.folders.EditPeerFolders({
+        folderPeers: [
+          new api.InputFolderPeer({
+            peer: new api.InputPeerChat({ chatId: bigInt(dbChat.chat_id) }),
+            folderId: archive ? 1 : 0, // 0 is active, 1 is archived
+          }),
+        ],
+      })
+    );
+  }
+
+  async sendMessageToChat(dbChat: { chat_id: number }, message: string) {
+    const api = this.getMtProtoApi();
+    await this.getMtProtoClient().invoke(
+      new api.messages.SendMessage({
+        message,
+        peer: new api.InputPeerChat({ chatId: bigInt(dbChat.chat_id) }),
+      })
+    );
+  }
+
   async editChatDescription(
     chatIdBigInt: bigInt.BigInteger,
     description: string
@@ -176,13 +163,13 @@ export class MtProtoWrapper extends BaseMtProto {
   ) {
     const mtProtoClient = this.getMtProtoClient();
     const mtProtoApi = this.getMtProtoApi();
-    const logger = this._context.logger;
+    const logger = this._getContext().logger;
 
     if (inviteLink) {
       const [owner, repo] = payload.repository.full_name.split("/");
       if ("link" in inviteLink) {
         await addCommentToIssue(
-          this._context,
+          this._getContext(),
           logger.ok(`A new workroom has been created for this task. [Join chat](${inviteLink.link})`).logMessage.raw,
           owner,
           repo,
@@ -225,12 +212,5 @@ export class MtProtoWrapper extends BaseMtProto {
         fwdLimit: 50,
       })
     );
-  }
-
-  getBotIdString() {
-    if (!this._botIdString) {
-      throw new Error("Bot ID is not available");
-    }
-    return this._botIdString;
   }
 }

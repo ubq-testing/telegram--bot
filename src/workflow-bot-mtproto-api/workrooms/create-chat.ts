@@ -1,6 +1,6 @@
 import { Context } from "../../types";
 import { CallbackResult } from "../../types/proxy";
-import { MtProtoWrapper } from "../bot/mtproto-wrapper";
+import { MtProtoHelper } from "../bot/mtproto-helpers";
 
 export async function createChat(context: Context<"issues.assigned">): Promise<CallbackResult> {
   const { payload, logger } = context;
@@ -20,13 +20,13 @@ export async function createChat(context: Context<"issues.assigned">): Promise<C
   }
 
   logger.info(`Will attempt to create a new chat room '${chatName}'...`);
-  const mtProto = new MtProtoWrapper(context);
-  await mtProto.initialize();
+  const mtProtoHelper = new MtProtoHelper(context);
+  await mtProtoHelper.initialize();
 
   try {
-    const chat = await mtProto.createChat(chatName)
-    const { chatId: chatIdJsNumber, chatIdBigInt, inviteLink } = await mtProto.createChatInviteLink(chat);
-    await mtProto.postChatInviteLinkToIssue(payload, chatIdBigInt, inviteLink, chatName)
+    const chat = await mtProtoHelper.createChat(chatName)
+    const { chatId: chatIdJsNumber, chatIdBigInt, inviteLink } = await mtProtoHelper.createChatInviteLink(chat);
+    await mtProtoHelper.postChatInviteLinkToIssue(payload, chatIdBigInt, inviteLink, chatName)
     await context.adapters.storage.handleChat({
       action: "create",
       chat: {

@@ -1,4 +1,3 @@
-import { MtProtoWrapper } from "../bot/mtproto-wrapper";
 import { Api } from "telegram";
 import bigInt from "big-integer";
 import { Context } from "../../types";
@@ -6,6 +5,7 @@ import { CallbackResult } from "../../types/proxy";
 import { GithubStorage } from "../../adapters/github/storage-layer";
 import { SuperbaseStorage } from "../../adapters/supabase/supabase";
 import { Chat } from "../../types/storage";
+import { MtProtoHelper } from "../bot/mtproto-helpers";
 
 export async function closeChat(context: Context<"issues.closed">): Promise<CallbackResult> {
   const { payload, adapters: { storage }, logger, } = context;
@@ -13,8 +13,8 @@ export async function closeChat(context: Context<"issues.closed">): Promise<Call
     return { status: 200, reason: "skipped" };
   }
 
-  const mtProtoWrapper = new MtProtoWrapper(context);
-  await mtProtoWrapper.initialize();
+  const mtProtoHelper = new MtProtoHelper(context);
+  await mtProtoHelper.initialize();
   const dbChat = await storage.retrieveChatByTaskNodeId(payload.issue.node_id);
   if (!dbChat) {
     logger.error("Attempted to close a workroom not found in the database.", { chatName: payload.issue.title });
@@ -23,27 +23,27 @@ export async function closeChat(context: Context<"issues.closed">): Promise<Call
 
   logger.info("Chat found: ", { dbChat });
 
-  const chatParticipants = await mtProtoWrapper.getChatParticipants(dbChat);
+  const chatParticipants = await mtProtoHelper.getChatParticipants(dbChat);
 
-  await mtProtoWrapper.updateChatArchiveStatus({ archive: true, dbChat });
-  await notifyAndRemoveFromArchivedChat({ mtProtoWrapper, chatParticipants, dbChat, storage, context });
+  await mtProtoHelper.updateChatArchiveStatus({ archive: true, dbChat });
+  await notifyAndRemoveFromArchivedChat({ mtProtoHelper, chatParticipants, dbChat, storage, context });
 
   await storage.handleChat({ action: "close", chat: dbChat });
   return { status: 200, reason: "chat_closed" };
 }
 
-async function notifyAndRemoveFromArchivedChat({ mtProtoWrapper, chatParticipants, dbChat, storage, context }:
+async function notifyAndRemoveFromArchivedChat({ mtProtoHelper, chatParticipants, dbChat, storage, context }:
   {
-    mtProtoWrapper: MtProtoWrapper;
+    mtProtoHelper: MtProtoHelper;
     chatParticipants: Api.TypeChatParticipants,
     dbChat: Chat,
     storage: GithubStorage | SuperbaseStorage,
     context: Context<"issues.closed">,
   }) {
   if (chatParticipants.className === "ChatParticipants") {
-    await mtProtoWrapper.sendMessageToChat(dbChat, "This task has been closed and this chat has been archived.");
+    await mtProtoHelper.sendMessageToChat(dbChat, "This task has been closed and this chat has been archived.");
     const participants = chatParticipants.participants;
-    const creatorId = (await mtProtoWrapper.getChatCreatorFromParticipants(participants)).userId;
+    const creatorId = (await mtProtoHelper.getChatCreatorFromParticipants(participants)).userId;
     const userIds = participants.map((participant) => participant.userId).filter((id) => id !== undefined);
 
     if (!userIds.includes(creatorId)) {
@@ -55,8 +55,8 @@ async function notifyAndRemoveFromArchivedChat({ mtProtoWrapper, chatParticipant
       userIds.map((id) => id.toJSNumber())
     );
 
-    const mtProtoClient = mtProtoWrapper.getMtProtoClient();
-    const mtProtoApi = mtProtoWrapper.getMtProtoApi();
+    const mtProtoClient = mtProtoHelper.getMtProtoClient();
+    const mtProtoApi = mtProtoHelper.getMtProtoApi();
 
     let generator = deleteChatUsers({
       mtProtoClient,
@@ -83,8 +83,8 @@ async function notifyAndRemoveFromArchivedChat({ mtProtoWrapper, chatParticipant
 async function* deleteChatUsers(
   { mtProtoClient, api, userIds, context, chatInputEntity }:
     {
-      mtProtoClient: MtProtoWrapper["_client"];
-      api: MtProtoWrapper["_api"];
+      mtProtoClient: MtProtoHelper["_client"];
+      api: MtProtoHelper["_api"];
       userIds: bigInt.BigInteger[];
       context: Context; chatInputEntity:
       Api.TypeInputPeer;

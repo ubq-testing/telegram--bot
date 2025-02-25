@@ -1,9 +1,9 @@
 import bigInt from "big-integer";
 import { Context } from "../../types";
 import { CallbackResult } from "../../types/proxy";
-import { MtProtoWrapper } from "../bot/mtproto-wrapper";
 import { Api } from "telegram";
 import { Chat } from "../../types/storage";
+import { MtProtoHelper } from "../bot/mtproto-helpers";
 
 export async function reopenChat(context: Context<"issues.reopened">): Promise<CallbackResult> {
   const {
@@ -16,8 +16,8 @@ export async function reopenChat(context: Context<"issues.reopened">): Promise<C
     return { status: 200, reason: "skipped" };
   }
 
-  const mtProtoWrapper = new MtProtoWrapper(context);
-  const { client } = await mtProtoWrapper.initialize();
+  const mtProtoHelper = new MtProtoHelper(context);
+  const { client } = await mtProtoHelper.initialize();
 
   logger.info("Reopening chat with name: ", { chatName: payload.issue.title });
   const dbChat = await storage.retrieveChatByTaskNodeId(payload.issue.node_id);
@@ -27,31 +27,31 @@ export async function reopenChat(context: Context<"issues.reopened">): Promise<C
     return { status: 200, reason: "chat_not_found" };
   }
 
-  const { chatCreatorId, chatIdBigInt } = await fetchChatAndAddCreator(mtProtoWrapper, dbChat);
+  const { chatCreatorId, chatIdBigInt } = await fetchChatAndAddCreator(mtProtoHelper, dbChat);
 
   await storage.handleChat({
     action: "reopen",
     chat: dbChat,
   });
 
-  await inviteUsersBackToChat({ client, context, chatIdBigInt, chatCreatorId, mtProtoWrapper, dbChat });
+  await inviteUsersBackToChat({ client, context, chatIdBigInt, chatCreatorId, mtProtoHelper, dbChat });
 
-  await mtProtoWrapper.sendMessageToChat(dbChat, "This task has been reopened and this chat has been unarchived.");
+  await mtProtoHelper.sendMessageToChat(dbChat, "This task has been reopened and this chat has been unarchived.");
   return { status: 200, reason: "chat_reopened" };
 }
 
 async function fetchChatAndAddCreator(
-  mtProtoWrapper: MtProtoWrapper,
+  mtProtoHelper: MtProtoHelper,
   dbChat: Chat
 ) {
   const chatIdBigInt = bigInt(dbChat.chat_id);
-  const fetchedChat = await mtProtoWrapper.fetchTelegramChat(dbChat);
+  const fetchedChat = await mtProtoHelper.getTelegramChat(dbChat);
 
   if (!fetchedChat) {
     throw new Error("Failed to fetch chat");
   }
 
-  await mtProtoWrapper.updateChatArchiveStatus({ dbChat, archive: false });
+  await mtProtoHelper.updateChatArchiveStatus({ dbChat, archive: false });
 
   const chatFull = fetchedChat.fullChat as Api.ChatFull;
   const participants = chatFull.participants as Api.ChatParticipantsForbidden;
@@ -62,7 +62,7 @@ async function fetchChatAndAddCreator(
   }
 
   // add the creator back to obtain control of the chat
-  await mtProtoWrapper.addUserToChat(chatIdBigInt, chatCreatorId.toJSNumber());
+  await mtProtoHelper.addUserToChat(chatIdBigInt, chatCreatorId.toJSNumber());
 
   return {
     chatCreatorId,
@@ -70,12 +70,12 @@ async function fetchChatAndAddCreator(
   }
 }
 
-async function inviteUsersBackToChat({ client, context, chatIdBigInt, chatCreatorId, mtProtoWrapper, dbChat }: {
-  client: MtProtoWrapper["_client"],
+async function inviteUsersBackToChat({ client, context, chatIdBigInt, chatCreatorId, mtProtoHelper, dbChat }: {
+  client: MtProtoHelper["_client"],
   context: Context<"issues.reopened">,
   chatIdBigInt: bigInt.BigInteger,
   chatCreatorId: bigInt.BigInteger,
-  mtProtoWrapper: MtProtoWrapper,
+  mtProtoHelper: MtProtoHelper,
   dbChat: Chat,
 }) {
   const chatInput = await client.getInputEntity(chatIdBigInt);
@@ -89,7 +89,7 @@ async function inviteUsersBackToChat({ client, context, chatIdBigInt, chatCreato
       if (userId === context.config.botId || userId === chatCreatorId.toJSNumber()) {
         continue;
       }
-      await mtProtoWrapper.addUserToChat(chatId, userId);
+      await mtProtoHelper.addUserToChat(chatId, userId);
     } catch (er) {
       context.logger.error("Failed to add chat users", { er });
     }
