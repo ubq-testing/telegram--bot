@@ -8,10 +8,10 @@ import { HTTPException } from "hono/http-exception";
 import { webhookCallback } from "grammy";
 import { Context as UbiquityOsContext } from "../types";
 import { Logger } from "../utils/logger";
-import type { Env } from "hono";
 import { setLogger } from "../botfather-bot/middlewares/logger";
 import { requestLogger } from "../botfather-bot/middlewares/request-logger";
 import { cors, jsonErrorHandler, rateLimit, securityHeaders } from "../botfather-bot/middlewares/wares";
+import type { Env } from "hono";
 
 interface Dependencies {
   bot: Bot;
@@ -171,14 +171,10 @@ export class BotFatherInitializer {
     return server;
   }
 
-  private _getServer(): BotFatherInitializer["_server"] {
-    if (!this._server) {
-      throw new Error("Server not initialized");
+  getBotFatherBot(): Bot {
+    if (!this._bot) {
+      throw new Error("BotFatherBot not initialized");
     }
-    return this._server;
-  }
-
-  getBotFatherBot(): BotFatherInitializer["_bot"] {
     return this._bot;
   }
 }

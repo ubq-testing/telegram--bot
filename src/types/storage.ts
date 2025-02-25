@@ -70,9 +70,9 @@ export type HandleChatParams<TAction extends ChatAction = ChatAction> = {
 export type RetrievalHelper<TType extends StorageTypes> = TType extends "allChats"
   ? Chat[]
   : TType extends "userBase"
-  ? UserBaseStorage
-  : TType extends "singleChat"
-  ? Chat
-  : TType extends "session"
-  ? SessionStorage
-  : never;
+    ? UserBaseStorage
+    : TType extends "singleChat"
+      ? Chat
+      : TType extends "session"
+        ? SessionStorage
+        : never;

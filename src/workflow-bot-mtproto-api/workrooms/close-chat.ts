@@ -8,7 +8,11 @@ import { Chat } from "../../types/storage";
 import { MtProtoHelper } from "../bot/mtproto-helpers";
 
 export async function closeChat(context: Context<"issues.closed">): Promise<CallbackResult> {
-  const { payload, adapters: { storage }, logger, } = context;
+  const {
+    payload,
+    adapters: { storage },
+    logger,
+  } = context;
   if (payload.repository.full_name.includes("devpool-directory")) {
     return { status: 200, reason: "skipped" };
   }
@@ -32,19 +36,24 @@ export async function closeChat(context: Context<"issues.closed">): Promise<Call
   return { status: 200, reason: "chat_closed" };
 }
 
-async function notifyAndRemoveFromArchivedChat({ mtProtoHelper, chatParticipants, dbChat, storage, context }:
-  {
-    mtProtoHelper: MtProtoHelper;
-    chatParticipants: Api.TypeChatParticipants,
-    dbChat: Chat,
-    storage: GithubStorage | SuperbaseStorage,
-    context: Context<"issues.closed">,
-  }) {
+async function notifyAndRemoveFromArchivedChat({
+  mtProtoHelper,
+  chatParticipants,
+  dbChat,
+  storage,
+  context,
+}: {
+  mtProtoHelper: MtProtoHelper;
+  chatParticipants: Api.TypeChatParticipants;
+  dbChat: Chat;
+  storage: GithubStorage | SuperbaseStorage;
+  context: Context<"issues.closed">;
+}) {
   if (chatParticipants.className === "ChatParticipants") {
     await mtProtoHelper.sendMessageToChat(dbChat, "This task has been closed and this chat has been archived.");
     const participants = chatParticipants.participants;
     const creatorId = (await mtProtoHelper.getChatCreatorFromParticipants(participants)).userId;
-    const userIds = participants.map((participant) => participant.userId).filter((id) => id !== undefined);
+    const userIds = participants.map((participant) => participant.userId).filter((id) => id != undefined);
 
     if (!userIds.includes(creatorId)) {
       userIds.push(creatorId);
@@ -61,8 +70,9 @@ async function notifyAndRemoveFromArchivedChat({ mtProtoHelper, chatParticipants
     let generator = deleteChatUsers({
       mtProtoClient,
       api: mtProtoApi,
-      userIds, context,
-      chatInputEntity: await mtProtoClient.getInputEntity(dbChat.chat_id)
+      userIds,
+      context,
+      chatInputEntity: await mtProtoClient.getInputEntity(dbChat.chat_id),
     });
 
     let result = await generator.next();
@@ -80,16 +90,19 @@ async function notifyAndRemoveFromArchivedChat({ mtProtoHelper, chatParticipants
   }
 }
 
-async function* deleteChatUsers(
-  { mtProtoClient, api, userIds, context, chatInputEntity }:
-    {
-      mtProtoClient: MtProtoHelper["_client"];
-      api: MtProtoHelper["_api"];
-      userIds: bigInt.BigInteger[];
-      context: Context; chatInputEntity:
-      Api.TypeInputPeer;
-    })
-  : AsyncGenerator<{ success: boolean; index: number; error?: { errorMessage: string; seconds: number } }> {
+async function* deleteChatUsers({
+  mtProtoClient,
+  api,
+  userIds,
+  context,
+  chatInputEntity,
+}: {
+  mtProtoClient: MtProtoHelper["_client"];
+  api: MtProtoHelper["_api"];
+  userIds: bigInt.BigInteger[];
+  context: Context;
+  chatInputEntity: Api.TypeInputPeer;
+}): AsyncGenerator<{ success: boolean; index: number; error?: { errorMessage: string; seconds: number } }> {
   for (let i = 0; i < userIds.length; i++) {
     // don't kick our friendly bot
     if (userIds[i].toJSNumber() === context.config.botId) {

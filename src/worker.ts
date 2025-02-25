@@ -20,10 +20,7 @@ export default {
     }
 
     const pluginEnvContext = await initWorkerPluginContext(request, env);
-    const results = await Promise.all([
-      telegramRoute(request, pluginEnvContext),
-      githubRoute(request, pluginEnvContext, executionCtx)
-    ]);
+    const results = await Promise.all([telegramRoute(request, pluginEnvContext), githubRoute(request, pluginEnvContext, executionCtx)]);
 
     return new Response(JSON.stringify(results), {
       headers: { "Content-Type": "application/json" },
@@ -75,7 +72,7 @@ async function githubRoute(request: Request, pluginEnvCtx: PluginEnvContext, exe
 async function telegramRoute(request: Request, pluginEnvCtx: PluginEnvContext) {
   if (["/telegram", "/telegram/"].includes(new URL(request.url).pathname)) {
     try {
-      return await runTelegramBotEntry(request, pluginEnvCtx)
+      return await runTelegramBotEntry(request, pluginEnvCtx);
     } catch (err) {
       logger.error("handleTelegramWebhook failed", { err });
       return handleUncaughtError(err);

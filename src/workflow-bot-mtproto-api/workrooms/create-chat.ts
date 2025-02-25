@@ -24,9 +24,9 @@ export async function createChat(context: Context<"issues.assigned">): Promise<C
   await mtProtoHelper.initialize();
 
   try {
-    const chat = await mtProtoHelper.createChat(chatName)
+    const chat = await mtProtoHelper.createChat(chatName);
     const { chatId: chatIdJsNumber, chatIdBigInt, inviteLink } = await mtProtoHelper.createChatInviteLink(chat);
-    await mtProtoHelper.postChatInviteLinkToIssue(payload, chatIdBigInt, inviteLink, chatName)
+    await mtProtoHelper.postChatInviteLinkToIssue(payload, chatIdBigInt, inviteLink, chatName);
     await context.adapters.storage.handleChat({
       action: "create",
       chat: {

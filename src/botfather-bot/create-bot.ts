@@ -59,7 +59,7 @@ export async function createBot(token: string, dependencies: Dependencies, optio
   bot.api.config.use(parseMode("HTML"));
 
   // Middleware usage
-  bot.use(hydrate);
+  bot.use(hydrate());
   bot.use(hydrateReply);
   bot.use(autoChatAction());
 

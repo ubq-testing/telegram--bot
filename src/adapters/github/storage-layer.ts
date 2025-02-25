@@ -13,7 +13,7 @@ import { Chat, ChatAction, HandleChatParams, RetrievalHelper, StorageTypes, User
 import { Storage } from "../create-adapters";
 
 export class GithubStorage implements Storage {
-  constructor() { }
+  constructor() {}
   userSnapshot(chatId: number, userIds: number[]): Promise<void> {
     throw new Error("Method not implemented.");
   }

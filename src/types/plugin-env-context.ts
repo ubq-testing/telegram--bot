@@ -19,7 +19,7 @@ export class PluginEnvContext {
     private readonly _inputs: PluginInputs,
     private _env: Env
   ) {
-    this._config = this._inputs.settings;
+    this._config = this.getPluginConfigSettings();
   }
 
   async createFullPluginInputsContext(inputs?: PluginInputs): Promise<Context> {

@@ -4,7 +4,7 @@ import { workflowDispatch } from "./workflow-dispatch";
 
 /**
  * Should only be called by the worker-proxy.
- * 
+ *
  * The logic for this function can be found in [../workflow-bot-mtproto-api/workrooms/create-chat.ts](../workflow-bot-mtproto-api/workrooms/create-chat.ts)
  */
 export async function createWorkroom(context: Context<"issues.assigned">): Promise<CallbackResult> {
@@ -13,7 +13,7 @@ export async function createWorkroom(context: Context<"issues.assigned">): Promi
 }
 /**
  * Should only be called by the worker-proxy.
- * 
+ *
  * The logic for this function can be found in [../workflow-bot-mtproto-api/workrooms/close-chat.ts](../workflow-bot-mtproto-api/workrooms/close-chat.ts)
  */
 export async function closeWorkroom(context: Context<"issues.closed">): Promise<CallbackResult> {
@@ -23,7 +23,7 @@ export async function closeWorkroom(context: Context<"issues.closed">): Promise<
 
 /**
  * Should only be called by the worker-proxy.
- * 
+ *
  * The logic for this function can be found in [../workflow-bot-mtproto-api/workrooms/reopen-chat.ts](../workflow-bot-mtproto-api/workrooms/reopen-chat.ts)
  */
 export async function reOpenWorkroom(context: Context<"issues.reopened">): Promise<CallbackResult> {

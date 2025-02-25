@@ -26,7 +26,7 @@ export class SessionManagerFactory {
       return this.sessionManager;
     }
 
-    const { SUPABASE_URL, SUPABASE_SERVICE_KEY } = context.env.TELEGRAM_BOT_ENV.storageSettings;
+    const { SUPABASE_URL, SUPABASE_SERVICE_KEY } = context.pluginEnvCtx.getEnv().TELEGRAM_BOT_ENV.storageSettings;
     const { octokit } = context;
 
     if (context.config.shouldUseGithubStorage) {

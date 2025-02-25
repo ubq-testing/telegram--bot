@@ -8,39 +8,37 @@ dotenv.config();
 
 /**
  * Helper class for handling MTProto API calls
- * 
+ *
  * This class extends the MtProtoWrapper class and provides additional
  * helper methods for interacting with the Telegram API.
- * 
+ *
  * Lower level interactions can still be done if need be.
- * 
- * TODO: more refactoring at a later date maybe?
+ *
+ * further refactoring could possibly be done here but I can't think of any
+ * more efficient way to do this at the moment. A couple more methods and
+ * break out into smaller classes?
  */
 export class MtProtoHelper extends MtProtoWrapper {
   constructor(context: Context) {
     super(context);
   }
 
-  async getChatCreatorFromParticipants(
-    participants: Api.TypeChatParticipant[]
-  ) {
+  async getChatCreatorFromParticipants(participants: Api.TypeChatParticipant[]) {
     let creator: Api.ChatParticipantCreator | undefined;
     participants.forEach((participant) => {
       if (participant.className === "ChatParticipantCreator") {
-        creator = participant
+        creator = participant;
       }
-    })
+    });
 
     if (!creator) {
       throw new Error("Failed to get chat creator");
     }
 
-    return creator
+    return creator;
   }
 
-  async getTelegramChat(
-    dbChat: { chat_id: number }
-  ): Promise<Api.messages.ChatFull> {
+  async getTelegramChat(dbChat: { chat_id: number }): Promise<Api.messages.ChatFull> {
     const api = this.getMtProtoApi();
 
     const fetchedChat = await this.getMtProtoClient().invoke(
@@ -57,7 +55,7 @@ export class MtProtoHelper extends MtProtoWrapper {
   }
 
   async getChatParticipants(dbChat: { chat_id: number }, tgChat?: Api.messages.ChatFull) {
-    const fetchedChat = tgChat ?? await this.getTelegramChat(dbChat);
+    const fetchedChat = tgChat ?? (await this.getTelegramChat(dbChat));
 
     if ("participants" in fetchedChat.fullChat) {
       return fetchedChat.fullChat.participants;
@@ -66,9 +64,7 @@ export class MtProtoHelper extends MtProtoWrapper {
     }
   }
 
-  async createChat(
-    chatName: string,
-  ) {
+  async createChat(chatName: string) {
     const api = this.getMtProtoApi();
     if (!this.getBotIdString()) {
       throw new Error("Bot ID is not available when creating chat");
@@ -82,9 +78,7 @@ export class MtProtoHelper extends MtProtoWrapper {
     );
   }
 
-  async createChatInviteLink(
-    chat: Api.messages.InvitedUsers,
-  ) {
+  async createChatInviteLink(chat: Api.messages.InvitedUsers) {
     let inviteLink, chatId, chatIdBigInt;
 
     if ("chats" in chat.updates) {
@@ -108,11 +102,11 @@ export class MtProtoHelper extends MtProtoWrapper {
     return {
       inviteLink,
       chatId,
-      chatIdBigInt
-    }
+      chatIdBigInt,
+    };
   }
 
-  async updateChatArchiveStatus({ dbChat, archive }: { dbChat: { chat_id: number }, archive: boolean }) {
+  async updateChatArchiveStatus({ dbChat, archive }: { dbChat: { chat_id: number }; archive: boolean }) {
     const api = this.getMtProtoApi();
     await this.getMtProtoClient().invoke(
       new api.folders.EditPeerFolders({
@@ -136,10 +130,7 @@ export class MtProtoHelper extends MtProtoWrapper {
     );
   }
 
-  async editChatDescription(
-    chatIdBigInt: bigInt.BigInteger,
-    description: string
-  ) {
+  async editChatDescription(chatIdBigInt: bigInt.BigInteger, description: string) {
     const mtProtoClient = this.getMtProtoClient();
     const mtProtoApi = this.getMtProtoApi();
 
@@ -151,12 +142,12 @@ export class MtProtoHelper extends MtProtoWrapper {
         })
       );
     } catch (er) {
-      throw new Error("Failed to edit chat description");
+      throw new Error(`Failed to edit chat description: \n ${String(er)}`);
     }
   }
 
   async postChatInviteLinkToIssue(
-    payload: { issue: { html_url: string, number: number, node_id: string }, repository: { full_name: string } },
+    payload: { issue: { html_url: string; number: number; node_id: string }; repository: { full_name: string } },
     chatIdBigInt: bigInt.BigInteger,
     inviteLink: Api.TypeExportedChatInvite | undefined,
     chatName: string
@@ -179,7 +170,6 @@ export class MtProtoHelper extends MtProtoWrapper {
         throw new Error(logger.error(`Failed to create chat invite link for the workroom: ${chatName}`).logMessage.raw);
       }
 
-
       await this.editChatDescription(chatIdBigInt, `${payload.issue.html_url}`);
 
       const isBotPromotedToAdmin = await mtProtoClient.invoke(
@@ -196,10 +186,7 @@ export class MtProtoHelper extends MtProtoWrapper {
     }
   }
 
-  async addUserToChat(
-    chatIdBigInt: bigInt.BigInteger | null,
-    userId: number
-  ) {
+  async addUserToChat(chatIdBigInt: bigInt.BigInteger | null, userId: number) {
     if (!chatIdBigInt) {
       throw new Error("Chat ID is not available");
     }

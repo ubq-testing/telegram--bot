@@ -32,7 +32,6 @@ async function run() {
     VOYAGEAI_API_KEY: process.env.VOYAGEAI_API_KEY ?? "", // not used through workflows
   };
 
-
   try {
     env = Value.Decode(envValidator.schema, payloadEnv);
   } catch (err) {

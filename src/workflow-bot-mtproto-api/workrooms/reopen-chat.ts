@@ -40,10 +40,7 @@ export async function reopenChat(context: Context<"issues.reopened">): Promise<C
   return { status: 200, reason: "chat_reopened" };
 }
 
-async function fetchChatAndAddCreator(
-  mtProtoHelper: MtProtoHelper,
-  dbChat: Chat
-) {
+async function fetchChatAndAddCreator(mtProtoHelper: MtProtoHelper, dbChat: Chat) {
   const chatIdBigInt = bigInt(dbChat.chat_id);
   const fetchedChat = await mtProtoHelper.getTelegramChat(dbChat);
 
@@ -67,16 +64,23 @@ async function fetchChatAndAddCreator(
   return {
     chatCreatorId,
     chatIdBigInt,
-  }
+  };
 }
 
-async function inviteUsersBackToChat({ client, context, chatIdBigInt, chatCreatorId, mtProtoHelper, dbChat }: {
-  client: MtProtoHelper["_client"],
-  context: Context<"issues.reopened">,
-  chatIdBigInt: bigInt.BigInteger,
-  chatCreatorId: bigInt.BigInteger,
-  mtProtoHelper: MtProtoHelper,
-  dbChat: Chat,
+async function inviteUsersBackToChat({
+  client,
+  context,
+  chatIdBigInt,
+  chatCreatorId,
+  mtProtoHelper,
+  dbChat,
+}: {
+  client: MtProtoHelper["_client"];
+  context: Context<"issues.reopened">;
+  chatIdBigInt: bigInt.BigInteger;
+  chatCreatorId: bigInt.BigInteger;
+  mtProtoHelper: MtProtoHelper;
+  dbChat: Chat;
 }) {
   const chatInput = await client.getInputEntity(chatIdBigInt);
   const chatId = chatInput.className === "InputPeerChat" ? chatInput.chatId : null;
