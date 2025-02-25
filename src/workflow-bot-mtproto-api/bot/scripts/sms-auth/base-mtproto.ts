@@ -14,9 +14,9 @@ dotenv.config();
  */
 export class BaseMtProto {
   // @ts-expect-error properties not defined in constructor, not required in baseclass
-  _client: TelegramClient;
-  _api: typeof Api = Api;
-  _session: StringSession | null = null;
+  private _client: TelegramClient;
+  private _api: typeof Api = Api;
+  private _session: StringSession | null = null;
 
   async initialize(env: Context["env"]["TELEGRAM_BOT_ENV"]["mtProtoSettings"], session?: string) {
     this._api = Api;
@@ -24,16 +24,12 @@ export class BaseMtProto {
     this._client = await this._mtProtoInit(env, this._session);
   }
 
-  get api() {
-    return this._api;
-  }
-
-  get client() {
+  getMtProtoClient() {
     return this._client;
   }
 
-  get session() {
-    return this._session;
+  getMtProtoApi() {
+    return this._api;
   }
 
   private async _mtProtoInit(env: Context["env"]["TELEGRAM_BOT_ENV"]["mtProtoSettings"], session: StringSession) {
