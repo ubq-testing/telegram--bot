@@ -41,7 +41,6 @@ export class BaseMtProto {
     return this._session;
   }
 
-
   private async _mtProtoInit(env: Context["env"]["TELEGRAM_BOT_ENV"]["mtProtoSettings"], session: StringSession) {
     const { TELEGRAM_API_HASH, TELEGRAM_APP_ID } = env;
 

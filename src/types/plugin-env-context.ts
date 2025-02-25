@@ -88,12 +88,10 @@ export class PluginEnvContext {
    */
   async getTelegramEventOctokit(): Promise<RestOctokitFromApp | Octokit | null> {
     let octokit: RestOctokitFromApp | Octokit | null = null;
-    // We'd take this from Context in the future when we are using the GitHub Storage Layer
-    const targetOwner = this._env.TELEGRAM_BOT_ENV.workflowFunctions.SOURCE_REPO_OWNER;
 
     try {
       await this._getApp().eachInstallation((installation) => {
-        if (installation.installation.account?.login.toLowerCase() === targetOwner.toLowerCase()) {
+        if (installation.installation.account?.login.toLowerCase() === this._config.storageOwner.toLowerCase()) {
           octokit = installation.octokit;
         }
       });
