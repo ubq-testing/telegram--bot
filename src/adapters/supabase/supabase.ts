@@ -152,4 +152,13 @@ export class SuperbaseStorage extends StorageGetters implements Storage {
       return false;
     }
   }
+
+  async getAllUsers(): Promise<UserBaseStorage[]> {
+    const { data, error } = await this.supabase.from("userbase").select("*");
+    if (error) {
+      this.logger.error("Failed to get all users", { er: error });
+      return [];
+    }
+    return data || [];
+  }
 }

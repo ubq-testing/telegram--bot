@@ -2,6 +2,7 @@ import { Context } from "../../types";
 import { StorageUser } from "../../types/storage";
 import { CallbackResult } from "../../types/proxy";
 import { logger } from "../../utils/logger";
+import { captureAndSaveRfcComment, sendRfcNotifications, shouldSaveRfcComment } from "./rfc-follow-ups";
 
 const reminderCommentRegex = /@(\w+), this task has been idle for a while/gi;
 // eslint-disable-next-line sonarjs/duplicates-in-character-class
@@ -13,7 +14,7 @@ const githubUsernameRegex = /@([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?)/gi
 // we'll have multiple permit comments to parse out here
 // the regex is capturing the claim url and the github username
 
-async function getUsersFromStorage(
+export async function getUsersFromStorage(
   context: Context<"issue_comment.created" | "issue_comment.edited">,
   body: string
 ): Promise<{ results: { claimUrl?: string }[]; users: StorageUser[] }> {
@@ -51,7 +52,7 @@ async function getUsersFromStorage(
   return { results, users: users.filter((u): u is StorageUser => !!u) };
 }
 
-async function fetchUsers(usernames: string[], context: Context<"issue_comment.created" | "issue_comment.edited">) {
+export async function fetchUsers(usernames: string[], context: Context<"issue_comment.created" | "issue_comment.edited">) {
   const {
     adapters: { storage },
     octokit,
@@ -64,10 +65,12 @@ async function fetchUsers(usernames: string[], context: Context<"issue_comment.c
       continue;
     }
     try {
-      const user = await octokit.rest.users.getByUsername({ username: username.replace("@", "") });
+      const user = await octokit.rest.users.getByUsername({ username: username.includes("@") ? username.replace("@", "") : username });
       const storageUser = await storage.retrieveUserByGithubId(user.data.id);
       if (storageUser) {
         users.push(storageUser);
+      } else {
+        logger.error(`User not found in storage`, { username });
       }
     } catch (er) {
       logger.error(`Error getting user by github id`, { er });
@@ -84,6 +87,16 @@ export async function notificationsRequiringComments(context: Context<"issue_com
 
   const commentDependantTriggers = ["payment", "reminder"];
   let i = 0;
+
+  if (!results.length) {
+    if (shouldSaveRfcComment(context)) {
+      await captureAndSaveRfcComment(context);
+    } else {
+      // otherwise we are going to use the comment event as a wildcard to send follow-up messages
+      await sendRfcNotifications(context.pluginEnvCtx.getBotFatherBot(), context);
+    }
+    return { status: 200, reason: "success" };
+  }
 
   for (const user of users.filter((u): u is StorageUser => !!u)) {
     if (!user) {
@@ -116,6 +129,11 @@ async function handleCommentNotificationTrigger({
   context: Context<"issue_comment.created" | "issue_comment.edited">;
   claimUrl?: string;
 }) {
+  console.log("Trigger", {
+    trigger,
+    user,
+    telegramId,
+  });
   if (trigger === "reminder" && !claimUrl) {
     return handleReminderNotification(user.github_username, telegramId, context);
   } else if (trigger === "payment" && claimUrl) {

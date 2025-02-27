@@ -4,6 +4,14 @@ export interface Withsha {
   sha?: string;
 }
 
+export type RfcComment = {
+  comment_id: number;
+  comment_url: string;
+  comment: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export type StorageUser = {
   telegram_id: number;
   github_id: number;
@@ -33,6 +41,8 @@ export type StorageUser = {
    * compared to the user's own notifications.
    */
   additional_user_listeners: string[];
+  rfc_comments: RfcComment[];
+  last_rfc_check: string;
 };
 
 /**
