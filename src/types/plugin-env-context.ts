@@ -105,11 +105,6 @@ export class PluginEnvContext {
     }
 
     if (!octokit) {
-      logger.info("Falling back to TEMP_SAFE_PAT for octokit");
-      octokit = new Octokit({ auth: this._env.TEMP_SAFE_PAT });
-    }
-
-    if (!octokit) {
       throw new Error("Octokit could not be initialized");
     }
 

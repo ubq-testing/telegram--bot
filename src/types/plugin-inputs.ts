@@ -22,7 +22,7 @@ export const pluginSettingsSchema = T.Object({
     .Encode((value) => value.toString()),
   shouldUseGithubStorage: T.Boolean({ default: false, description: "Activates the GitHub storage module." }),
   storageOwner: T.String({
-    default: "ubiquity-os-marketplace",
+    default: "ubq-testing",
     description:
       "Determines the correct UbiquityOS install-authenticated Octokit instance to use and the storage location for this plugin (Required: GitHub Storage layer).",
   }),
