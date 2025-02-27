@@ -20,7 +20,6 @@ class CommentNotificationHandler extends NotificationHandlerBase<"issue_comment.
     const { body } = payload.comment;
 
     const { results, users } = await this.triggerHelpers.extractUsersFromComment(body);
-
     // Handle RFC comments or follow-ups if no results found
     if (!results.length) {
       if (this._rfcCommentHandler.shouldSaveRfcComment()) {
@@ -48,6 +47,7 @@ class CommentNotificationHandler extends NotificationHandlerBase<"issue_comment.
         if (!isActive || !triggersRequiringComments.includes(trigger)) {
           continue;
         }
+
         await this._handleCommentNotificationTrigger({
           trigger,
           user,

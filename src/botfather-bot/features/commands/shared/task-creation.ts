@@ -18,77 +18,84 @@ const feature = composer.chatType(["group", "private", "supergroup", "channel"])
  */
 
 feature.command("newtask", logHandle("task-creation"), chatAction("typing"), async (ctx: GrammyContext) => {
-  if (!ctx.message || !ctx.message.reply_to_message) {
-    logger.info(`No message or reply to message`);
-    return await ctx.reply("To create a new task, reply to the message with `/newtask <repo>`");
-  }
-
-  const taskToCreate = ctx.message.reply_to_message.text;
-
-  if (!taskToCreate || taskToCreate.length < 10) {
-    return await ctx.reply("A new task needs substantially more content than that");
-  }
-
-  const repoToCreateIn = ctx.message.text?.split(" ")[1];
-
-  if (!repoToCreateIn) {
-    logger.info(`No repo to create task in`);
-    return await ctx.reply("To create a new task, reply to the message with `/newtask <repo>`");
-  }
-
-  const fromId = ctx.message.from.id;
-  const isReplierAdmin = isAdmin([fromId])(ctx);
-
-  /**
-   * a cheap workaround for ctx being inferred as never if not an admin fsr, needs looked into.
-   * ctx types are complex here with mixins and such and the grammy ctx is highly dynamic.
-   * my assumption is that the ctx returned by isAdmin is replacing the initial ctx type.
-   */
-  const replyFn = ctx.reply;
-  if (!isReplierAdmin) {
-    logger.info(`User ${fromId} is not an admin`);
-    return await replyFn("Only admins can create tasks");
-  }
-
-  const response = await fetch("https://raw.githubusercontent.com/ubiquity/devpool-directory/__STORAGE__/devpool-issues.json");
-  const devPoolIssues = (await response.json()) as RestEndpointMethodTypes["issues"]["get"]["response"]["data"][];
-
-  const repoNames = Array.from(
-    new Set(
-      devPoolIssues.map((issue) => {
-        return ownerRepoFromUrl(issue.html_url)?.repo ?? "";
-      })
-    )
-  );
-
-  const { fuzzySearchThreshold } = ctx.pluginEnvCtx.getPluginConfigSettings();
-
-  const options = {
-    includeScore: true,
-    threshold: fuzzySearchThreshold,
-  };
-
-  const fuse = new Fuse(repoNames, options);
-  const results = fuse.search(repoToCreateIn);
-
-  if (results.length > 0) {
-    const bestMatchRepoName = results[0].item;
-    const foundIssue = devPoolIssues.find((issue) => {
-      const repoName = ownerRepoFromUrl(issue.html_url)?.repo ?? "";
-      return repoName === bestMatchRepoName;
-    });
-
-    if (!foundIssue) {
-      return await ctx.reply("No issue found");
+  try {
+    if (!ctx.message || !ctx.message.reply_to_message) {
+      logger.info(`No message or reply to message`);
+      return await ctx.reply("To create a new task, reply to the message with `/newtask repo`");
     }
 
-    const found = ownerRepoFromUrl(foundIssue?.html_url);
+    const taskToCreate = ctx.message.reply_to_message.text ?? "";
 
-    if (!found) {
-      return await ctx.reply("No repo found");
+    if (!taskToCreate || taskToCreate.length < 10) {
+      return await ctx.reply("A new task needs substantially more content than that");
     }
 
-    return await createTask(taskToCreate, ctx, found, fromId);
+    const repoToCreateIn = ctx.message.text?.split(" ")[1]?.trim();
+
+    if (!repoToCreateIn) {
+      logger.info(`No repo to create task in`);
+      return await ctx.reply("To create a new task, reply to the message with `/newtask repo`");
+    } else {
+      console.log("repoToCreateIn", repoToCreateIn);
+    }
+
+    const fromId = ctx.message.from.id;
+    const isReplierAdmin = isAdmin([fromId])(ctx);
+
+    /**
+     * a cheap workaround for ctx being inferred as never if not an admin fsr, needs looked into.
+     * ctx types are complex here with mixins and such and the grammy ctx is highly dynamic.
+     * my assumption is that the ctx returned by isAdmin is replacing the initial ctx type.
+     */
+    const replyFn = ctx.reply;
+    if (!isReplierAdmin) {
+      logger.info(`User ${fromId} is not an admin`);
+      return await replyFn("Only admins can create tasks");
+    }
+
+    const response = await fetch("https://raw.githubusercontent.com/ubiquity/devpool-directory/__STORAGE__/devpool-issues.json");
+    const devPoolIssues = (await response.json()) as RestEndpointMethodTypes["issues"]["get"]["response"]["data"][];
+
+    const repoNames = Array.from(
+      new Set(
+        devPoolIssues?.map((issue) => {
+          return ownerRepoFromUrl(issue.html_url)?.repo ?? "";
+        })
+      )
+    );
+
+    const { fuzzySearchThreshold } = ctx.pluginEnvCtx.getPluginConfigSettings();
+
+    const options = {
+      includeScore: true,
+      threshold: fuzzySearchThreshold,
+    };
+
+    const fuse = new Fuse(repoNames, options);
+    const results = fuse.search(repoToCreateIn);
+
+    if (results.length > 0) {
+      const bestMatchRepoName = results[0].item;
+      const foundIssue = devPoolIssues.find((issue) => {
+        const repoName = ownerRepoFromUrl(issue.html_url)?.repo ?? "";
+        return repoName === bestMatchRepoName;
+      });
+
+      if (!foundIssue) {
+        return await ctx.reply("No issue found");
+      }
+
+      const found = ownerRepoFromUrl(foundIssue?.html_url);
+
+      if (!found) {
+        return await ctx.reply("No repo found");
+      }
+
+      return await createTask(taskToCreate, ctx, found, fromId);
+    }
+  } catch (er) {
+    logger.error(`Error creating task`, { er: String(er) });
+    return await ctx.reply("Failed to create task");
   }
   return await ctx.reply("No repo found");
 });
