@@ -14,7 +14,7 @@ export type RfcComment = {
 };
 
 export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.created" | "issue_comment.edited"> {
-  private _rfcCommentRegex = /rfc @(\w+)|rfc @(\w+)|request for comment @(\w+)/gi;
+  private _rfcCommentRegex = /rfc @(\w+)|rfc @(\w+)|request for comment @(\w+)/i;
 
   constructor(context: Context<"issue_comment.created" | "issue_comment.edited">) {
     super(context);
@@ -79,8 +79,9 @@ export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.cr
     }
 
     const { owner, repo, number } = commentUrl;
-    const issueComments = await octokit.rest.issues.listComments({ owner, repo, issue_number: number });
-    const comment = issueComments.data.find((c) => c.id === rfcComment.comment_id);
+    const issueComments = await octokit.paginate(octokit.rest.issues.listComments, { owner, repo, issue_number: number });
+
+    const comment = issueComments.find((c) => c.id === rfcComment.comment_id);
 
     if (!comment) {
       logger.error(`Comment not found`, { rfcComment });
@@ -88,7 +89,7 @@ export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.cr
     }
 
     const rfcCommentDate = new Date(rfcComment.created_at);
-    const commentsAfterRfc = issueComments.data.filter((c) => new Date(c.created_at).getTime() > rfcCommentDate.getTime());
+    const commentsAfterRfc = issueComments.filter((c) => new Date(c.created_at).getTime() > rfcCommentDate.getTime());
 
     if (commentsAfterRfc.length > 0 && commentsAfterRfc.some((c) => c.user?.login === user.github_username)) {
       user.rfc_comments = user.rfc_comments.filter((c) => c.comment_id !== rfcComment.comment_id);
