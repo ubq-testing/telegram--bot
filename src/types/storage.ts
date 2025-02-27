@@ -1,16 +1,9 @@
 import { NotificationTriggers } from "../github-handlers/private-notifications/constants";
+import { RfcComment } from "../github-handlers/private-notifications/handler-rfc-comments";
 
 export interface Withsha {
   sha?: string;
 }
-
-export type RfcComment = {
-  comment_id: number;
-  comment_url: string;
-  comment: string;
-  created_at: string;
-  updated_at: string;
-};
 
 export type StorageUser = {
   telegram_id: number;
@@ -43,13 +36,11 @@ export type StorageUser = {
   additional_user_listeners: string[];
   rfc_comments: RfcComment[];
   last_rfc_check: string;
-};
+} & Withsha;
 
-/**
- * Used as our user-base storage layer. We'll demo by setting up
- * direct DMs based on webhook events/plugin outcomes.
- */
-export type UserBaseStorage = StorageUser & Withsha;
+export type UserBaseStorage = {
+  [telegramId: string]: StorageUser;
+} & Withsha;
 
 export type Chat = {
   status: "open" | "closed" | "reopened";
@@ -78,7 +69,7 @@ export type HandleChatParams<TAction extends ChatAction = ChatAction> = {
 };
 
 export type RetrievalHelper<TType extends StorageTypes> = TType extends "allChats"
-  ? Chat[]
+  ? ChatStorage
   : TType extends "userBase"
     ? UserBaseStorage
     : TType extends "singleChat"

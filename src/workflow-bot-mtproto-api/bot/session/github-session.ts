@@ -1,6 +1,8 @@
 import { StringSession } from "telegram/sessions";
 import { GithubStorage } from "../../../adapters/github/storage-layer";
 import { SessionManager } from "./session-manager";
+import { Context } from "../../../types";
+import { SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * This class extends the StringSession class from the Telegram library.
@@ -9,16 +11,18 @@ import { SessionManager } from "./session-manager";
  */
 export class GitHubSession extends StringSession implements SessionManager {
   private _storage: GithubStorage;
-  private _session?: string;
 
-  constructor(session?: string) {
-    super(session);
-    this._storage = new GithubStorage();
-    this._session = session;
+  constructor(
+    private _context: Context,
+    private _supabase: SupabaseClient,
+    private _session?: string
+  ) {
+    super(_session);
+    this._storage = new GithubStorage(_context);
   }
 
   getClient() {
-    return;
+    return this._supabase;
   }
 
   getStorageHandler(): GithubStorage {
@@ -36,7 +40,7 @@ export class GitHubSession extends StringSession implements SessionManager {
     const session = await this._storage.retrieveSession();
 
     if (session) {
-      return new GitHubSession(session);
+      return new GitHubSession(this._context, this._supabase, session);
     } else {
       throw new Error("No session found. Please run the SMS Login script first.");
     }
