@@ -18,7 +18,7 @@ export type RfcComment = {
 };
 
 export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.created" | "issue_comment.edited"> {
-  private _rfcCommentRegex = /rfc @(\w+)|rfc @(\w+)|request for comment @(\w+)/i;
+  private _rfcCommentRegex = /\brfc @(\w+)\b|\brequest for comment @(\w+)\b|@(\w+)\s+rfc\b/i;
 
   constructor(context: Context<"issue_comment.created" | "issue_comment.edited">) {
     super(context);
@@ -127,22 +127,6 @@ export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.cr
     rfcComment.last_push = new Date().toISOString();
   }
 
-  private _getUsernameFromRfcComment(body: string, rfcMatches: [] | RegExpMatchArray) {
-    let username;
-    for (const match of rfcMatches) {
-      if (match) {
-        username = match.split(" ")[1];
-        break;
-      }
-    }
-
-    if (!username) {
-      logger.error(`Username not found in RFC comment`, { body });
-    }
-
-    return username;
-  }
-
   private async _shouldFollowUpRfc(user: StorageUser): Promise<boolean> {
     const { listening_to, rfc_comments, github_username } = user;
 
@@ -205,6 +189,15 @@ export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.cr
 
       return now > followUpAllowedDate;
     });
+  }
+
+  private _getUsernameFromRfcComment(body: string, rfcMatches: [] | RegExpExecArray): string | undefined {
+    if (rfcMatches[1]) return rfcMatches[1];
+    if (rfcMatches[2]) return rfcMatches[2];
+    if (rfcMatches[3]) return rfcMatches[3];
+
+    logger.error(`Username not found in RFC comment`, { body });
+    return undefined;
   }
 
   // Required overrides for NotificationHandlerBase
