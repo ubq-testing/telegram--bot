@@ -1,7 +1,6 @@
 import { logger } from "../../utils/logger";
 import { Chat, ChatAction, ChatStorage, HandleChatParams, RetrievalHelper, StorageTypes, UserBaseStorage, StorageUser } from "../../types/storage";
 import { PluginEnvContext } from "../../types/plugin-env-context";
-import { RequestError } from "octokit";
 import { Context } from "../../types";
 import { isChatsStorage, isUserBaseStorage, isSingleChatStorage, isSessionStorage } from "../storage-guards";
 import { deleteAllShas } from "./helpers";
@@ -17,22 +16,28 @@ export class GithubStorage {
   payloadRepoOwner: string; // which partner this data belongs to
   pluginRepo: string; // is the name of this plugin's repository i.e ubiquity-os-kernel-telegram
 
-  installID: number | null = null; // used to get the correct install octokit
+  installID: number | null = null; // used to get the correct install _octokit
 
   // all need prefixed with their storage path
   chatStoragePath = "chat-storage.json";
   userStoragePath = "user-base.json";
   telegramSessionPath = "session-storage.json";
 
-  octokit: Context["octokit"];
+  private _octokit: Awaited<ReturnType<PluginEnvContext["getTelegramEventOctokit"]>> | null = null;
 
   constructor(context: Context) {
-    this.octokit = context.octokit;
     this.pluginEnvCtx = context.pluginEnvCtx;
     const { SOURCE_REPO_OWNER, SOURCE_REPOSITORY } = context.env.TELEGRAM_BOT_ENV.workflowFunctions;
     this.pluginRepo = SOURCE_REPOSITORY;
     this.payloadRepoOwner = SOURCE_REPO_OWNER;
     this._formatStoragePaths();
+  }
+
+  async getOctokit(): Promise<NonNullable<GithubStorage["_octokit"]>> {
+    if (!this._octokit) {
+      this._octokit = await this.pluginEnvCtx.getTelegramEventOctokit();
+    }
+    return this._octokit as NonNullable<GithubStorage["_octokit"]>;
   }
 
   public async retrieveChatByTaskNodeId(taskNodeId: string, dbObj?: ChatStorage): Promise<Chat | undefined> {
@@ -199,10 +204,6 @@ export class GithubStorage {
   public async handleUserBaseStorage<TType extends "create" | "delete" | "update">(user: StorageUser, action: TType) {
     const dbObject = await this._retrieveStorageDataObject("userBase");
 
-    if ((action === "create" && user) || (action === "delete" && !user)) {
-      throw new Error("User already exists or does not exist");
-    }
-
     if (action === "create" || action === "update") {
       dbObject[user.telegram_id] = user;
     } else {
@@ -220,7 +221,7 @@ export class GithubStorage {
    * Do we need a safety check to ensure we are not accidentally deleting data? Maybe, needs tested.
    */
 
-  private async _storeData<TType extends StorageTypes>(data: RetrievalHelper<TType>) {
+  private async _storeData<TType extends StorageTypes>(data: RetrievalHelper<TType>): Promise<boolean> {
     if (!data) {
       throw new Error("No data provided to store");
     }
@@ -243,14 +244,16 @@ export class GithubStorage {
       path = this.telegramSessionPath;
       type = "session";
     } else {
+      console.log("Invalid data type", data);
       throw new Error("Invalid data type");
     }
 
     const content = JSON.stringify(data, null, 2);
+    const authedOctokit = await this.getOctokit();
 
     try {
       if (!sha) {
-        const { data: shaData } = await this.octokit.rest.repos.getContent({
+        const { data: shaData } = await authedOctokit.rest.repos.getContent({
           owner: this.payloadRepoOwner,
           repo: this.storageRepo,
           path,
@@ -262,7 +265,7 @@ export class GithubStorage {
         }
       }
 
-      await this.octokit.rest.repos.createOrUpdateFileContents({
+      await authedOctokit.rest.repos.createOrUpdateFileContents({
         owner: this.payloadRepoOwner,
         repo: this.storageRepo,
         path,
@@ -272,10 +275,10 @@ export class GithubStorage {
         sha,
       });
       return true;
-    } catch (er) {
-      this.logger.error("Failed to store data", { er });
+    } catch {
+      await this._handleMissingStorageBranchOrFile(this.payloadRepoOwner, path, type);
+      return await this._storeData(data);
     }
-    return false;
   }
 
   /**
@@ -293,11 +296,12 @@ export class GithubStorage {
     };
 
     const path = storagePaths[type];
+    const authedOctokit = await this.getOctokit();
 
     let dataContent, sha;
 
     try {
-      const { data } = await this.octokit.rest.repos.getContent({
+      const { data } = await authedOctokit.rest.repos.getContent({
         owner: this.payloadRepoOwner,
         repo: this.storageRepo,
         path,
@@ -311,8 +315,12 @@ export class GithubStorage {
         throw logger.error("Data content not found");
       }
     } catch (er) {
-      await this._handleMissingStorageBranchOrFile(this.payloadRepoOwner, path, type);
-      return this._retrieveStorageDataObject(type, withSha);
+      const isSuccessful = await this._handleMissingStorageBranchOrFile(this.payloadRepoOwner, path, type);
+      if (!isSuccessful) {
+        throw logger.error("Failed to retrieve storage data", { er });
+      }
+
+      return {} as RetrievalHelper<TType>;
     }
 
     try {
@@ -326,62 +334,73 @@ export class GithubStorage {
   private async _handleMissingStorageBranchOrFile(owner: string, path: string, type: StorageTypes) {
     let mostRecentDefaultHeadCommitSha;
 
+    const authedOctokit = await this.getOctokit();
+    let branch, branchError;
+
+    // Check if the branch exists
     try {
-      const { data: defaultBranchData } = await this.octokit.rest.repos.getCommit({
+      branch = await authedOctokit.rest.repos.getBranch({
+        owner,
+        repo: this.storageRepo,
+        branch: this.storageBranch,
+      });
+    } catch (e) {
+      branchError = e;
+      console.log("Branch does not exist", { owner, path, type, storageRepo: this.storageRepo, storageBranch: this.storageBranch });
+    }
+
+    if (branch) {
+      console.log("Branch exists - creating file", { owner, path, type });
+      try {
+        await authedOctokit.rest.repos.createOrUpdateFileContents({
+          owner,
+          repo: this.storageRepo,
+          path,
+          branch: this.storageBranch,
+          message: `chore: create ${type.replace(/([A-Z])/g, " $1").toLowerCase()}`,
+          content: Buffer.from("{\n}").toString("base64"),
+          sha: branch.data.commit.sha,
+        });
+
+        return true;
+      } catch (err) {
+        console.log("Failed to create new storage file", { err: String(err) });
+        throw logger.error("Failed to create new storage file", { err: String(err) });
+      }
+    }
+
+    try {
+      const { data: defaultBranchData } = await authedOctokit.rest.repos.getCommit({
         owner,
         repo: this.storageRepo,
         ref: "heads/main",
       });
       mostRecentDefaultHeadCommitSha = defaultBranchData.sha;
     } catch (er) {
-      throw logger.error("Failed to get default branch commit sha", { er });
+      logger.error("Failed to get default branch commit", { er });
     }
 
-    // Check if the branch exists
-    try {
-      await this.octokit.rest.repos.getBranch({
+    if (mostRecentDefaultHeadCommitSha && !branchError) {
+      await authedOctokit.rest.git.createRef({
         owner,
         repo: this.storageRepo,
-        branch: this.storageBranch,
+        ref: `refs/heads/${this.storageBranch}`,
+        sha: mostRecentDefaultHeadCommitSha,
       });
-    } catch (branchError) {
-      if (branchError instanceof RequestError || branchError instanceof Error) {
-        const { message } = branchError;
-        if (message.toLowerCase().includes(`branch not found`)) {
-          // Branch doesn't exist, create the branch
 
-          try {
-            await this.octokit.rest.git.createRef({
-              owner,
-              repo: this.storageRepo,
-              ref: `refs/heads/${this.storageBranch}`,
-              sha: mostRecentDefaultHeadCommitSha,
-            });
-          } catch (err) {
-            throw logger.error("Failed to create branch", { err });
-          }
-        } else {
-          throw logger.error("Failed to handle missing storage branch or file", { branchError });
-        }
-      } else {
-        throw logger.error("Failed to handle missing storage branch or file", { branchError });
-      }
-    }
-
-    try {
-      // Create or update the file
-      await this.octokit.rest.repos.createOrUpdateFileContents({
+      await authedOctokit.rest.repos.createOrUpdateFileContents({
         owner,
         repo: this.storageRepo,
         path,
         branch: this.storageBranch,
         message: `chore: create ${type.replace(/([A-Z])/g, " $1").toLowerCase()}`,
         content: Buffer.from("{\n}").toString("base64"),
-        sha: mostRecentDefaultHeadCommitSha,
       });
-    } catch (err) {
-      throw logger.error("Failed to create new storage file", { err });
+    } else {
+      throw logger.error("Failed to create new storage branch", { branchError });
     }
+
+    return true;
   }
   /**
    * Standardized storage paths for the partner's repository.
