@@ -14,12 +14,14 @@ export class PluginEnvContext {
   private _config: Context["config"];
   private _botFatherHonoApp: BotFatherInitializer["_server"] | null = null;
   private _botFatherBot: Bot | null = null;
+  private _env: Env;
 
   constructor(
     private readonly _inputs: PluginInputs,
-    private _env: Env
+    env: Env
   ) {
-    this._config = this.getPluginConfigSettings();
+    this._config = Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, this._inputs?.settings ?? {}));
+    this._env = Value.Decode(envValidator.schema, Value.Default(envValidator.schema, env))
   }
 
   async createFullPluginInputsContext(inputs?: PluginInputs): Promise<Context> {
@@ -72,11 +74,11 @@ export class PluginEnvContext {
   }
 
   getEnv(): Env {
-    return Value.Decode(envValidator.schema, Value.Default(envValidator.schema, this._env));
+    return this._env;
   }
 
   getPluginConfigSettings(): Context["config"] {
-    return Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, this._config ?? {}));
+    return this._config;
   }
 
   /**
