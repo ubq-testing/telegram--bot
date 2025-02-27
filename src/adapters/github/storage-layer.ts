@@ -1,84 +1,20 @@
-/* eslint-disable */
-/**
- * @DEV - This is disabled and while I plan to implement some sort of toggle
- *        for this, it's not a priority for this PR and will be completed in:
- *
- *      - https://github.com/ubiquity-os-marketplace/ubiquity-os-kernel-telegram/issues/14
- *
- *
- *
- *
- */
-import { Chat, ChatAction, HandleChatParams, RetrievalHelper, StorageTypes, UserBaseStorage } from "../../types/storage";
-import { Storage } from "../create-adapters";
-
-export class GithubStorage implements Storage {
-  constructor() {}
-  userSnapshot(chatId: number, userIds: number[]): Promise<void> {
-    throw new Error("Method not implemented.");
-  }
-  updateChatStatus(status: "open" | "closed" | "reopened", taskNodeId?: string, chatId?: number): Promise<void> {
-    throw new Error("Method not implemented.");
-  }
-  saveChat(chatId: number, chatName: string, taskNodeId: string): Promise<void> {
-    throw new Error("Method not implemented.");
-  }
-  retrieveChatByChatId(chatId: number): Promise<Chat | undefined> {
-    throw new Error("Method not implemented.");
-  }
-  retrieveChatByTaskNodeId(taskNodeId: string): Promise<Chat | undefined> {
-    throw new Error("Method not implemented.");
-  }
-  retrieveUserByTelegramId(telegramId: number, dbObj?: UserBaseStorage): Promise<UserBaseStorage | undefined> {
-    throw new Error("Method not implemented.");
-  }
-  retrieveUserByGithubId(githubId: number | null | undefined, dbObj?: UserBaseStorage): Promise<UserBaseStorage | undefined> {
-    throw new Error("Method not implemented.");
-  }
-  retrieveSession(): Promise<string | null> {
-    throw new Error("Method not implemented.");
-  }
-  handleChat<TAction extends ChatAction>(params: HandleChatParams<TAction>): Promise<void> {
-    throw new Error("Method not implemented.");
-  }
-  handleSession<TAction extends "create" | "delete">(session: string, action: TAction): Promise<void> {
-    throw new Error("Method not implemented.");
-  }
-  handleUserBaseStorage<TType extends "create" | "delete" | "update">(user: UserBaseStorage, action: TType): Promise<boolean> {
-    throw new Error("Method not implemented.");
-  }
-  storeData<TType extends StorageTypes>(data: RetrievalHelper<TType> | null, idToDelete?: number): Promise<boolean> {
-    throw new Error("Method not implemented.");
-  }
-  getAllUsers(): Promise<UserBaseStorage[]> {
-    throw new Error("Method not implemented.");
-  }
-  getChatUsers(chatId: number): Promise<number[]> {
-    throw new Error("Method not implemented.");
-  }
-}
-
-/**
- *
 import { logger } from "../../utils/logger";
-import { Chat, ChatAction, ChatStorage, HandleChatParams, RetrievalHelper, StorageTypes, UserBaseStorage, SessionStorage, Withsha } from "../../types/storage";
+import { Chat, ChatAction, ChatStorage, HandleChatParams, RetrievalHelper, StorageTypes, UserBaseStorage, StorageUser } from "../../types/storage";
 import { PluginEnvContext } from "../../types/plugin-env-context";
-import { getPluginManifestDetails } from "./utils";
 import { RequestError } from "octokit";
-import { Storage } from "../supabase/supabase";
+import { Context } from "../../types";
+import { isChatsStorage, isUserBaseStorage, isSingleChatStorage, isSessionStorage } from "../storage-guards";
+import { deleteAllShas } from "./helpers";
 
- * Uses GitHub as a storage layer, in particular, a JSON
- * based private repository.
-
-export class GithubStorage implements Storage {
-  octokit: Context["octokit"];
+export class GithubStorage {
+  pluginEnvCtx: PluginEnvContext;
   logger = logger;
 
-  storageRepo = "ubiquibot-config"; // always the same (until global storage is implemented)
+  storageRepo = ".ubiquity-os"; // always the same (until global storage is implemented)
   storageBranch = "storage"; // always the same (until branch-per-partner is implemented)
 
-  payloadRepoOwner: string | undefined = undefined; // which partner this data belongs to
-  pluginRepo: string | undefined = undefined; // is the name of this plugin's repository i.e ubiquity-os-kernel-telegram
+  payloadRepoOwner: string; // which partner this data belongs to
+  pluginRepo: string; // is the name of this plugin's repository i.e ubiquity-os-kernel-telegram
 
   installID: number | null = null; // used to get the correct install octokit
 
@@ -87,113 +23,35 @@ export class GithubStorage implements Storage {
   userStoragePath = "user-base.json";
   telegramSessionPath = "session-storage.json";
 
-  // returns a standard octokit during setup
-  isEnvSetup = false;
+  octokit: Context["octokit"];
 
-  constructor(ctx: Context, { storageOwner, isEnvSetup }: { storageOwner?: string; isEnvSetup?: boolean } = {}) {
-    this.isEnvSetup = isEnvSetup ?? false;
-    this.octokit = ctx.octokit;
-    this.payloadRepoOwner = storageOwner;
-
-    if (!this.payloadRepoOwner) {
-      const { payload } = ctx;
-
-      if (payload) {
-        this.getOwnerFromPayload(payload);
-      }
-    }
-
-    /**
-     * The assumption here is that GitHub payloads will always have this info
-     * whereas Telegram payloads will not. We must centralize our Telegram storage
-     * regardless, so this makes sense but could be improved upon.
-     *
-     * td - validate no GitHub webhook payloads are missing this info
-     * (current used webhooks are safe)
-
-    if (!this.payloadRepoOwner) {
-      /**
-       * @DEV - Forks should update the manifest pointing to their forked repository
-       *
-       * in this case "ubiquity-os"
-
-      this.payloadRepoOwner = getPluginManifestDetails().name.split("/")[0];
-    }
-
-    /**
-     * This would centralize all of our storage to a single organization
-     * which is suitable as we are the only partner at the moment.
-     *
-     * this.payloadRepoOwner = getPluginManifestDetails().name.split("/")[0];
-     *
-     * This could also be used to centralize a storage location for
-     * partner's if we had a reference to other orgs that they own,
-     * via the config or storage layer.
-     *
-     * this.payloadRepoOwner = getPartnerStorageLocation(this.payloadRepoOwner);
-
-    this.pluginRepo = getPluginManifestDetails().name.split("/")[1];
-
-    this.formatStoragePaths();
+  constructor(context: Context) {
+    this.octokit = context.octokit;
+    this.pluginEnvCtx = context.pluginEnvCtx;
+    const { SOURCE_REPO_OWNER, SOURCE_REPOSITORY } = context.env.TELEGRAM_BOT_ENV.workflowFunctions;
+    this.pluginRepo = SOURCE_REPOSITORY;
+    this.payloadRepoOwner = SOURCE_REPO_OWNER;
+    this._formatStoragePaths();
   }
 
-  /**
-   * Standardized storage paths for the partner's repository.
-   *
-   * https://github.com/ubiquity-os/plugin-template/issues/2#issuecomment-2395009642
-   * https://github.com/ubiquity-os-marketplace/ubiquity-os-kernel-telegram/pull/3#issuecomment-2394941038
-   *
-   * e.g:
-   * - ubiquibot-config/plugin-store/ubiquity-os/ubiquity-os-kernel-telegram/chat-storage.json
-   * - ubiquibot-config/plugin-store/ubiquity-os/ubiquity-os-kernel-telegram/user-base.json
-   * - ubiquibot-config/plugin-store/ubiquity-os/ubiquity-os-kernel-telegram/session-storage.json
+  public async retrieveChatByTaskNodeId(taskNodeId: string, dbObj?: ChatStorage): Promise<Chat | undefined> {
+    const dbObject = dbObj ?? (await this._retrieveStorageDataObject("allChats"));
 
-  formatStoragePaths() {
-    this.chatStoragePath = `plugin-store/${this.payloadRepoOwner}/${this.pluginRepo}/${this.chatStoragePath}`;
-    this.userStoragePath = `plugin-store/${this.payloadRepoOwner}/${this.pluginRepo}/${this.userStoragePath}`;
-    this.telegramSessionPath = `plugin-store/${this.payloadRepoOwner}/${this.pluginRepo}/${this.telegramSessionPath}`;
-  }
-
-  /**
-   * This is a requirement in order to fetch/push data to the
-   * partner's repository. It will return an octokit instance
-   * with the correct permissions.
-   *
-   * Storage is handled via a dedicated GitHub App with the
-   * necessary permissions to read/write to the repository.
-
-  async getStorageOctokit() {
-    if (this.isEnvSetup) {
-      // setup pushes secrets to ubiquity-os-kernel-telegram, doesn't need the app instance
-      return this.octokit;
-    }
-
-    try {
-      this.octokit = await PluginEnvContext.getInstance().getTelegramEventOctokit();
-
-      if (!this.payloadRepoOwner) {
-        throw new Error("Unable to initialize storage octokit: owner not found");
+    if (dbObject.chats) {
+      const chat = dbObject.chats.find((chat) => chat.task_node_id === taskNodeId);
+      if (chat) {
+        return {
+          ...chat,
+          sha: dbObject.sha,
+        };
       }
-
-      const installs = await this.octokit.request("GET /app/installations");
-      const thisInstall = installs.data.find((install) => install.account?.login === this.payloadRepoOwner);
-
-      if (!thisInstall) {
-        throw new Error("Unable to initialize storage octokit: installation not found");
-      }
-
-      return await PluginEnvContext.getInstance().getApp()?.getInstallationOctokit(thisInstall.id);
-    } catch (er) {
-      throw this.logger.error("Failed to get install octokit", { er });
     }
   }
 
-  // Granular Data Retrieval
+  public async retrieveChatByChatId(chatId: number, dbObj?: ChatStorage): Promise<Chat | undefined> {
+    const dbObject = dbObj ?? (await this._retrieveStorageDataObject("allChats"));
 
-  async retrieveChatByTaskNodeId(taskNodeId: string, dbObj?: ChatStorage): Promise<Chat | undefined> {
-    const dbObject = dbObj ?? (await this.retrieveStorageDataObject("allChats"));
-
-    const chat = dbObject.chats.find((chat) => chat.task_node_id === taskNodeId);
+    const chat = dbObject.chats.find((chat) => chat.chat_id === chatId);
     if (chat) {
       return {
         ...chat,
@@ -202,21 +60,8 @@ export class GithubStorage implements Storage {
     }
   }
 
-  async retrieveChatByChatId(chatId: number, dbObj?: ChatStorage): Promise<Chat | undefined> {
-    const dbObject = dbObj ?? (await this.retrieveStorageDataObject("allChats"));
-
-    const chat = dbObject.chats.find((chat) => chat.chatId === chatId);
-    if (chat) {
-      return {
-        ...chat,
-        sha: dbObject.sha,
-      };
-    }
-  }
-
-  async retrieveUserByTelegramId(telegramId: number, dbObj?: UserBaseStorage): Promise<UserBaseStorage | undefined> {
-    const dbObject = dbObj ?? (await this.retrieveStorageDataObject("userBase"));
-
+  public async retrieveUserByTelegramId(telegramId: number, dbObj?: UserBaseStorage) {
+    const dbObject = dbObj ?? (await this._retrieveStorageDataObject("userBase"));
     const user = dbObject[telegramId];
 
     if (user) {
@@ -227,11 +72,9 @@ export class GithubStorage implements Storage {
     }
   }
 
-  async retrieveUserByGithubId(githubId: number | null | undefined, dbObj?: UserBaseStorage): Promise<UserBaseStorage | undefined> {
-    const dbObject = dbObj ?? (await this.retrieveStorageDataObject("userBase"));
-
-    const user = Object.values(dbObject).find((user) => user.githubId === githubId);
-
+  public async retrieveUserByGithubId(githubId: number | null | undefined, dbObj?: UserBaseStorage): Promise<StorageUser | undefined> {
+    const dbObject = dbObj ?? (await this._retrieveStorageDataObject("userBase"));
+    const user = Object.values(dbObject).find((user) => user.github_id === githubId);
     if (user) {
       return {
         ...user,
@@ -240,25 +83,29 @@ export class GithubStorage implements Storage {
     }
   }
 
-  async retrieveSession() {
-    const session = await this.retrieveStorageDataObject("session");
+  public async retrieveSession() {
+    const { session } = await this._retrieveStorageDataObject("session");
+    return session;
+  }
 
-    return session.session;
+  public async retrieveAllUsers() {
+    const dbObject = await this._retrieveStorageDataObject("userBase");
+    return Object.values(dbObject);
   }
 
   // Functions for handling data
 
-  async userSnapshot(chatId: number, userIds: number[], dbObj?: ChatStorage) {
-    const dbObject = dbObj ?? (await this.retrieveStorageDataObject("allChats"));
+  public async userSnapshot(chatId: number, userIds: number[], dbObj?: ChatStorage) {
+    const dbObject = dbObj ?? (await this._retrieveStorageDataObject("allChats"));
 
-    const chat = dbObject.chats.find((chat) => chat.chatId === chatId);
+    const chat = dbObject.chats.find((chat) => chat.chat_id === chatId);
 
     if (!chat) {
       throw new Error("Chat not found");
     }
 
     dbObject.chats = dbObject.chats.map((dbChat) => {
-      if (dbChat.chatId === chatId) {
+      if (dbChat.chat_id === chatId) {
         return {
           ...dbChat,
           userIds,
@@ -268,13 +115,7 @@ export class GithubStorage implements Storage {
       return dbChat;
     });
 
-    return await this.storeData(dbObject);
-  }
-
-  async getAllUsers() {
-    const dbObject = await this.retrieveStorageDataObject("userBase");
-
-    return Object.values(dbObject);
+    await this._storeData(dbObject);
   }
 
   // Storage handlers
@@ -282,10 +123,11 @@ export class GithubStorage implements Storage {
   /**
    * This will create | reopen | close a chat. It must be passed the full
    * chat object.
+   */
 
-  async handleChat<TAction extends ChatAction>(params: HandleChatParams<TAction>) {
+  public async handleChat<TAction extends ChatAction>(params: HandleChatParams<TAction>) {
     // we'll need this no matter what
-    const dbObject = await this.retrieveStorageDataObject("allChats");
+    const dbObject = await this._retrieveStorageDataObject("allChats");
 
     const { action, chat } = params;
 
@@ -294,7 +136,7 @@ export class GithubStorage implements Storage {
       dbObject.chats.push(chat);
     } else {
       const nodeId = chat.task_node_id;
-      const chatIndex = dbObject.chats.findIndex((dbChat) => nodeId === dbchat.task_node_id);
+      const chatIndex = dbObject.chats.findIndex((dbChat) => nodeId === dbChat.task_node_id);
 
       if (chatIndex === -1) {
         throw new Error("Chat not found");
@@ -313,7 +155,7 @@ export class GithubStorage implements Storage {
       }
     }
 
-    return await this.storeData(dbObject);
+    return await this._storeData(dbObject);
   }
 
   /**
@@ -321,9 +163,10 @@ export class GithubStorage implements Storage {
    * and replace it with the new one.
    *
    * "delete" will remove the session, this will break things without a new session.
+   */
 
-  async handleSession<TAction extends "create" | "delete">(session: string, action: TAction) {
-    const dbObject = await this.retrieveStorageDataObject("session", true);
+  public async handleSession<TAction extends "create" | "delete">(session: string, action: TAction) {
+    const dbObject = await this._retrieveStorageDataObject("session", true);
 
     if (action === "create") {
       dbObject.session = session;
@@ -331,7 +174,7 @@ export class GithubStorage implements Storage {
       dbObject.session = null;
     }
 
-    return await this.storeData(dbObject);
+    return await this._storeData(dbObject);
   }
 
   /**
@@ -342,9 +185,10 @@ export class GithubStorage implements Storage {
    * This way notifications can only be received to the account which is subscribing,
    * them may choose to listen into other users, but cannot enable notifications for
    * another user.
+   */
 
-  async handleUserBaseStorage<TType extends "create" | "delete" | "update">(user: UserBaseStorage, action: TType) {
-    const dbObject = await this.retrieveStorageDataObject("userBase");
+  public async handleUserBaseStorage<TType extends "create" | "delete" | "update">(user: StorageUser, action: TType) {
+    const dbObject = await this._retrieveStorageDataObject("userBase");
 
     if ((action === "create" && user) || (action === "delete" && !user)) {
       throw new Error("User already exists or does not exist");
@@ -353,13 +197,11 @@ export class GithubStorage implements Storage {
     if (action === "create" || action === "update") {
       dbObject[user.telegram_id] = user;
     } else {
-      delete dbObject[user.telegramId];
+      delete dbObject[user.telegram_id];
     }
 
-    return await this.storeData(dbObject);
+    return await this._storeData(dbObject);
   }
-
-  // Low level fetching and storage
 
   /**
    * Stores data in the GitHub repo. It will overwrite the existing
@@ -367,8 +209,12 @@ export class GithubStorage implements Storage {
    * updated properties, or mistakes will be made.
    *
    * Do we need a safety check to ensure we are not accidentally deleting data? Maybe, needs tested.
+   */
 
-  async storeData<TType extends StorageTypes>(data: RetrievalHelper<TType>) {
+  private async _storeData<TType extends StorageTypes>(data: RetrievalHelper<TType>) {
+    if (!data) {
+      throw new Error("No data provided to store");
+    }
     let path;
     let type: StorageTypes;
     let { sha } = data;
@@ -393,17 +239,10 @@ export class GithubStorage implements Storage {
 
     const content = JSON.stringify(data, null, 2);
 
-    const owner = this.payloadRepoOwner;
-
-    if (!owner) {
-      throw new Error("Unable to store data: owner not found");
-    }
-
     try {
-      const storageOctokit = await this.getStorageOctokit();
       if (!sha) {
-        const { data: shaData } = await storageOctokit.rest.repos.getContent({
-          owner,
+        const { data: shaData } = await this.octokit.rest.repos.getContent({
+          owner: this.payloadRepoOwner,
           repo: this.storageRepo,
           path,
           ref: this.storageBranch,
@@ -414,8 +253,8 @@ export class GithubStorage implements Storage {
         }
       }
 
-      await storageOctokit.rest.repos.createOrUpdateFileContents({
-        owner,
+      await this.octokit.rest.repos.createOrUpdateFileContents({
+        owner: this.payloadRepoOwner,
         repo: this.storageRepo,
         path,
         branch: this.storageBranch,
@@ -435,8 +274,8 @@ export class GithubStorage implements Storage {
    * and returns it.
    *
    * Fitted with a helper for returning the correct storage type depending on the param.
-
-  async retrieveStorageDataObject<TType extends StorageTypes = StorageTypes>(type: TType, withSha?: boolean): Promise<RetrievalHelper<TType>> {
+   */
+  private async _retrieveStorageDataObject<TType extends StorageTypes = StorageTypes>(type: TType, withSha?: boolean): Promise<RetrievalHelper<TType>> {
     const storagePaths = {
       allChats: this.chatStoragePath,
       singleChat: this.chatStoragePath,
@@ -446,19 +285,10 @@ export class GithubStorage implements Storage {
 
     const path = storagePaths[type];
 
-    if (!this.payloadRepoOwner) {
-      throw logger.error("Unable to retrieve data: owner not found");
-    }
-
-    let storageOctokit, dataContent, sha;
-    try {
-      storageOctokit = await this.getStorageOctokit();
-    } catch (er) {
-      throw logger.error("Failed to retrieve storage octokit", { er });
-    }
+    let dataContent, sha;
 
     try {
-      const { data } = await storageOctokit.rest.repos.getContent({
+      const { data } = await this.octokit.rest.repos.getContent({
         owner: this.payloadRepoOwner,
         repo: this.storageRepo,
         path,
@@ -476,7 +306,8 @@ export class GithubStorage implements Storage {
         (er instanceof RequestError || er instanceof Error) &&
         (er.message.toLowerCase().includes("not found") || er.message.includes(`No commit found for the ref ${this.storageBranch}`))
       ) {
-        return this.handleMissingStorageBranchOrFile<TType>(storageOctokit, this.payloadRepoOwner, path, type, withSha);
+        await this._handleMissingStorageBranchOrFile(this.payloadRepoOwner, path, type);
+        return await this._retrieveStorageDataObject(type, withSha);
       } else {
         throw logger.error("Failed to retrieve storage data object", { er });
       }
@@ -490,17 +321,11 @@ export class GithubStorage implements Storage {
     }
   }
 
-  async handleMissingStorageBranchOrFile<TType extends StorageTypes>(
-    storageOctokit: Context["octokit"],
-    owner: string,
-    path: string,
-    type: StorageTypes,
-    withSha?: boolean
-  ) {
+  private async _handleMissingStorageBranchOrFile(owner: string, path: string, type: StorageTypes) {
     let mostRecentDefaultHeadCommitSha;
 
     try {
-      const { data: defaultBranchData } = await storageOctokit.rest.repos.getCommit({
+      const { data: defaultBranchData } = await this.octokit.rest.repos.getCommit({
         owner,
         repo: this.storageRepo,
         ref: "heads/main", // ubiquibot-config uses main as default
@@ -512,7 +337,7 @@ export class GithubStorage implements Storage {
 
     // Check if the branch exists
     try {
-      await storageOctokit.rest.repos.getBranch({
+      await this.octokit.rest.repos.getBranch({
         owner,
         repo: this.storageRepo,
         branch: this.storageBranch,
@@ -524,7 +349,7 @@ export class GithubStorage implements Storage {
           // Branch doesn't exist, create the branch
 
           try {
-            await storageOctokit.rest.git.createRef({
+            await this.octokit.rest.git.createRef({
               owner,
               repo: this.storageRepo,
               ref: `refs/heads/${this.storageBranch}`,
@@ -543,7 +368,7 @@ export class GithubStorage implements Storage {
 
     try {
       // Create or update the file
-      await storageOctokit.rest.repos.createOrUpdateFileContents({
+      await this.octokit.rest.repos.createOrUpdateFileContents({
         owner,
         repo: this.storageRepo,
         path,
@@ -552,82 +377,25 @@ export class GithubStorage implements Storage {
         content: Buffer.from("{\n}").toString("base64"),
         sha: mostRecentDefaultHeadCommitSha,
       });
-
-      return (await this.retrieveStorageDataObject(type, withSha)) as RetrievalHelper<TType>;
     } catch (err) {
       throw logger.error("Failed to create new storage file", { err });
     }
   }
+  /**
+   * Standardized storage paths for the partner's repository.
+   *
+   * https://github.com/ubiquity-os/plugin-template/issues/2#issuecomment-2395009642
+   * https://github.com/ubiquity-os-marketplace/ubiquity-os-kernel-telegram/pull/3#issuecomment-2394941038
+   *
+   * e.g:
+   * - ubiquibot-config/plugin-store/ubiquity-os/ubiquity-os-kernel-telegram/chat-storage.json
+   * - ubiquibot-config/plugin-store/ubiquity-os/ubiquity-os-kernel-telegram/user-base.json
+   * - ubiquibot-config/plugin-store/ubiquity-os/ubiquity-os-kernel-telegram/session-storage.json
+   */
 
-  // Helper functions
-
-  getOwnerFromPayload(payload: Context["payload"]) {
-    if ("repository" in payload && payload.repository && !this.payloadRepoOwner) {
-      this.payloadRepoOwner = payload.repository.owner?.login;
-    }
-
-    if ("organization" in payload && payload.organization && !this.payloadRepoOwner) {
-      this.payloadRepoOwner = payload.organization.login;
-    }
-
-    if ("sender" in payload && payload.sender && !this.payloadRepoOwner) {
-      this.payloadRepoOwner = payload.sender.login;
-    }
-
-    if ("installation" in payload && payload.installation && !this.payloadRepoOwner) {
-      this.installID = payload.installation.id;
-    }
-
-    if (!this.payloadRepoOwner) {
-      throw new Error("Owner not found");
-    }
+  private _formatStoragePaths() {
+    this.chatStoragePath = `plugin-store/${this.payloadRepoOwner}/${this.pluginRepo}/${this.chatStoragePath}`;
+    this.userStoragePath = `plugin-store/${this.payloadRepoOwner}/${this.pluginRepo}/${this.userStoragePath}`;
+    this.telegramSessionPath = `plugin-store/${this.payloadRepoOwner}/${this.pluginRepo}/${this.telegramSessionPath}`;
   }
 }
-
-function deleteAllShas<T extends Withsha>(data: T) {
-  Object.keys(data).forEach((key) => {
-    const value = data[key as keyof typeof data];
-
-    if (key === "sha") {
-      Reflect.deleteProperty(data, key);
-    }
-
-    if (typeof value === "object" && value) {
-      deleteAllShas(value);
-    }
-
-    if (Array.isArray(value)) {
-      value.forEach((item) => {
-        if (typeof item === "object" && item) {
-          deleteAllShas(item);
-        }
-      });
-    }
-  });
-
-  return data;
-}
-
-function isSessionStorage(data: unknown): data is SessionStorage {
-  if (typeof data !== "object" || !data) return false;
-  return "session" in data;
-}
-
-function isChatsStorage(data: unknown): data is ChatStorage {
-  if (typeof data !== "object" || !data) return false;
-  return "chats" in data;
-}
-
-function isUserBaseStorage(data: unknown): data is UserBaseStorage {
-  if (typeof data !== "object" || !data) return false;
-  const firstItem = Object.values(data)[0];
-  if (typeof firstItem !== "object" || !firstItem) return false;
-  const keys = Object.keys(firstItem);
-  return keys.includes("telegramId") && keys.includes("githubId") && keys.includes("listeningTo") && keys.includes("additional_user_listeners");
-}
-
-function isSingleChatStorage(data: unknown): data is Chat {
-  if (typeof data !== "object" || !data) return false;
-  return "chatId" in data || "taskNodeId" in data;
-}
-*/
