@@ -9,3 +9,5 @@ export const notifyTriggers: Record<NotificationTriggers, SupportedEventsU> = {
   disqualification: "issues.unassigned",
   review: "pull_request.review_requested",
 };
+
+export const triggersRequiringComments: NotificationTriggers[] = ["payment", "reminder"];
