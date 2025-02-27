@@ -155,9 +155,13 @@ async function createTask(taskToCreate: string, ctx: GrammyContext, { owner, rep
     return await ctx.reply("Failed to parse task");
   }
 
-  const userCredits = await ctx.adapters.storage.retrieveUserByTelegramId(fromId);
+  const user = await ctx.adapters.storage.retrieveUserByTelegramId(fromId);
 
-  const username = userCredits?.github_username ?? "Anonymous";
+  if (!user) {
+    return await ctx.reply("Failed to retrieve user");
+  }
+
+  const username = user.github_username;
   const chatLink = ctx.chat?.type !== "private" && (await ctx.createChatInviteLink());
 
   const chatLinkText = chatLink ? ` [here](${chatLink.invite_link})` : "";

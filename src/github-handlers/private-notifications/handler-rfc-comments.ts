@@ -1,9 +1,17 @@
 import { Context } from "../../types";
-import { RfcComment, StorageUser } from "../../types/storage";
+import { StorageUser } from "../../types/storage";
 import { logger } from "../../utils/logger";
 import { retrieveUsersByGithubUsernames } from "./shared";
 import { NotificationMessage } from "./notification-message";
 import { NotificationHandlerBase } from "./notification-handler-base";
+
+export type RfcComment = {
+  comment_id: number;
+  comment_url: string;
+  comment: string;
+  created_at: string;
+  updated_at: string;
+};
 
 export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.created" | "issue_comment.edited"> {
   private _rfcCommentRegex = /rfc @(\w+)|rfc @(\w+)|request for comment @(\w+)/gi;
@@ -40,7 +48,7 @@ export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.cr
   }
 
   public async tryFollowupForAllUsers(): Promise<{ status: number; reason: string }> {
-    const allUsers = await this.context.adapters.storage.getAllUsers();
+    const allUsers = await this.context.adapters.storage.retrieveAllUsers();
     const { octokit } = this.context;
 
     for (const user of allUsers) {
