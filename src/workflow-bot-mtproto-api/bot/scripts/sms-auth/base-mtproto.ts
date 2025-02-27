@@ -38,6 +38,9 @@ export class BaseMtProto {
   }
 
   getStringSessionObject() {
+    if (!this._session) {
+      throw new Error("Session object is not initialized");
+    }
     return this._session;
   }
 

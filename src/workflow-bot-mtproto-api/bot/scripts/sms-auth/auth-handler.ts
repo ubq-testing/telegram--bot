@@ -1,10 +1,11 @@
 // @ts-expect-error no types for this package
 import input from "input";
 import dotenv from "dotenv";
-import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { BaseMtProto } from "./base-mtproto";
 import { Context } from "../../../../types";
 import { logger } from "../../../../utils/logger";
+import { GithubStorage } from "../../../../adapters/github/storage-layer";
+import { Octokit } from "octokit";
 dotenv.config();
 
 /**
@@ -12,8 +13,8 @@ dotenv.config();
  * this will give us the necessary session information to login in the future.
  */
 export class AuthHandler {
-  private _supabase: SupabaseClient;
   private _env;
+  private _storage: GithubStorage;
 
   constructor() {
     const env = process.env.TELEGRAM_BOT_ENV;
@@ -26,15 +27,15 @@ export class AuthHandler {
       throw new Error("Failed to parse environment variables for Telegram Bot");
     }
 
-    const { botSettings, mtProtoSettings, storageSettings } = parsedEnv;
+    const { botSettings, mtProtoSettings, storageSettings, workflowFunctions } = parsedEnv;
 
-    if (!botSettings || !mtProtoSettings || !storageSettings) {
+    if (!botSettings || !mtProtoSettings || !storageSettings || !workflowFunctions) {
       throw new Error("Missing required environment variables for Telegram Bot settings");
     }
 
     const { TELEGRAM_BOT_TOKEN, TELEGRAM_BOT_WEBHOOK } = botSettings;
     const { TELEGRAM_APP_ID, TELEGRAM_API_HASH } = mtProtoSettings;
-    const { SUPABASE_URL, SUPABASE_SERVICE_KEY } = storageSettings;
+    const { SOURCE_REPOSITORY, SOURCE_REPO_OWNER, TARGET_BRANCH } = workflowFunctions;
 
     if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_BOT_WEBHOOK) {
       throw new Error("Missing required environment variables for Telegram Bot settings");
@@ -44,17 +45,41 @@ export class AuthHandler {
       throw new Error("Missing required environment variables for MtProto settings");
     }
 
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
-      throw new Error("Missing required environment variables for storage settings");
+    if (!SOURCE_REPOSITORY || !SOURCE_REPO_OWNER || !TARGET_BRANCH) {
+      throw new Error("Missing required environment variables for Workflow functions");
     }
-
-    this._supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
     this._env = {
       TELEGRAM_API_HASH,
       TELEGRAM_APP_ID,
       TELEGRAM_BOT_TOKEN,
     };
+
+    const APP_PRIVATE_KEY = process.env.APP_PRIVATE_KEY;
+    const APP_ID = process.env.APP_ID;
+    const VOYAGEAI_API_KEY = process.env.VOYAGEAI_API_KEY;
+    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+    const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+    const TEMP_SAFE_PAT = process.env.TEMP_SAFE_PAT;
+
+    if (!APP_PRIVATE_KEY || !APP_ID || !VOYAGEAI_API_KEY || !OPENAI_API_KEY || !OPENROUTER_API_KEY || !TEMP_SAFE_PAT) {
+      throw new Error("Missing required environment variables for App settings");
+    }
+
+    // we need to push the session data to GitHub
+    this._storage = new GithubStorage({
+      octokit: new Octokit({ auth: process.env.REPO_ADMIN_ACCESS_TOKEN || process.env.TEMP_SAFE_PAT }),
+      env: {
+        TELEGRAM_BOT_ENV: parsedEnv,
+        KERNEL_PUBLIC_KEY: process.env.KERNEL_PUBLIC_KEY,
+        OPENAI_API_KEY,
+        OPENROUTER_API_KEY,
+        TEMP_SAFE_PAT,
+        APP_ID,
+        APP_PRIVATE_KEY,
+        VOYAGEAI_API_KEY,
+      },
+    } as unknown as Context);
   }
 
   /**
@@ -86,28 +111,9 @@ export class AuthHandler {
         onError: (err: unknown) => console.error("Error during login:", { err }),
       });
 
-      if (!this._supabase) {
-        throw new Error("Supabase client is not initialized");
+      if (!(await this._storage.handleSession(mtProto.getStringSessionObject().save(), "create"))) {
+        throw new Error("Failed to save session data to GitHub.");
       }
-
-      const { data: existingSessions } = await this._supabase.from("tg-bot-sessions").select("*");
-
-      if (existingSessions?.length) {
-        for (const sessionData of existingSessions || []) {
-          const { error } = await this._supabase.from("tg-bot-sessions").delete().eq("id", sessionData.id);
-
-          if (error) {
-            logger.error("Failed to delete session", { sessionData, er: error });
-          }
-        }
-      }
-
-      const { error } = await this._supabase.from("tg-bot-sessions").insert([{ session_data: mtProto.getStringSessionObject()?.save() }]);
-
-      if (error) {
-        throw new Error("Failed to save session data to Supabase.");
-      }
-
       logger.ok("Successfully logged in and saved session data. You can now run the bot.");
       process.exit(0);
     } catch (err) {

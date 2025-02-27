@@ -423,10 +423,14 @@ class SetUpHandler {
 
   async storeRepoSecrets() {
     const octokit = new Octokit({ auth: process.env.REPO_ADMIN_ACCESS_TOKEN });
-    const secrets = {
+    const secrets: Context["env"] = {
       TELEGRAM_BOT_ENV: this.env.TELEGRAM_BOT_ENV,
       APP_ID: this.env.APP_ID,
       APP_PRIVATE_KEY: this.env.APP_PRIVATE_KEY,
+      VOYAGEAI_API_KEY: this.env.VOYAGEAI_API_KEY,
+      OPENAI_API_KEY: this.env.OPENAI_API_KEY,
+      OPENROUTER_API_KEY: this.env.OPENROUTER_API_KEY,
+      KERNEL_PUBLIC_KEY: this.env.KERNEL_PUBLIC_KEY,
     };
 
     try {

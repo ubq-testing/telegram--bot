@@ -5,6 +5,7 @@ import { RequestError } from "octokit";
 import { Context } from "../../types";
 import { isChatsStorage, isUserBaseStorage, isSingleChatStorage, isSessionStorage } from "../storage-guards";
 import { deleteAllShas } from "./helpers";
+import CryptoJS from "crypto-js";
 
 export class GithubStorage {
   pluginEnvCtx: PluginEnvContext;
@@ -169,12 +170,23 @@ export class GithubStorage {
     const dbObject = await this._retrieveStorageDataObject("session", true);
 
     if (action === "create") {
-      dbObject.session = session;
+      console.log("session", session);
+      dbObject.session = this._encrypt(session);
+      console.log("encrypted", dbObject.session);
     } else {
       dbObject.session = null;
     }
 
     return await this._storeData(dbObject);
+  }
+
+  private _encrypt(text: string): string {
+    return CryptoJS.AES.encrypt(text, this.pluginEnvCtx.getEnv().APP_PRIVATE_KEY).toString();
+  }
+
+  private _decrypt(ciphertext: string): string {
+    const bytes = CryptoJS.AES.decrypt(ciphertext, this.pluginEnvCtx.getEnv().APP_PRIVATE_KEY);
+    return bytes.toString(CryptoJS.enc.Utf8);
   }
 
   /**
@@ -217,7 +229,7 @@ export class GithubStorage {
     }
     let path;
     let type: StorageTypes;
-    let { sha } = data;
+    const { sha } = data;
 
     data = deleteAllShas(data);
 
@@ -239,34 +251,38 @@ export class GithubStorage {
 
     const content = JSON.stringify(data, null, 2);
 
-    try {
-      if (!sha) {
-        const { data: shaData } = await this.octokit.rest.repos.getContent({
-          owner: this.payloadRepoOwner,
-          repo: this.storageRepo,
-          path,
-          ref: this.storageBranch,
-        });
+    console.log("Fake storing data", { type, content });
 
-        if ("sha" in shaData) {
-          sha = shaData.sha;
-        }
-      }
+    return true;
 
-      await this.octokit.rest.repos.createOrUpdateFileContents({
-        owner: this.payloadRepoOwner,
-        repo: this.storageRepo,
-        path,
-        branch: this.storageBranch,
-        message: `chore: updated ${type.replace(/([A-Z])/g, " $1").toLowerCase()}`,
-        content: Buffer.from(content).toString("base64"),
-        sha,
-      });
-      return true;
-    } catch (er) {
-      this.logger.error("Failed to store data", { er });
-    }
-    return false;
+    // try {
+    //   if (!sha) {
+    //     const { data: shaData } = await this.octokit.rest.repos.getContent({
+    //       owner: this.payloadRepoOwner,
+    //       repo: this.storageRepo,
+    //       path,
+    //       ref: this.storageBranch,
+    //     });
+
+    //     if ("sha" in shaData) {
+    //       sha = shaData.sha;
+    //     }
+    //   }
+
+    //   await this.octokit.rest.repos.createOrUpdateFileContents({
+    //     owner: this.payloadRepoOwner,
+    //     repo: this.storageRepo,
+    //     path,
+    //     branch: this.storageBranch,
+    //     message: `chore: updated ${type.replace(/([A-Z])/g, " $1").toLowerCase()}`,
+    //     content: Buffer.from(content).toString("base64"),
+    //     sha,
+    //   });
+    //   return true;
+    // } catch (er) {
+    //   this.logger.error("Failed to store data", { er });
+    // }
+    // return false;
   }
 
   /**
