@@ -1,32 +1,29 @@
 import { RestEndpointMethodTypes } from "@octokit/rest";
-import { Context } from "../types";
 type IssueLabel = RestEndpointMethodTypes["issues"]["listLabelsForRepo"]["response"]["data"][0];
 
-export function getPriorityLabelValue(context: Context) {
-    if (!("issue" in context.payload)) {
-        return 0;
-    }
-    return Math.max(1, context.payload.issue.labels ? parsePriorityLabel(context.payload.issue.labels as IssueLabel[]) : 1);
+export function getPriorityLabelValue(labels: IssueLabel[]): number {
+  return Math.max(0, labels ? parsePriorityLabel(labels as IssueLabel[]) : 0);
 }
 
-export function parsePriorityLabel(labels: (IssueLabel | string)[]): number {
-    for (const label of labels) {
-        let priorityLabel = "";
-        if (typeof label === "string") {
-            priorityLabel = label;
-        } else {
-            priorityLabel = label.name || "";
-        }
-
-        if (priorityLabel.startsWith("Priority:")) {
-            const matched = priorityLabel.match(/Priority: (\d+)/i);
-            if (!matched) {
-                return 1;
-            }
-
-            return Number(matched[1]);
-        }
+function parsePriorityLabel(labels: (IssueLabel | string)[]): number {
+  const regex = /Priority: (\d+)/i;
+  for (const label of labels) {
+    let priorityLabel = "";
+    if (typeof label === "string") {
+      priorityLabel = label;
+    } else {
+      priorityLabel = label.name || "";
     }
 
-    return 1;
+    if (priorityLabel.startsWith("Priority:")) {
+      const matched = regex.exec(priorityLabel);
+      if (!matched) {
+        return 1;
+      }
+
+      return Number(matched[1]);
+    }
+  }
+
+  return 0;
 }

@@ -163,7 +163,6 @@ async function run() {
         }
         answers[step.title] ??= {};
 
-
         if (question.name === "TELEGRAM_BOT_ADMINS") {
           const adminArray = answer.split(",").map((id: string) => Number(id.trim()));
           answers[step.title][question.name] = adminArray;
