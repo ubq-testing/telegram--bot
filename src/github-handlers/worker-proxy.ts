@@ -1,9 +1,9 @@
 import { Context, SupportedEventsU } from "../types";
 import { ProxyCallbacks } from "../types/proxy";
 import { bubbleUpErrorComment } from "../utils/errors";
-import { notificationsRequiringComments } from "./private-notifications/comment-notification-handler";
-import { disqualificationNotification } from "./private-notifications/disqualification-trigger";
-import { reviewNotification } from "./private-notifications/review-trigger";
+import { notificationsRequiringComments } from "./private-notifications/handler-comment-notifications";
+import { disqualificationNotification } from "./private-notifications/handler-disqualification-trigger";
+import { reviewNotification } from "./private-notifications/handler-review-requests";
 import { closeWorkroom, createWorkroom, reOpenWorkroom } from "./workflow-functions";
 
 const callbacks = {
