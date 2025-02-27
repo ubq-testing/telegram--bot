@@ -6,12 +6,12 @@ import { StorageUser } from "../../types/storage";
 
 class DisqualificationDmHandler extends NotificationHandlerBase<"issues.unassigned"> {
   protected getUserId() {
-    return this.context.payload.assignee?.id;
+    return this.context.payload.issue.assignee?.id ?? this.context.payload.assignee?.id ?? 0;
   }
 
   protected shouldSkipNotification(dbUser: StorageUser) {
-    const unassignedUser = this.context.payload.assignee?.login;
-    return this.context.payload.sender.login === unassignedUser || !dbUser.listening_to["disqualification"];
+    console.log("Checking if we should skip disqualification notification::" + dbUser.listening_to["disqualification"]);
+    return !dbUser.listening_to["disqualification"];
   }
 
   protected getMessage(username: string) {
