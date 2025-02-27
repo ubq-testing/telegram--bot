@@ -16,7 +16,7 @@ export class Embeddings {
   }
 
   async getIssue(issueNodeId: string): Promise<DatabaseItem[] | null> {
-    const { data, error } = await this.supabase.from("issues").select("*").eq("id", issueNodeId).returns<DatabaseItem[]>();
+    const { data, error } = await this.supabase.from("issues").select("*").eq("id", issueNodeId);
     if (error) {
       logger.error("Error getting issue", { error });
       return null;

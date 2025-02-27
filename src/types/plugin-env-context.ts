@@ -21,7 +21,7 @@ export class PluginEnvContext {
     env: Env
   ) {
     this._config = Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, this._inputs?.settings ?? {}));
-    this._env = Value.Decode(envValidator.schema, Value.Default(envValidator.schema, env))
+    this._env = Value.Decode(envValidator.schema, Value.Default(envValidator.schema, env));
   }
 
   async createFullPluginInputsContext(inputs?: PluginInputs): Promise<Context> {
