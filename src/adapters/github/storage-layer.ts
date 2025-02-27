@@ -169,12 +169,14 @@ export class GithubStorage {
   public async handleSession<TAction extends "create" | "delete">(session: string, action: TAction) {
     const dbObject = await this._retrieveStorageDataObject("session", true);
 
-    if (action === "create") {
-      console.log("session", session);
-      dbObject.session = this._encrypt(session);
-      console.log("encrypted", dbObject.session);
-    } else {
-      dbObject.session = null;
+    try {
+      if (action === "create") {
+        dbObject.session = this._encrypt(session);
+      } else {
+        dbObject.session = null;
+      }
+    } catch (er) {
+      console.log("error", er);
     }
 
     return await this._storeData(dbObject);
@@ -182,11 +184,6 @@ export class GithubStorage {
 
   private _encrypt(text: string): string {
     return CryptoJS.AES.encrypt(text, this.pluginEnvCtx.getEnv().APP_PRIVATE_KEY).toString();
-  }
-
-  private _decrypt(ciphertext: string): string {
-    const bytes = CryptoJS.AES.decrypt(ciphertext, this.pluginEnvCtx.getEnv().APP_PRIVATE_KEY);
-    return bytes.toString(CryptoJS.enc.Utf8);
   }
 
   /**
@@ -229,7 +226,7 @@ export class GithubStorage {
     }
     let path;
     let type: StorageTypes;
-    const { sha } = data;
+    let { sha } = data;
 
     data = deleteAllShas(data);
 
@@ -251,38 +248,34 @@ export class GithubStorage {
 
     const content = JSON.stringify(data, null, 2);
 
-    console.log("Fake storing data", { type, content });
+    try {
+      if (!sha) {
+        const { data: shaData } = await this.octokit.rest.repos.getContent({
+          owner: this.payloadRepoOwner,
+          repo: this.storageRepo,
+          path,
+          ref: this.storageBranch,
+        });
 
-    return true;
+        if ("sha" in shaData) {
+          sha = shaData.sha;
+        }
+      }
 
-    // try {
-    //   if (!sha) {
-    //     const { data: shaData } = await this.octokit.rest.repos.getContent({
-    //       owner: this.payloadRepoOwner,
-    //       repo: this.storageRepo,
-    //       path,
-    //       ref: this.storageBranch,
-    //     });
-
-    //     if ("sha" in shaData) {
-    //       sha = shaData.sha;
-    //     }
-    //   }
-
-    //   await this.octokit.rest.repos.createOrUpdateFileContents({
-    //     owner: this.payloadRepoOwner,
-    //     repo: this.storageRepo,
-    //     path,
-    //     branch: this.storageBranch,
-    //     message: `chore: updated ${type.replace(/([A-Z])/g, " $1").toLowerCase()}`,
-    //     content: Buffer.from(content).toString("base64"),
-    //     sha,
-    //   });
-    //   return true;
-    // } catch (er) {
-    //   this.logger.error("Failed to store data", { er });
-    // }
-    // return false;
+      await this.octokit.rest.repos.createOrUpdateFileContents({
+        owner: this.payloadRepoOwner,
+        repo: this.storageRepo,
+        path,
+        branch: this.storageBranch,
+        message: `chore: updated ${type.replace(/([A-Z])/g, " $1").toLowerCase()}`,
+        content: Buffer.from(content).toString("base64"),
+        sha,
+      });
+      return true;
+    } catch (er) {
+      this.logger.error("Failed to store data", { er });
+    }
+    return false;
   }
 
   /**
@@ -318,15 +311,8 @@ export class GithubStorage {
         throw logger.error("Data content not found");
       }
     } catch (er) {
-      if (
-        (er instanceof RequestError || er instanceof Error) &&
-        (er.message.toLowerCase().includes("not found") || er.message.includes(`No commit found for the ref ${this.storageBranch}`))
-      ) {
-        await this._handleMissingStorageBranchOrFile(this.payloadRepoOwner, path, type);
-        return await this._retrieveStorageDataObject(type, withSha);
-      } else {
-        throw logger.error("Failed to retrieve storage data object", { er });
-      }
+      await this._handleMissingStorageBranchOrFile(this.payloadRepoOwner, path, type);
+      return this._retrieveStorageDataObject(type, withSha);
     }
 
     try {
@@ -344,7 +330,7 @@ export class GithubStorage {
       const { data: defaultBranchData } = await this.octokit.rest.repos.getCommit({
         owner,
         repo: this.storageRepo,
-        ref: "heads/main", // ubiquibot-config uses main as default
+        ref: "heads/main",
       });
       mostRecentDefaultHeadCommitSha = defaultBranchData.sha;
     } catch (er) {
