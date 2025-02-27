@@ -65,7 +65,10 @@ feature.command("register", logHandle("command-register"), chatAction("typing"),
           payment: false,
           reminder: false,
           review: false,
+          rfc: false,
         },
+        last_rfc_check: new Date().toISOString(),
+        rfc_comments: [],
       },
       "create"
     );
