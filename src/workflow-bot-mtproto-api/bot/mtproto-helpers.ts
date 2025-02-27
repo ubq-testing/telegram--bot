@@ -3,7 +3,7 @@ import { Context } from "../../types";
 import bigInt from "big-integer";
 import dotenv from "dotenv";
 import { addCommentToIssue } from "../../utils/add-comment-to-issues";
-import { MtProtoWrapper } from "./scripts/sms-auth/mtproto-wrapper";
+import { MtProtoWrapper } from "./mtproto-wrapper";
 dotenv.config();
 
 /**

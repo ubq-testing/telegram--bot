@@ -1,6 +1,6 @@
+import { Context } from "../../types";
 import { BaseMtProto } from "./base-mtproto";
-import { Context } from "../../../../types";
-import { SessionManager, SessionManagerFactory } from "../../session/session-manager";
+import { SessionManager, SessionManagerFactory } from "./session/session-manager";
 import dotenv from "dotenv";
 dotenv.config();
 

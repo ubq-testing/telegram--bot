@@ -1,11 +1,11 @@
 // @ts-expect-error no types for this package
 import input from "input";
 import dotenv from "dotenv";
-import { BaseMtProto } from "./base-mtproto";
-import { Context } from "../../../../types";
-import { logger } from "../../../../utils/logger";
-import { GithubStorage } from "../../../../adapters/github/storage-layer";
+import { Context } from "../../../types";
+import { logger } from "../../../utils/logger";
+import { GithubStorage } from "../../../adapters/github/storage-layer";
 import { Octokit } from "octokit";
+import { BaseMtProto } from "../base-mtproto";
 dotenv.config();
 
 /**
@@ -68,7 +68,10 @@ export class AuthHandler {
 
     // we need to push the session data to GitHub
     this._storage = new GithubStorage({
-      octokit: new Octokit({ auth: process.env.REPO_ADMIN_ACCESS_TOKEN || process.env.TEMP_SAFE_PAT }),
+      octokit: new Octokit({ auth: process.env.REPO_ADMIN_ACCESS_TOKEN ?? process.env.TEMP_SAFE_PAT }),
+      pluginEnvCtx: {
+        getEnv: () => { return { APP_PRIVATE_KEY } },
+      },
       env: {
         TELEGRAM_BOT_ENV: parsedEnv,
         KERNEL_PUBLIC_KEY: process.env.KERNEL_PUBLIC_KEY,
@@ -122,3 +125,13 @@ export class AuthHandler {
     process.exit(1);
   }
 }
+
+/**
+ * Run with `yarn sms-auth`
+ */
+async function main() {
+  const authHandler = new AuthHandler();
+  await authHandler.smsLogin();
+}
+
+main().catch(console.error);

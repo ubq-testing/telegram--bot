@@ -4,7 +4,7 @@ import { Octokit } from "@octokit/rest";
 import sodium from "libsodium-wrappers";
 import { logger } from "../../../utils/logger";
 
-export async function encryptSecret(secret: string | object, key: string) {
+export async function encryptSecret(secret: string | object | number, key: string) {
     await sodium.ready;
     const binkey = sodium.from_base64(key, sodium.base64_variants.ORIGINAL);
     const binsec = sodium.from_string(secret);
@@ -12,7 +12,7 @@ export async function encryptSecret(secret: string | object, key: string) {
     return sodium.to_base64(encBytes, sodium.base64_variants.ORIGINAL);
 }
 
-export async function storeSecret(key: string, value: string | object, repoFullName: string, token: string) {
+export async function storeSecret(key: string, value: string | object | number, repoFullName: string, token: string) {
     const octokit = new Octokit({ auth: token });
     const [owner, repo] = repoFullName.split("/");
 

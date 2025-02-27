@@ -146,7 +146,7 @@ const steps = [
         ],
     },
 ] as const;
-const answers: Record<string, Record<string, string>> = {};
+const answers: Record<string, Record<string, number | string>> = {};
 
 async function run() {
     for (const step of steps) {
@@ -165,6 +165,12 @@ async function run() {
                     const adminArray = answer.split(",").map((id: string) => Number(id.trim()));
                     answers[step.title] ??= {};
                     answers[step.title][question.name] = adminArray;
+                    continue;
+                }
+
+                if (question.name === "TELEGRAM_APP_ID") {
+                    answers[step.title] ??= {};
+                    answers[step.title][question.name] = Number(answer);
                     continue;
                 }
 
@@ -190,20 +196,23 @@ async function run() {
         OPENAI_API_KEY: answers["API keys"]["OPENAI_API_KEY"],
         OPENROUTER_API_KEY: answers["API keys"]["OPENROUTER_API_KEY"],
         TEMP_SAFE_PAT: answers["API keys"]["TEMP_SAFE_PAT"],
+        REPO_ADMIN_ACCESS_TOKEN: answers["Secret upload"]["REPO_ADMIN_ACCESS_TOKEN"],
     } as unknown as Context["env"];
 
     await saveEnv(parsedEnv);
 
+    Reflect.deleteProperty(parsedEnv, "REPO_ADMIN_ACCESS_TOKEN");
+
     for (const [key, value] of Object.entries(parsedEnv)) {
         // push each one to the repository
-        await storeSecret(key, value, answers["Repository settings"]["TELEGRAM_BOT_REPOSITORY_FULL_NAME"], answers["Secret upload"]["REPO_ADMIN_ACCESS_TOKEN"]);
+        await storeSecret(key, value, answers["Repository settings"]["TELEGRAM_BOT_REPOSITORY_FULL_NAME"] as string, answers["Secret upload"]["REPO_ADMIN_ACCESS_TOKEN"] as string);
     }
 
     logger.ok("Environment setup completed successfully");
 }
 
 function getOwnerRepo() {
-    const ownerRepo = answers["Repository settings"]["TELEGRAM_BOT_REPOSITORY_FULL_NAME"];
+    const ownerRepo = answers["Repository settings"]["TELEGRAM_BOT_REPOSITORY_FULL_NAME"] as string;
     const [owner, repo] = ownerRepo.split("/");
     return { owner, repo };
 }
