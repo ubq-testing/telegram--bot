@@ -1,13 +1,13 @@
 import { Context } from "../../../types";
 import { GithubStorage } from "../../../adapters/github/storage-layer";
-import { SuperbaseStorage } from "../../../adapters/supabase/supabase";
+import { SupabaseStorage } from "../../../adapters/supabase/supabase";
 import { GitHubSession } from "./github-session";
 import { SupabaseSession } from "./supabase-session";
 import { StringSession } from "telegram/sessions";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 export interface SessionManager extends StringSession {
-  getStorageHandler(): GithubStorage | SuperbaseStorage;
+  getStorageHandler(): GithubStorage | SupabaseStorage;
   saveSession(): Promise<void>;
   loadSession(): Promise<GitHubSession | SupabaseSession>;
   getSession(): Promise<string>;
@@ -19,7 +19,7 @@ export class SessionManagerFactory {
   // eslint-disable-next-line sonarjs/public-static-readonly
   static sessionManager: SessionManager;
   // eslint-disable-next-line sonarjs/public-static-readonly
-  static storage: GithubStorage | SuperbaseStorage;
+  static storage: GithubStorage | SupabaseStorage;
 
   static createSessionManager(context: Context, session?: string): SessionManager {
     if (this.sessionManager) {

@@ -6,7 +6,7 @@ import { StorageGetters } from "./storage-getters";
 import { isChatsStorage, isUserBaseStorage, isSingleChatStorage, isSessionStorage } from "../storage-guards";
 import { Storage } from "../create-adapters";
 
-export class SuperbaseStorage extends StorageGetters implements Storage {
+export class SupabaseStorage extends StorageGetters implements Storage {
   protected supabase: SupabaseClient;
   protected logger = logger;
   octokit: Context["octokit"];

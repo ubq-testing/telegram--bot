@@ -3,7 +3,7 @@ import bigInt from "big-integer";
 import { Context } from "../../types";
 import { CallbackResult } from "../../types/proxy";
 import { GithubStorage } from "../../adapters/github/storage-layer";
-import { SuperbaseStorage } from "../../adapters/supabase/supabase";
+import { SupabaseStorage } from "../../adapters/supabase/supabase";
 import { Chat } from "../../types/storage";
 import { MtProtoHelper } from "../bot/mtproto-helpers";
 
@@ -46,7 +46,7 @@ async function notifyAndRemoveFromArchivedChat({
   mtProtoHelper: MtProtoHelper;
   chatParticipants: Api.TypeChatParticipants;
   dbChat: Chat;
-  storage: GithubStorage | SuperbaseStorage;
+  storage: GithubStorage | SupabaseStorage;
   context: Context<"issues.closed">;
 }) {
   if (chatParticipants.className === "ChatParticipants") {

@@ -2,7 +2,7 @@ import { SupabaseClient } from "@supabase/supabase-js";
 import { StringSession } from "telegram/sessions";
 import { Context } from "../../../types";
 import { SessionManager } from "./session-manager";
-import { SuperbaseStorage } from "../../../adapters/supabase/supabase";
+import { SupabaseStorage } from "../../../adapters/supabase/supabase";
 
 /**
  * This class extends the StringSession class from the Telegram library.
@@ -10,16 +10,16 @@ import { SuperbaseStorage } from "../../../adapters/supabase/supabase";
  * It adds the ability to save and load the session data from Supabase.
  */
 export class SupabaseSession extends StringSession implements SessionManager {
-  _storage: SuperbaseStorage;
+  _storage: SupabaseStorage;
   _supabase: SupabaseClient;
 
   constructor(client: SupabaseClient, octokit: Context["octokit"], session?: string) {
     super(session);
     this._supabase = client;
-    this._storage = new SuperbaseStorage(octokit, this._supabase);
+    this._storage = new SupabaseStorage(octokit, this._supabase);
   }
 
-  getStorageHandler(): SuperbaseStorage {
+  getStorageHandler(): SupabaseStorage {
     return this._storage;
   }
 
