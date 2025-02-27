@@ -4,6 +4,8 @@ import { logger } from "../../utils/logger";
 import { retrieveUsersByGithubUsernames } from "./shared";
 import { NotificationMessage } from "./notification-message";
 import { NotificationHandlerBase } from "./notification-handler-base";
+import { getPriorityLabelValue } from "../labels";
+import ms, { StringValue } from "ms";
 
 export type RfcComment = {
   comment_id: number;
@@ -11,6 +13,8 @@ export type RfcComment = {
   comment: string;
   created_at: string;
   updated_at: string;
+  follow_up_allowed_after: string;
+  last_push?: string;
 };
 
 export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.created" | "issue_comment.edited"> {
@@ -29,14 +33,6 @@ export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.cr
   public async captureAndSaveRfcComment(): Promise<void> {
     const { body } = this.context.payload.comment;
     const rfcMatches = this._rfcCommentRegex.exec(body) || [];
-
-    await this.context.octokit.rest.reactions.createForIssueComment({
-      comment_id: this.context.payload.comment.id,
-      owner: this.context.payload.repository.owner.login,
-      repo: this.context.payload.repository.name,
-      content: "eyes", // (-_-)
-    });
-
     const username = this._getUsernameFromRfcComment(body, rfcMatches);
 
     if (!username) {
@@ -50,34 +46,37 @@ export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.cr
       return;
     }
 
-    const fetchedUser = this._updateUserRfcComments(fetchedUsers);
+    const issueLabels = await this.context.octokit.rest.issues.listLabelsOnIssue({
+      owner: this.context.payload.repository.owner.login,
+      repo: this.context.payload.repository.name,
+      issue_number: this.context.payload.issue.number,
+    });
+
+    const priorityLabelValue = getPriorityLabelValue(issueLabels.data);
+
+    await this.context.octokit.rest.reactions.createForIssueComment({
+      comment_id: this.context.payload.comment.id,
+      owner: this.context.payload.repository.owner.login,
+      repo: this.context.payload.repository.name,
+      content: "eyes", // (-_-)
+    });
+
+    const fetchedUser = this._updateUserRfcComments(fetchedUsers, priorityLabelValue);
     await this.context.adapters.storage.handleUserBaseStorage(fetchedUser, "update");
   }
 
   public async tryFollowupForAllUsers(): Promise<{ status: number; reason: string }> {
     const allUsers = await this.context.adapters.storage.retrieveAllUsers();
-    const { octokit } = this.context;
 
     for (const user of allUsers) {
-      if (!this._shouldFollowUpRfc(user)) {
-        continue;
-      }
-
-      const rfcsCommentsToFollowUp = this._getRfcsCommentsToFollowUp(user);
-      if (!rfcsCommentsToFollowUp.length) continue;
-
-      for (const rfcComment of rfcsCommentsToFollowUp) {
-        await this._handleRfcCommentFollowUp(rfcComment, user, octokit);
-      }
-
-      user.last_rfc_check = new Date().toISOString();
+      await this._shouldFollowUpRfc(user);
       await this.context.adapters.storage.handleUserBaseStorage(user, "update");
     }
 
     return { status: 200, reason: "success" };
   }
 
-  private async _handleRfcCommentFollowUp(rfcComment: RfcComment, user: StorageUser, octokit: Context["octokit"]): Promise<void> {
+  private async _handleRfcCommentFollowUp(rfcComment: RfcComment, user: StorageUser): Promise<void> {
     const commentUrl = this.triggerHelpers.ownerRepoNumberFromCommentUrl(rfcComment.comment_url);
 
     if (!commentUrl) {
@@ -86,18 +85,21 @@ export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.cr
     }
 
     const { owner, repo, number } = commentUrl;
-    const issueComments = await octokit.paginate(octokit.rest.issues.listComments, { owner, repo, issue_number: number });
+    const issueComments = await this.context.octokit.paginate(this.context.octokit.rest.issues.listComments, { owner, repo, issue_number: number });
 
     const comment = issueComments.find((c) => c.id === rfcComment.comment_id);
-
     if (!comment) {
       logger.error(`Comment not found`, { rfcComment });
       return;
     }
 
-    const rfcCommentDate = new Date(rfcComment.created_at);
-    const commentsAfterRfc = issueComments.filter((c) => new Date(c.created_at).getTime() > rfcCommentDate.getTime());
+    const commentDateToUse = new Date(comment.updated_at) > new Date(comment.created_at) ? new Date(comment.updated_at) : new Date(comment.created_at);
 
+    // has the user commented on the RFC?
+    const commentsAfterRfc = issueComments.filter((c) => new Date(c.created_at).getTime() > commentDateToUse.getTime());
+
+    // if the user has commented on the RFC, we don't need to send a notification
+    // we can remove the RFC comment from the user's list
     if (commentsAfterRfc.length > 0 && commentsAfterRfc.some((c) => c.user?.login === user.github_username)) {
       user.rfc_comments = user.rfc_comments.filter((c) => c.comment_id !== rfcComment.comment_id);
       await this.context.adapters.storage.handleUserBaseStorage(user, "update");
@@ -122,6 +124,7 @@ export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.cr
     }
 
     await this.deliverNotification(telegramId, rfcMessage);
+    rfcComment.last_push = new Date().toISOString();
   }
 
   private _getUsernameFromRfcComment(body: string, rfcMatches: [] | RegExpMatchArray) {
@@ -140,7 +143,7 @@ export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.cr
     return username;
   }
 
-  private _shouldFollowUpRfc(user: StorageUser): boolean {
+  private async _shouldFollowUpRfc(user: StorageUser): Promise<boolean> {
     const { listening_to, rfc_comments, github_username } = user;
 
     if (!rfc_comments || !github_username || !listening_to.rfc) {
@@ -148,19 +151,20 @@ export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.cr
       return false;
     }
 
-    const now = new Date();
-    const lastRfcCheck = new Date(user.last_rfc_check);
-    const rfcFollowUpTime = 1000;
-
-    if (now.getTime() - lastRfcCheck.getTime() < rfcFollowUpTime) {
-      console.log("Not enough time has passed since last check", { now, lastRfcCheck });
+    const rfcsCommentsToFollowUp = this._getRfcsCommentsToFollowUp(user);
+    if (!rfcsCommentsToFollowUp.length) {
+      console.log("No RFC comments to follow up", { rfcsCommentsToFollowUp });
       return false;
+    }
+
+    for (const rfcComment of rfcsCommentsToFollowUp) {
+      await this._handleRfcCommentFollowUp(rfcComment, user);
     }
 
     return true;
   }
 
-  private _updateUserRfcComments(fetchedUsers: StorageUser[]) {
+  private _updateUserRfcComments(fetchedUsers: StorageUser[], priorityLabelValue: number): StorageUser {
     const fetchedUser = fetchedUsers[0];
     const rfcComments = fetchedUser.rfc_comments ?? [];
 
@@ -171,6 +175,7 @@ export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.cr
       created_at: comment.created_at,
       updated_at: comment.updated_at,
       comment_url: comment.html_url,
+      follow_up_allowed_after: ms(this.context.config.dmNotifications.rfcFollowUpPriorityScale[priorityLabelValue], { long: true }),
     };
 
     const existingComment = rfcComments.find((c) => c.comment_id === rfcComment.comment_id);
@@ -182,18 +187,23 @@ export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.cr
     }
 
     fetchedUser.rfc_comments = rfcComments;
-    fetchedUser.last_rfc_check = new Date().toISOString();
-
     return fetchedUser;
   }
 
   private _getRfcsCommentsToFollowUp(user: StorageUser): RfcComment[] {
     const now = new Date();
-    const rfcFollowUpTime = 1000;
-
     return user.rfc_comments.filter((c) => {
-      const commentDate = new Date(c.created_at);
-      return now.getTime() - commentDate.getTime() > rfcFollowUpTime;
+      const followUpAllowedAfter = ms(c.follow_up_allowed_after as StringValue);
+
+      if (isNaN(followUpAllowedAfter)) {
+        logger.error(`Invalid follow_up_allowed_after date: ${c.follow_up_allowed_after}`);
+        return false;
+      }
+
+      const followUpAllowedDate = new Date(c.last_push ?? c.created_at);
+      followUpAllowedDate.setMilliseconds(followUpAllowedDate.getMilliseconds() + followUpAllowedAfter);
+
+      return now > followUpAllowedDate;
     });
   }
 
