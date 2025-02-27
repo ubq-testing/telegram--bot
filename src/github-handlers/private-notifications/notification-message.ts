@@ -43,14 +43,14 @@ Thank you for your contribution.`;
   static getReminderMessage(data: { username: string; issueHtmlUrl: string; repositoryFullName: string; issueNumber: string }): string {
     const template = `<b>Hello {{ username }}</b>,
     
-This task has been idle for a while, please provide an update on <a href="{{ issue.html_url }}">{{ repository.full_name }}#{{ issue.number }}</a>.`;
+This task has been idle for a while, please provide an update on <a href="{{ issueHtmlUrl }}">{{ repositoryFullName }}#{{ issueNumber }}</a>.`;
     return this._formatMessage(template, data);
   }
 
   static getDisqualificationMessage(data: { username: string; issueHtmlUrl: string; repositoryFullName: string; issueNumber: string }): string {
     const template = `<b>Hello {{ username }}</b>,
   
-You have been disqualified from <a href="{{ issue.html_url }}">{{ repository.full_name }}#{{ issue.number }}</a>.
+You have been disqualified from <a href="{{ issueHtmlUrl }}">{{ repositoryFullName }}#{{ issueNumber }}</a>.
   
 You will not be able to self-assign this task again.`;
     return this._formatMessage(template, data);
@@ -65,7 +65,7 @@ You will not be able to self-assign this task again.`;
   }): string {
     const template = `<b>Hello {{ username }}</b>,
   
-{{ pull_request.author }} has requested a review from you on <a href="{{ pull_request.html_url }}">{{ repository.full_name }}#{{ issue.number }}</a>.`;
+{{ pullRequestAuthor }} has requested a review from you on <a href="{{ pullRequestHtmlUrl }}">{{ repositoryFullName }}#{{ issueNumber }}</a>.`;
     return this._formatMessage(template, data);
   }
 }
