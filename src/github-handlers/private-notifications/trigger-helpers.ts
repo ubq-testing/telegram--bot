@@ -3,12 +3,12 @@ import { StorageUser } from "../../types/storage";
 import { retrieveUsersByGithubUsernames } from "./shared";
 
 export class CommentTriggerHelpers {
-  private _reminderCommentRegex = /@(\w+), this task has been idle for a while/gi;
+  private _reminderCommentRegex = /@(\w+), this task has been idle for a while/i;
   // eslint-disable-next-line sonarjs/duplicates-in-character-class
-  private _base64ClaimUrlRegex = /href="https:\/\/[^/]+\/?\?claim=([A-Za-z0-9+/=]+)"/gi;
+  private _base64ClaimUrlRegex = /href="https:\/\/[^/]+\/?\?claim=([A-Za-z0-9+/=]+)"/i;
   private _amountPatternRegex = /\[\s*\d+(\.\d+)?\s*[A-Z]+\s*\]/gi; // E.G. [ 1.5 DAI ]
   // eslint-disable-next-line sonarjs/duplicates-in-character-class
-  private _githubUsernameRegex = /@([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?)/gi; // E.G. @username
+  private _githubUsernameRegex = /@([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?)/i; // E.G. @username
 
   constructor(private _context: Context) {}
 
@@ -55,7 +55,7 @@ export class CommentTriggerHelpers {
 
   private _extractClaimUrls(body: string): { claimUrl?: string }[] {
     const matches = this._base64ClaimUrlRegex.exec(body) || [];
-    return matches.map((match) => ({ claimUrl: match[1] }));
+    return matches.map((match) => ({ claimUrl: match }));
   }
 
   private _extractUsernames(body: string, isPaymentComment: boolean, isReminderComment: boolean): string[] {
