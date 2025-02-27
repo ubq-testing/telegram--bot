@@ -20,8 +20,8 @@
     "test": "cross-env NODE_OPTIONS=\"$NODE_OPTIONS --experimental-vm-modules\" jest --setupFiles dotenv/config --coverage",
     "worker": "wrangler dev --env dev --port 3000",
     "deploy": "wrangler deploy --env dev",
-    "sms-auth": "npx tsx src/bot/mtproto-api/bot/scripts/sms-auth/sms-auth.ts",
-    "setup-env": "npx tsx src/bot/mtproto-api/bot/scripts/sms-auth/setup-env.ts"
+    "sms-auth": "npx tsx src/workflow-bot-mtproto-api/bot/scripts/sms-auth.ts",
+    "setup-env": "npx tsx src/workflow-bot-mtproto-api/bot/scripts/setup-env.ts"
   },
   "keywords": [
     "typescript",
