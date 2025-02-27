@@ -70,7 +70,9 @@ export class AuthHandler {
     this._storage = new GithubStorage({
       octokit: new Octokit({ auth: process.env.REPO_ADMIN_ACCESS_TOKEN ?? process.env.TEMP_SAFE_PAT }),
       pluginEnvCtx: {
-        getEnv: () => { return { APP_PRIVATE_KEY } },
+        getEnv: () => {
+          return { APP_PRIVATE_KEY };
+        },
       },
       env: {
         TELEGRAM_BOT_ENV: parsedEnv,
