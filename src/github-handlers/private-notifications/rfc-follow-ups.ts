@@ -2,7 +2,7 @@ import { Context } from "../../types";
 import { RfcComment, StorageUser } from "../../types/storage";
 import { logger } from "../../utils/logger";
 import { Bot } from "../../botfather-bot/create-bot";
-import { fetchUsers } from "./comment-triggers";
+import { retrieveUsersByGithubUsernames } from "./comment-triggers";
 
 const rfcCommentRegex = /rfc @(\w+)|rfc @(\w+)|request for comment @(\w+)/gi;
 
@@ -33,7 +33,7 @@ export async function captureAndSaveRfcComment(context: Context<"issue_comment.c
         return;
     }
 
-    const fetchedUsers = await fetchUsers([username], context);
+    const fetchedUsers = await retrieveUsersByGithubUsernames([username], context);
     if (!fetchedUsers || fetchedUsers.length === 0) {
         logger.error(`User not found for ${username}`);
         return;

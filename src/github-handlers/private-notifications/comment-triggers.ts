@@ -45,14 +45,14 @@ export async function getUsersFromStorage(
     throw logger.error("Invalid notification trigger or not implemented yet", { body });
   }
 
-  const users = await fetchUsers(
+  const users = await retrieveUsersByGithubUsernames(
     usernames.filter((u): u is string => !!u),
     context
   );
   return { results, users: users.filter((u): u is StorageUser => !!u) };
 }
 
-export async function fetchUsers(usernames: string[], context: Context<"issue_comment.created" | "issue_comment.edited">) {
+export async function retrieveUsersByGithubUsernames(usernames: string[], context: Context<"issue_comment.created" | "issue_comment.edited">) {
   const {
     adapters: { storage },
     octokit,
