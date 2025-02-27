@@ -30,6 +30,13 @@ export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.cr
     const { body } = this.context.payload.comment;
     const rfcMatches = this._rfcCommentRegex.exec(body) || [];
 
+    await this.context.octokit.rest.reactions.createForIssueComment({
+      comment_id: this.context.payload.comment.id,
+      owner: this.context.payload.repository.owner.login,
+      repo: this.context.payload.repository.name,
+      content: "eyes", // (-_-)
+    });
+
     const username = this._getUsernameFromRfcComment(body, rfcMatches);
 
     if (!username) {
