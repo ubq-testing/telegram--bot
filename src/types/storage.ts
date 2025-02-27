@@ -35,7 +35,6 @@ export type StorageUser = {
    */
   additional_user_listeners: string[];
   rfc_comments: RfcComment[];
-  last_rfc_check: string;
 } & Withsha;
 
 export type UserBaseStorage = {

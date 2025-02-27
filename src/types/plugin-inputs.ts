@@ -1,5 +1,6 @@
 import { SupportedEvents, SupportedEventsU } from "./context";
 import { StaticDecode, Type as T } from "@sinclair/typebox";
+import ms, { StringValue } from "ms";
 import { StandardValidator } from "typebox-validators";
 
 export interface PluginInputs<T extends SupportedEventsU = SupportedEventsU, TU extends SupportedEvents[T] = SupportedEvents[T]> {
@@ -12,6 +13,24 @@ export interface PluginInputs<T extends SupportedEventsU = SupportedEventsU, TU 
   signature: string;
   authToken: string;
 }
+
+const rfcFollowUpPriorityScale = T.Record(
+  T.Number(),
+  T.Transform(T.String())
+    .Decode((v) => {
+      try {
+        return ms(v as StringValue);
+      } catch (er) {
+        console.error(er);
+        throw new Error("Invalid duration format");
+      }
+    })
+    .Encode((v) => v.toString()),
+  {
+    description: "The duration before follow-up notifications are sent for RFC comments based on priority.",
+    default: { 0: "2 minute", 1: "1 Week", 2: "5 Days", 3: "3 Days", 4: "1 Day", 5: "12 Hours" },
+  }
+);
 
 export const pluginSettingsSchema = T.Object({
   /**
@@ -51,6 +70,12 @@ export const pluginSettingsSchema = T.Object({
       }),
     ],
     { default: { kind: "OpenAi", model: "o1-mini", baseUrl: "https://api.openai.com/v1" } }
+  ),
+  dmNotifications: T.Object(
+    {
+      rfcFollowUpPriorityScale,
+    },
+    { default: {} }
   ),
 });
 
