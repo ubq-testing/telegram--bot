@@ -121,15 +121,15 @@ export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.cr
     user.rfc_comments = user.rfc_comments.map((c) => (c.comment_id === rfcComment.comment_id ? rfcComment : c));
 
     await this.context.adapters.storage.handleUserBaseStorage(user, "update");
-    await this._handleCommentReaction();
+    await this._handleCommentReaction(rfcComment.comment_id);
   }
 
-  private async _handleCommentReaction(): Promise<void> {
+  private async _handleCommentReaction(commentId: number): Promise<void> {
     const hasEyeReactions = this.context.payload.comment.reactions.eyes > 0;
     if (hasEyeReactions) {
       // was it the bot that reacted with eyes?
       const reactions = await this.context.octokit.rest.reactions.listForIssueComment({
-        comment_id: this.context.payload.comment.id,
+        comment_id: commentId,
         owner: this.context.payload.repository.owner.login,
         repo: this.context.payload.repository.name,
       });
@@ -142,7 +142,7 @@ export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.cr
     }
 
     await this.context.octokit.rest.reactions.createForIssueComment({
-      comment_id: this.context.payload.comment.id,
+      comment_id: commentId,
       owner: this.context.payload.repository.owner.login,
       repo: this.context.payload.repository.name,
       content: "eyes", // (-_-)
