@@ -121,18 +121,37 @@ export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.cr
     user.rfc_comments = user.rfc_comments.map((c) => (c.comment_id === rfcComment.comment_id ? rfcComment : c));
 
     await this.context.adapters.storage.handleUserBaseStorage(user, "update");
-    await this._handleCommentReaction(rfcComment.comment_id);
+    await this._handleCommentReaction(rfcComment);
   }
 
-  private async _handleCommentReaction(commentId: number): Promise<void> {
-    const hasEyeReactions = this.context.payload.comment.reactions.eyes > 0;
+  private async _handleCommentReaction(rfcComment: RfcComment): Promise<void> {
+    const urlData = this.triggerHelpers.ownerRepoNumberFromCommentUrl(rfcComment.comment_url);
+    if (!urlData) {
+      logger.error(`Comment URL not found`, { rfcComment });
+      return;
+    }
+
+    const { owner, repo } = urlData;
+    const comment = await this.context.octokit.rest.issues.getComment({
+      comment_id: rfcComment.comment_id,
+      owner,
+      repo,
+    });
+
+    if (!comment) {
+      logger.error(`Comment not found`, { rfcComment });
+      return;
+    }
+
+    const hasEyeReactions = comment.data.reactions?.eyes && comment.data.reactions.eyes > 0;
     if (hasEyeReactions) {
       // was it the bot that reacted with eyes?
       const reactions = await this.context.octokit.rest.reactions.listForIssueComment({
-        comment_id: commentId,
-        owner: this.context.payload.repository.owner.login,
-        repo: this.context.payload.repository.name,
+        comment_id: rfcComment.comment_id,
+        owner,
+        repo,
       });
+
       const appSlug = this.context.pluginEnvCtx.getAppSlug();
       const botReaction = reactions.data.find((r) => r.user?.login.toLowerCase().includes(appSlug));
       if (botReaction) {
@@ -140,11 +159,10 @@ export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.cr
         return;
       }
     }
-
     await this.context.octokit.rest.reactions.createForIssueComment({
-      comment_id: commentId,
-      owner: this.context.payload.repository.owner.login,
-      repo: this.context.payload.repository.name,
+      comment_id: rfcComment.comment_id,
+      owner,
+      repo,
       content: "eyes", // (-_-)
     });
   }
