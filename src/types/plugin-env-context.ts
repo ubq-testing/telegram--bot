@@ -15,6 +15,7 @@ export class PluginEnvContext {
   private _botFatherHonoApp: BotFatherInitializer["_server"] | null = null;
   private _botFatherBot: Bot | null = null;
   private _env: Env;
+  private _appSlug: string | null = null;
 
   constructor(
     private readonly _inputs: PluginInputs,
@@ -84,6 +85,13 @@ export class PluginEnvContext {
     return this._config;
   }
 
+  getAppSlug(): string {
+    if (!this._appSlug) {
+      throw new Error("App slug not found");
+    }
+    return this._appSlug;
+  }
+
   /**
    * Telegram payloads do not come with a token so we need to use the
    * GitHub app to interact with the GitHub API for bot commands like /register etc.
@@ -91,13 +99,14 @@ export class PluginEnvContext {
    * This can be used with events from both Telegram and GitHub, this token comes from
    * the worker's environment variables i.e the Storage App.
    */
-  async getTelegramEventOctokit(): Promise<RestOctokitFromApp | Octokit | null> {
-    let octokit: RestOctokitFromApp | Octokit | null = null;
+  async getTelegramEventOctokit(): Promise<RestOctokitFromApp | null> {
+    let octokit: RestOctokitFromApp | null = null;
 
     try {
       await this._getApp().eachInstallation((installation) => {
         if (installation.installation.account?.login.toLowerCase() === this._config.storageOwner.toLowerCase()) {
           octokit = installation.octokit;
+          this._appSlug = installation.installation.app_slug;
         }
       });
     } catch (er) {

@@ -54,13 +54,6 @@ export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.cr
 
     const priorityLabelValue = getPriorityLabelValue(issueLabels.data);
 
-    await this.context.octokit.rest.reactions.createForIssueComment({
-      comment_id: this.context.payload.comment.id,
-      owner: this.context.payload.repository.owner.login,
-      repo: this.context.payload.repository.name,
-      content: "eyes", // (-_-)
-    });
-
     const fetchedUser = this._updateUserRfcComments(fetchedUsers, priorityLabelValue);
     await this.context.adapters.storage.handleUserBaseStorage(fetchedUser, "update");
   }
@@ -69,7 +62,7 @@ export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.cr
     const allUsers = await this.context.adapters.storage.retrieveAllUsers();
 
     for (const user of allUsers) {
-      await this._shouldFollowUpRfc(user);
+      await this._followUpRfcs(user);
       await this.context.adapters.storage.handleUserBaseStorage(user, "update");
     }
 
@@ -106,28 +99,57 @@ export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.cr
       return;
     }
 
-    await this._sendRfcNotification(rfcComment, user.github_username, user.telegram_id);
+    await this._sendRfcNotification(rfcComment, user);
   }
 
-  private async _sendRfcNotification(rfcComment: RfcComment, githubUsername: string, telegramId: number): Promise<void> {
+  private async _sendRfcNotification(rfcComment: RfcComment, user: StorageUser): Promise<void> {
     const rfcMessage = NotificationMessage.getRfcMessage({
-      username: githubUsername,
+      username: user.github_username,
       comment: rfcComment.comment,
       commentUrl: rfcComment.comment_url,
     });
 
-    const userPrivateChat = await this.getChat(telegramId);
+    const userPrivateChat = await this.getChat(user.telegram_id);
 
     if (!userPrivateChat) {
-      logger.error(`This user has not started a chat with the bot yet`, { telegramId });
+      logger.error(`This user has not started a chat with the bot yet`, { userTelegramId: user.telegram_id });
       return;
     }
 
-    await this.deliverNotification(telegramId, rfcMessage);
+    await this.deliverNotification(user.telegram_id, rfcMessage);
     rfcComment.last_push = new Date().toISOString();
+    user.rfc_comments = user.rfc_comments.map((c) => (c.comment_id === rfcComment.comment_id ? rfcComment : c));
+
+    await this.context.adapters.storage.handleUserBaseStorage(user, "update");
+    await this._handleCommentReaction();
   }
 
-  private async _shouldFollowUpRfc(user: StorageUser): Promise<boolean> {
+  private async _handleCommentReaction(): Promise<void> {
+    const hasEyeReactions = this.context.payload.comment.reactions.eyes > 0;
+    if (hasEyeReactions) {
+      // was it the bot that reacted with eyes?
+      const reactions = await this.context.octokit.rest.reactions.listForIssueComment({
+        comment_id: this.context.payload.comment.id,
+        owner: this.context.payload.repository.owner.login,
+        repo: this.context.payload.repository.name,
+      });
+      const appSlug = this.context.pluginEnvCtx.getAppSlug();
+      const botReaction = reactions.data.find((r) => r.user?.login.toLowerCase().includes(appSlug));
+      if (botReaction) {
+        // add another reaction to signal we've sent multiple? edit the rfc comment to say we've sent multiple?
+        return;
+      }
+    }
+
+    await this.context.octokit.rest.reactions.createForIssueComment({
+      comment_id: this.context.payload.comment.id,
+      owner: this.context.payload.repository.owner.login,
+      repo: this.context.payload.repository.name,
+      content: "eyes", // (-_-)
+    });
+  }
+
+  private async _followUpRfcs(user: StorageUser): Promise<boolean> {
     const { listening_to, rfc_comments, github_username } = user;
 
     if (!rfc_comments || !github_username || !listening_to.rfc) {
