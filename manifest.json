@@ -23,7 +23,7 @@
         "type": "boolean"
       },
       "storageOwner": {
-        "default": "ubiquity-os-marketplace",
+        "default": "ubq-testing",
         "description": "Determines the correct UbiquityOS install-authenticated Octokit instance to use and the storage location for this plugin (Required: GitHub Storage layer).",
         "type": "string"
       },
@@ -98,6 +98,29 @@
             "required": ["kind"]
           }
         ]
+      },
+      "dmNotifications": {
+        "default": {},
+        "type": "object",
+        "properties": {
+          "rfcFollowUpPriorityScale": {
+            "description": "The duration before follow-up notifications are sent for RFC comments based on priority.",
+            "default": {
+              "0": "2 minute",
+              "1": "1 Week",
+              "2": "5 Days",
+              "3": "3 Days",
+              "4": "1 Day",
+              "5": "12 Hours"
+            },
+            "type": "object",
+            "patternProperties": {
+              "^(0|[1-9][0-9]*)$": {
+                "type": "string"
+              }
+            }
+          }
+        }
       }
     }
   }
