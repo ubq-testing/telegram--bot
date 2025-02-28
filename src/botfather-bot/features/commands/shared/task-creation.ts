@@ -35,8 +35,6 @@ feature.command("newtask", logHandle("task-creation"), chatAction("typing"), asy
     if (!repoToCreateIn) {
       logger.info(`No repo to create task in`);
       return await ctx.reply("To create a new task, reply to the message with `/newtask repo`");
-    } else {
-      console.log("repoToCreateIn", repoToCreateIn);
     }
 
     const fromId = ctx.message.from.id;

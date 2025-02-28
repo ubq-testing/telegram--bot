@@ -2,6 +2,7 @@ import { SupportedEvents, SupportedEventsU } from "./context";
 import { StaticDecode, Type as T } from "@sinclair/typebox";
 import ms, { StringValue } from "ms";
 import { StandardValidator } from "typebox-validators";
+import { logger } from "../utils/logger";
 
 export interface PluginInputs<T extends SupportedEventsU = SupportedEventsU, TU extends SupportedEvents[T] = SupportedEvents[T]> {
   stateId: string;
@@ -21,8 +22,7 @@ const rfcFollowUpPriorityScale = T.Record(
       try {
         return ms(v as StringValue);
       } catch (er) {
-        console.error(er);
-        throw new Error("Invalid duration format");
+        throw logger.error(`Invalid duration format`, { er: String(er) });
       }
     })
     .Encode((v) => v.toString()),

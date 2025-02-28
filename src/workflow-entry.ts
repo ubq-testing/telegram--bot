@@ -9,7 +9,7 @@ import { runGitHubWorkflowEntry } from "./plugin";
 import { initializeBotFatherInstance } from "./botfather-bot/initialize-botfather-instance";
 dotenv.config();
 
-async function initWorkerPluginContext(inputs: PluginInputs, env: Env) {
+async function initWorkflowPluginContext(inputs: PluginInputs, env: Env) {
   const pluginEnvContext = new PluginEnvContext(inputs, env);
   const botFatherInstance = await initializeBotFatherInstance(pluginEnvContext);
   if (!botFatherInstance) {
@@ -63,7 +63,7 @@ async function run() {
     signature: payload.signature,
   };
 
-  const pluginEnvContext = await initWorkerPluginContext(inputs, env);
+  const pluginEnvContext = await initWorkflowPluginContext(inputs, env);
   const context = await pluginEnvContext.createFullPluginInputsContext(inputs);
   return await runGitHubWorkflowEntry(context);
 }

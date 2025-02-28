@@ -8,7 +8,6 @@ import CryptoJS from "crypto-js";
 
 export class GithubStorage {
   pluginEnvCtx: PluginEnvContext;
-  logger = logger;
 
   storageRepo = ".ubiquity-os"; // always the same (until global storage is implemented)
   storageBranch = "storage"; // always the same (until branch-per-partner is implemented)
@@ -181,7 +180,7 @@ export class GithubStorage {
         dbObject.session = null;
       }
     } catch (er) {
-      console.log("error", er);
+      throw logger.error("Failed to handle session", { er });
     }
 
     return await this._storeData(dbObject);
@@ -244,7 +243,6 @@ export class GithubStorage {
       path = this.telegramSessionPath;
       type = "session";
     } else {
-      console.log("Invalid data type", data);
       throw new Error("Invalid data type");
     }
 
@@ -346,11 +344,9 @@ export class GithubStorage {
       });
     } catch (e) {
       branchError = e;
-      console.log("Branch does not exist", { owner, path, type, storageRepo: this.storageRepo, storageBranch: this.storageBranch });
     }
 
     if (branch) {
-      console.log("Branch exists - creating file", { owner, path, type });
       try {
         await authedOctokit.rest.repos.createOrUpdateFileContents({
           owner,
@@ -364,7 +360,6 @@ export class GithubStorage {
 
         return true;
       } catch (err) {
-        console.log("Failed to create new storage file", { err: String(err) });
         throw logger.error("Failed to create new storage file", { err: String(err) });
       }
     }

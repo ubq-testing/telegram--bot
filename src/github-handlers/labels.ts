@@ -18,7 +18,7 @@ function parsePriorityLabel(labels: (IssueLabel | string)[]): number {
     if (priorityLabel.startsWith("Priority:")) {
       const matched = regex.exec(priorityLabel);
       if (!matched) {
-        return 1;
+        return 0;
       }
 
       return Number(matched[1]);

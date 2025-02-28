@@ -10,7 +10,6 @@ class DisqualificationDmHandler extends NotificationHandlerBase<"issues.unassign
   }
 
   protected shouldSkipNotification(dbUser: StorageUser) {
-    console.log("Checking if we should skip disqualification notification::" + dbUser.listening_to["disqualification"]);
     return !dbUser.listening_to["disqualification"];
   }
 

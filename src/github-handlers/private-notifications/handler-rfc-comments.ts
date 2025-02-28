@@ -153,13 +153,13 @@ export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.cr
     const { listening_to, rfc_comments, github_username } = user;
 
     if (!rfc_comments || !github_username || !listening_to.rfc) {
-      console.log("No RFC comments or github username or not listening to RFC", { rfc_comments, github_username, listening_to });
+      logger.info("No RFC comments or github username or not listening to RFC", { rfc_comments, github_username, listening_to });
       return false;
     }
 
     const rfcsCommentsToFollowUp = this._getRfcsCommentsToFollowUp(user);
     if (!rfcsCommentsToFollowUp.length) {
-      console.log("No RFC comments to follow up", { rfcsCommentsToFollowUp });
+      logger.info("No RFC comments to follow up", { rfcsCommentsToFollowUp });
       return false;
     }
 
