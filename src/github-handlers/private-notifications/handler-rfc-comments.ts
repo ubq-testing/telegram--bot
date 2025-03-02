@@ -231,25 +231,24 @@ export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.cr
     });
   }
 
-  private _getUsernameFromRfcComment(body: string, rfcMatches: [] | RegExpExecArray): string | undefined {
+  private _getUsernameFromRfcComment(body: string, rfcMatches: [] | RegExpExecArray): string | null {
     if (rfcMatches[1]) return rfcMatches[1];
     if (rfcMatches[2]) return rfcMatches[2];
     if (rfcMatches[3]) return rfcMatches[3];
 
     logger.error(`Username not found in RFC comment`, { body });
-    return undefined;
+    return null;
   }
 
-  // Required overrides for NotificationHandlerBase
   protected getUserId() {
-    return undefined;
+    return null;
   }
 
   protected shouldSkipNotification(): boolean {
     return false;
   }
 
-  protected getMessage(): string {
-    return "";
+  protected getMessage() {
+    return null;
   }
 }

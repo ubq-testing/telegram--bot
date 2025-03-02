@@ -6,7 +6,7 @@ import { StorageUser } from "../../types/storage";
 
 class ReviewNotificationHandler extends NotificationHandlerBase<"pull_request.review_requested"> {
   protected getUserId() {
-    return this.context.payload.requested_reviewer?.id;
+    return this.context.payload.requested_reviewer?.id ?? null;
   }
 
   protected shouldSkipNotification(dbUser: StorageUser) {

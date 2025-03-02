@@ -123,18 +123,15 @@ class CommentNotificationHandler extends NotificationHandlerBase<"issue_comment.
   }
 
   protected getUserId() {
-    // We don't need to get the user ID for comments
-    return undefined;
+    return null;
   }
 
   protected shouldSkipNotification(): boolean {
-    // We don't skip any notifications for comments
     return false;
   }
 
-  protected getMessage(): string {
-    // Messages are customized for each trigger type
-    return "";
+  protected getMessage(): string | null {
+    return null;
   }
 }
 

@@ -16,9 +16,9 @@ export abstract class NotificationHandlerBase<T extends SupportedEventsU = Suppo
     this.triggerHelpers = new CommentTriggerHelpers(context);
   }
 
-  protected abstract getUserId(): number | undefined;
+  protected abstract getUserId(): number | null;
   protected abstract shouldSkipNotification(dbUser: StorageUser): boolean;
-  protected abstract getMessage(username: string): string;
+  protected abstract getMessage(username: string): string | null;
 
   public async handle(): Promise<CallbackResult> {
     const dbUser = await this.getDbUser();
@@ -45,6 +45,11 @@ export abstract class NotificationHandlerBase<T extends SupportedEventsU = Suppo
   private async _sendNotification(dbUser: StorageUser) {
     const message = this.getMessage(dbUser.github_username);
     const chat = await this.getChat(dbUser.telegram_id);
+
+    if (!message) {
+      logger.error(`Message not found for ${dbUser.github_username}`);
+      return;
+    }
 
     if (chat) {
       await this.deliverNotification(dbUser.telegram_id, message);
