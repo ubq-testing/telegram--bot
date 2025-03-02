@@ -6,11 +6,9 @@ export class NotificationMessage {
   static getRfcMessage(data: { username: string; comment: string; commentUrl: string }): string {
     const template = `<b>Hello {{ username }}</b>,
     
-It seems you have not responded to the RFC comment yet. Please provide your feedback on the proposed changes:
+Your request for comment is still pending:
   
-{{ comment }}
-  
-You can reply to the comment <a href="{{ commentUrl }}">here</a>.`;
+<a href="{{ commentUrl }}">{{ comment }}</a>.`;
     return this._formatMessage(template, data);
   }
 

@@ -4,11 +4,9 @@ import { retrieveUsersByGithubUsernames } from "./shared";
 
 export class CommentTriggerHelpers {
   private _reminderCommentRegex = /@(\w+), this task has been idle for a while/i;
-  // eslint-disable-next-line sonarjs/duplicates-in-character-class
-  private _base64ClaimUrlRegex = /href="https:\/\/[^/]+\/?\?claim=([A-Za-z0-9+/=]+)"/i;
+  private _base64ClaimUrlRegex = /href="https:\/\/[^/]+\/?\?claim=([A-Z0-9+/=]+)"/i;
   private _amountPatternRegex = /\[\s*\d+(\.\d+)?\s*[A-Z]+\s*\]/gi; // E.G. [ 1.5 DAI ]
-  // eslint-disable-next-line sonarjs/duplicates-in-character-class
-  private _githubUsernameRegex = /@([a-zA-Z0-9](?:[a-zA-Z0-9-]{0,37}[a-zA-Z0-9])?)/i; // E.G. @username
+  private _githubUsernameRegex = /@([A-Z0-9](?:[A-Z0-9-]{0,37}[A-Z0-9])?)/i; // E.G. @username
 
   constructor(private _context: Context) {}
 
