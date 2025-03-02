@@ -199,7 +199,7 @@ export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.cr
       created_at: comment.created_at,
       updated_at: comment.updated_at,
       comment_url: comment.html_url,
-      follow_up_allowed_after: ms(this.context.config.dmNotifications.rfcFollowUpPriorityScale[priorityLabelValue], { long: true }),
+      follow_up_allowed_after: ms(this.context.config.privateNotifications.rfcFollowUpPriorityScale[priorityLabelValue], { long: true }),
     };
 
     const existingComment = rfcComments.find((c) => c.comment_id === rfcComment.comment_id);
