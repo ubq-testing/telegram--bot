@@ -26,7 +26,7 @@ async function makeServerRequest(server: BotFatherInitializer["_server"], reques
   }
 }
 
-async function readResponseBody(res: Response): Promise<string> {
+async function readResponseBody(res: Response): Promise<string | null> {
   let body;
   try {
     body = await res.text();
@@ -43,11 +43,11 @@ async function readResponseBody(res: Response): Promise<string> {
       stack: er instanceof Error ? er.stack : undefined,
     };
     logger.error(errorInfo.message, { error: er as Error });
-    return "";
   }
+  return null;
 }
 
-function createResponse(res: Response, body: string): Response {
+function createResponse(res: Response, body: string | null): Response {
   try {
     if (!res) {
       throw new Error("Response is null");
