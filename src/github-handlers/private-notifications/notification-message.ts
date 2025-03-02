@@ -1,7 +1,5 @@
 export class NotificationMessage {
   private static _formatMessage(template: string, data: Record<string, string>): string {
-    // "Parameter name `_` must match one of the following formats: strictCamelCase"
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     return template.replace(/{{\s*(\w+)\s*}}/g, (_, key) => data[key] || "");
   }
 

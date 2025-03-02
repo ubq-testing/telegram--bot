@@ -46,16 +46,7 @@ export default tsEslint.config({
     "use-isnan": "error",
     "no-unneeded-ternary": "error",
     "no-nested-ternary": "error",
-    "@typescript-eslint/no-unused-vars": [
-      "error",
-      {
-        args: "after-used",
-        ignoreRestSiblings: true,
-        vars: "all",
-        varsIgnorePattern: "^_",
-        argsIgnorePattern: "^_",
-      },
-    ],
+
     "@typescript-eslint/await-thenable": "error",
     "@typescript-eslint/no-misused-new": "error",
     "@typescript-eslint/restrict-plus-operands": "error",
@@ -66,8 +57,23 @@ export default tsEslint.config({
     "sonarjs/no-identical-conditions": "error",
     "sonarjs/no-identical-expressions": "error",
     "sonarjs/new-cap": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        args: "after-used",
+        ignoreRestSiblings: true,
+        vars: "all",
+        varsIgnorePattern: "^_",
+        argsIgnorePattern: "^_",
+      },
+    ],
     "@typescript-eslint/naming-convention": [
       "error",
+      {
+        selector: "parameter",
+        format: ["strictCamelCase"],
+        leadingUnderscore: "allow",
+      },
       {
         selector: "interface",
         format: ["StrictPascalCase"],
