@@ -9,10 +9,10 @@ import CryptoJS from "crypto-js";
 export class GithubStorage {
   pluginEnvCtx: PluginEnvContext;
 
-  storageRepo = ".ubiquity-os"; // always the same (until global storage is implemented)
-  storageBranch = "storage"; // always the same (until branch-per-partner is implemented)
+  storageRepo = ".ubiquity-os";
+  storageBranch = "__STORAGE__";
 
-  payloadRepoOwner: string; // which partner this data belongs to
+  payloadRepoOwner: string; // ubiquity-os-marketplace
   pluginRepo: string; // is the name of this plugin's repository i.e ubiquity-os-kernel-telegram
 
   installID: number | null = null; // used to get the correct install _octokit
