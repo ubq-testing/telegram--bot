@@ -24,7 +24,7 @@ export class PluginEnvContext {
     if (env.TELEGRAM_BOT_ENV && typeof env.TELEGRAM_BOT_ENV === "string") {
       env.TELEGRAM_BOT_ENV = JSON.parse(env.TELEGRAM_BOT_ENV);
     }
-    this._config = Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, this._inputs ?? {}));
+    this._config = Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, this._inputs.settings ?? {}));
     this._env = Value.Decode(envValidator.schema, Value.Default(envValidator.schema, env));
   }
 
