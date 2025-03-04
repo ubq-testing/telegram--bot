@@ -16,6 +16,7 @@ jobs:
           pluginEntry: "${{ github.workspace }}/src/workflow-entry.ts"
           schemaPath: "${{ github.workspace }}/src/types/plugin-inputs.ts"
           treatAsEsm: true
+          sourceMap: true
         env:
           APP_ID: ${{ secrets.APP_ID }}
           APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}

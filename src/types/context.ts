@@ -1,10 +1,9 @@
-import { Octokit } from "@octokit/rest";
 import { EmitterWebhookEvent as WebhookEvent, EmitterWebhookEventName as WebhookEventName } from "@octokit/webhooks";
-import { Env } from "./env";
+import { Context as _Context } from "@ubiquity-os/plugin-sdk";
 import { PluginSettings } from "./plugin-inputs";
-import { Logs } from "@ubiquity-os/ubiquity-os-logger";
-import { createAdapters } from "../adapters";
-import { Octokit as RestOctokitFromApp } from "octokit";
+import { Env } from "./env";
+import { createAdapters } from "../adapters/create-adapters";
+import { PluginEnvContext } from "./plugin-env-context";
 
 export type SupportedEventsU = WebhookEventName;
 
@@ -12,12 +11,10 @@ export type SupportedEvents = {
   [K in SupportedEventsU]: K extends WebhookEventName ? WebhookEvent<K> : never;
 };
 
-export interface Context<T extends SupportedEventsU = SupportedEventsU, TU extends SupportedEvents[T] = SupportedEvents[T]> {
-  eventName: T;
-  payload: TU["payload"];
-  octokit: Octokit | RestOctokitFromApp;
-  config: PluginSettings;
-  env: Env;
-  logger: Logs;
+// @ts-expect-error - octokit type mismatch - doesn't affect runtime
+interface ExtendedContext<T extends SupportedEventsU> extends _Context<PluginSettings, Env, null, T> {
   adapters: ReturnType<typeof createAdapters>;
+  pluginEnvCtx: PluginEnvContext;
 }
+
+export type Context<T extends SupportedEventsU = SupportedEventsU> = ExtendedContext<T>;

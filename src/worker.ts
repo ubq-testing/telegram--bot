@@ -1,72 +1,81 @@
-import { Env, envValidator, PluginInputs } from "./types";
-import { handleGithubWebhook } from "./handlers/github-webhook";
-import { handleTelegramWebhook } from "./handlers/telegram-webhook";
-import manifest from "../manifest.json";
-import { handleUncaughtError } from "./utils/errors";
-import { PluginContext } from "./types/plugin-context-single";
-import { Value } from "@sinclair/typebox/value";
+import { Context, Env, envValidator, PluginInputs, pluginSettingsValidator } from "./types";
+import { PluginEnvContext } from "./types/plugin-env-context";
+import { ExecutionContext } from "hono";
+import { createPlugin } from "@ubiquity-os/plugin-sdk";
+import { runGithubWorkerEntry, runTelegramBotEntry } from "./plugin";
+import { Manifest } from "@ubiquity-os/plugin-sdk/manifest";
 import { logger } from "./utils/logger";
+import { handleUncaughtError } from "./utils/errors";
+import { createAdapters } from "./adapters/create-adapters";
+import manifest from "../manifest.json";
+import { initializeBotFatherInstance } from "./botfather-bot/initialize-botfather-instance";
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    const url = new URL(request.url);
-    const path = url.pathname;
-    if (request.method === "GET") {
-      if (path === "/manifest.json") {
-        return new Response(JSON.stringify(manifest), {
-          headers: { "content-type": "application/json" },
-        });
-      }
-    }
-
-    const contentType = request.headers.get("content-type");
-    if (contentType !== "application/json") {
-      logger.info("!application/json", { contentType });
-      return new Response(JSON.stringify({ error: `Error: ${contentType} is not a valid content type` }), {
-        status: 400,
-        headers: { "content-type": "application/json" },
+  async fetch(request: Request, env: Env, executionCtx?: ExecutionContext) {
+    // The SDK handles this but it's cleaner if we handle it here
+    if (new URL(request.url).pathname === "/manifest.json") {
+      return new Response(JSON.stringify(manifest), {
+        headers: { "Content-Type": "application/json" },
       });
     }
 
-    let envSettings;
+    const pluginEnvContext = await initWorkerPluginContext(request, env);
+    const results = await Promise.all([telegramRoute(request, pluginEnvContext), githubRoute(request, pluginEnvContext, executionCtx)]);
 
-    try {
-      envSettings = Value.Decode(envValidator.schema, Value.Default(envValidator.schema, env));
-    } catch (err) {
-      logger.error("Could not decode env", { err });
-      return new Response(JSON.stringify({ err, message: "Invalid environment provided" }), {
-        status: 400,
-        headers: { "content-type": "application/json" },
-      });
-    }
-
-    const payload = (await request.clone().json()) as PluginInputs; // required cast
-    Reflect.deleteProperty(payload, "authToken");
-    try {
-      PluginContext.initialize(payload, envSettings);
-    } catch (er) {
-      logger.error("Could not initialize PluginContext on fetch", { er, payload });
-      return new Response(JSON.stringify({ err: er, message: "Invalid plugin context provided" }), {
-        status: 400,
-        headers: { "content-type": "application/json" },
-      });
-    }
-
-    if (["/telegram", "/telegram/"].includes(path)) {
-      try {
-        logger.info("payload", { payload });
-        return await handleTelegramWebhook(request, envSettings);
-      } catch (err) {
-        logger.error("handleTelegramWebhook failed", { err, path, content: payload });
-        return handleUncaughtError(err);
-      }
-    } else {
-      try {
-        return await handleGithubWebhook(request, envSettings);
-      } catch (err) {
-        logger.error("handleGithubWebhook failed", { err, path, content: payload });
-        return handleUncaughtError(err);
-      }
-    }
+    return new Response(JSON.stringify(results), {
+      headers: { "Content-Type": "application/json" },
+    });
   },
 };
+
+async function initWorkerPluginContext(request: Request, env: Env) {
+  const payload = (await request.clone().json()) as PluginInputs; // required cast
+  const pluginEnvContext = new PluginEnvContext(payload, env);
+  const botFatherInstance = await initializeBotFatherInstance(pluginEnvContext);
+  if (!botFatherInstance) {
+    throw new Error("BotFatherInstance not initialized");
+  }
+  pluginEnvContext.setBotFatherContext(botFatherInstance);
+  return pluginEnvContext;
+}
+
+async function githubRoute(request: Request, pluginEnvCtx: PluginEnvContext, executionCtx?: ExecutionContext) {
+  return createPlugin<Context>(
+    (context) => {
+      const ctx = context as unknown as Context;
+      ctx.adapters = createAdapters(ctx);
+      ctx.pluginEnvCtx = pluginEnvCtx;
+
+      return runGithubWorkerEntry(ctx);
+    },
+    manifest as Manifest,
+    {
+      envSchema: envValidator.schema,
+      postCommentOnError: true,
+      settingsSchema: pluginSettingsValidator.schema,
+      logLevel: "debug",
+      kernelPublicKey: pluginEnvCtx.getEnv().KERNEL_PUBLIC_KEY,
+      bypassSignatureVerification: process.env.NODE_ENV === "local",
+    }
+  ).fetch(request, pluginEnvCtx.getEnv(), executionCtx);
+}
+
+/**
+ * This route handles updates directly from Telegram and so it's a separate route
+ * because the payloads are different which would cause the SDK to throw an error.
+ *
+ * - This route is used for the Telegram bot commands like `/register` etc.
+ *
+ * Because the kernel is _not_ forwarding the payload, we need to rely on
+ * `Value.Default` to populate the `env` and `config` properties.
+ */
+async function telegramRoute(request: Request, pluginEnvCtx: PluginEnvContext) {
+  if (["/telegram", "/telegram/"].includes(new URL(request.url).pathname)) {
+    try {
+      return await runTelegramBotEntry(request, pluginEnvCtx);
+    } catch (err) {
+      logger.error("handleTelegramWebhook failed", { err });
+      return handleUncaughtError(err);
+    }
+  }
+}

@@ -1,17 +1,25 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
 import { Value } from "@sinclair/typebox/value";
-import { envValidator, pluginSettingsSchema, PluginInputs, pluginSettingsValidator } from "./types";
-import { PluginContext } from "./types/plugin-context-single";
-import dotenv from "dotenv";
+import { envValidator, pluginSettingsSchema, PluginInputs, pluginSettingsValidator, Env } from "./types";
+import { PluginEnvContext } from "./types/plugin-env-context";
 import { logger } from "./utils/logger";
-import { proxyWorkflowCallbacks } from "./handlers/workflow-proxy";
+import dotenv from "dotenv";
+import { runGitHubWorkflowEntry } from "./plugin";
+import { initializeBotFatherInstance } from "./botfather-bot/initialize-botfather-instance";
 dotenv.config();
 
-/**
- * Main entry point for the workflow functions
- */
-export async function run() {
+async function initWorkerPluginContext(inputs: PluginInputs, env: Env) {
+  const pluginEnvContext = new PluginEnvContext(inputs, env);
+  const botFatherInstance = await initializeBotFatherInstance(pluginEnvContext);
+  if (!botFatherInstance) {
+    throw new Error("BotFatherInstance not initialized");
+  }
+  pluginEnvContext.setBotFatherContext(botFatherInstance);
+  return pluginEnvContext;
+}
+
+async function run() {
   const payload = github.context.payload.inputs;
 
   let env, settings;
@@ -20,6 +28,8 @@ export async function run() {
     TELEGRAM_BOT_ENV: process.env.TELEGRAM_BOT_ENV,
     APP_ID: process.env.APP_ID,
     APP_PRIVATE_KEY: process.env.APP_PRIVATE_KEY,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    VOYAGEAI_API_KEY: process.env.VOYAGEAI_API_KEY ?? "", // not used through workflows
   };
 
   try {
@@ -49,12 +59,13 @@ export async function run() {
     settings,
     authToken: payload.authToken,
     ref: payload.ref,
+    command: payload.command,
+    signature: payload.signature,
   };
 
-  PluginContext.initialize(inputs, env);
-
-  const context = await PluginContext.getInstance().getContext();
-  return proxyWorkflowCallbacks(context)[inputs.eventName];
+  const pluginEnvContext = await initWorkerPluginContext(inputs, env);
+  const context = await pluginEnvContext.createFullPluginInputsContext(inputs);
+  return await runGitHubWorkflowEntry(context);
 }
 
 run()

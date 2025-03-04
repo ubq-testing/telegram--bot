@@ -1,14 +1,19 @@
-import { Env, PluginInputs } from "./types";
 import { Context } from "./types";
-import { PluginContext } from "./types/plugin-context-single";
-import { proxyCallbacks } from "./handlers/worker-proxy";
+import { workerCallbacks } from "./github-handlers/worker-proxy";
+import { proxyWorkflowCallbacks } from "./github-handlers/workflow-proxy";
+import { sendBotFatherRequest } from "./botfather-bot/send-botfather-request";
+import { PluginEnvContext } from "./types/plugin-env-context";
 
-export async function runPlugin(context: Context) {
+export async function runGithubWorkerEntry(context: Context) {
   const { eventName } = context;
-  return proxyCallbacks(context)[eventName];
+  await Promise.resolve(workerCallbacks(context)[eventName]);
 }
 
-export async function plugin(inputs: PluginInputs, env: Env) {
-  const context = await PluginContext.initialize(inputs, env).getContext();
-  return await runPlugin(context);
+export async function runGitHubWorkflowEntry(context: Context) {
+  const { eventName } = context;
+  await Promise.resolve(proxyWorkflowCallbacks(context)[eventName]);
+}
+
+export async function runTelegramBotEntry(request: Request, pluginEnvCtx: PluginEnvContext) {
+  return await sendBotFatherRequest(request, pluginEnvCtx);
 }

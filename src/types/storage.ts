@@ -1,4 +1,4 @@
-import { NotificationTriggers } from "../constants";
+import { NotificationTriggers } from "../github-handlers/private-notifications/constants";
 
 export interface Withsha {
   sha?: string;
