@@ -17,7 +17,7 @@ export interface PluginInputs<T extends SupportedEventsU = SupportedEventsU, TU 
 
 const rfcFollowUpPriorityScale = T.Record(
   T.Number(),
-  T.Transform(T.String())
+  T.Transform(T.Union([T.String(), T.Number()]))
     .Decode((v) => {
       try {
         return ms(v as StringValue);
@@ -25,7 +25,7 @@ const rfcFollowUpPriorityScale = T.Record(
         throw logger.error(`Invalid duration format`, { er: String(er) });
       }
     })
-    .Encode((v) => v.toString()),
+    .Encode((v) => ms(v, { long: true })),
   {
     description: "The duration before follow-up notifications are sent for RFC comments based on priority.",
     default: { 0: "2 minute", 1: "1 Week", 2: "5 Days", 3: "3 Days", 4: "1 Day", 5: "12 Hours" },
@@ -57,10 +57,9 @@ export const pluginSettingsSchema = T.Object({
     },
     { default: { model: "o1-mini", baseUrl: "https://api.openai.com/v1" } }
   ),
-  privateNotifications: T.Object(
-    {
-      rfcFollowUpPriorityScale,
-    },
+  privateNotifications: T.Object({
+    rfcFollowUpPriorityScale,
+  },
     { default: {} }
   ),
 });
