@@ -17,7 +17,7 @@ export class MtProtoWrapper extends BaseMtProto {
 
   async initialize() {
     const session = await this._sessionManager.getSession();
-    const initialized = await super.initialize(this._context.env.TELEGRAM_BOT_ENV.mtProtoSettings, session);
+    const initialized = await super.initialize(this._context.env, session);
     await initialized.client.getDialogs();
     this._botIdString = await initialized.client.getPeerId(this._context.config.botId, true);
     return initialized;

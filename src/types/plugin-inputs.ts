@@ -57,9 +57,10 @@ export const pluginSettingsSchema = T.Object({
     },
     { default: { model: "o1-mini", baseUrl: "https://api.openai.com/v1" } }
   ),
-  privateNotifications: T.Object({
-    rfcFollowUpPriorityScale,
-  },
+  privateNotifications: T.Object(
+    {
+      rfcFollowUpPriorityScale,
+    },
     { default: {} }
   ),
 });

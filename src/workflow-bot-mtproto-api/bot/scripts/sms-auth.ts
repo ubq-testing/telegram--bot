@@ -15,7 +15,7 @@ dotenv.config({ path: "../../../../dev.vars" });
  * this will give us the necessary session information to login in the future.
  */
 export class AuthHandler {
-  private _env;
+  private _env: Env;
   private _storage: GithubStorage;
 
   constructor() {
@@ -51,12 +51,6 @@ export class AuthHandler {
       throw new Error("Missing required environment variables for Workflow functions");
     }
 
-    this._env = {
-      TELEGRAM_API_HASH,
-      TELEGRAM_APP_ID,
-      TELEGRAM_BOT_TOKEN,
-    };
-
     const APP_PRIVATE_KEY = process.env.APP_PRIVATE_KEY;
     const APP_ID = process.env.APP_ID;
     const VOYAGEAI_API_KEY = process.env.VOYAGEAI_API_KEY;
@@ -67,7 +61,7 @@ export class AuthHandler {
       throw new Error("Missing required environment variables for App settings");
     }
 
-    const env: Env = {
+    this._env = {
       APP_ID,
       APP_PRIVATE_KEY,
       VOYAGEAI_API_KEY,
@@ -80,8 +74,8 @@ export class AuthHandler {
     // we need to push the session data to GitHub
     this._storage = new GithubStorage({
       octokit: new Octokit({ auth: process.env.REPO_ADMIN_ACCESS_TOKEN ?? process.env.TEMP_SAFE_PAT }),
-      pluginEnvCtx: new PluginEnvContext({ settings: "{}" } as unknown as PluginInputs, env),
-      env,
+      pluginEnvCtx: new PluginEnvContext({ settings: "{}" } as unknown as PluginInputs, this._env),
+      env: this._env,
     } as unknown as Context);
   }
 
@@ -101,7 +95,7 @@ export class AuthHandler {
   async smsLogin() {
     const mtProto = new BaseMtProto();
     // empty string as it's a new session
-    if (!this._env.TELEGRAM_API_HASH || !this._env.TELEGRAM_APP_ID) {
+    if (!this._env.TELEGRAM_BOT_ENV.mtProtoSettings.TELEGRAM_API_HASH || !this._env.TELEGRAM_BOT_ENV.mtProtoSettings.TELEGRAM_APP_ID) {
       throw new Error("Missing required environment variables for MtProto settings");
     }
 
