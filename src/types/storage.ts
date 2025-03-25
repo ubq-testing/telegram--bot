@@ -38,7 +38,9 @@ export type StorageUser = {
 } & Withsha;
 
 export type UserBaseStorage = {
-  [telegramId: string]: StorageUser;
+  users: {
+    [telegramId: string]: StorageUser;
+  };
 } & Withsha;
 
 export type Chat = {

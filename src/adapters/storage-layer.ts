@@ -1,4 +1,3 @@
-import { logger } from "../utils/logger";
 import { Chat, ChatAction, ChatStorage, HandleChatParams, RetrievalHelper, StorageTypes, UserBaseStorage, StorageUser } from "../types/storage";
 import { PluginEnvContext } from "../types/plugin-env-context";
 import { Context } from "../types";
@@ -67,7 +66,7 @@ export class GithubStorage {
 
   public async retrieveUserByTelegramId(telegramId: number, dbObj?: UserBaseStorage) {
     const dbObject = dbObj ?? (await this._retrieveStorageDataObject("userBase"));
-    const user = dbObject[telegramId];
+    const user = dbObject.users[telegramId];
 
     if (user) {
       return {
@@ -79,7 +78,7 @@ export class GithubStorage {
 
   public async retrieveUserByGithubId(githubId: number | null | undefined, dbObj?: UserBaseStorage): Promise<StorageUser | undefined> {
     const dbObject = dbObj ?? (await this._retrieveStorageDataObject("userBase"));
-    const user = Object.values(dbObject).find((user) => user.github_id === githubId);
+    const user = Object.values(dbObject.users).find((user) => user.github_id === githubId);
     if (user) {
       return {
         ...user,
@@ -94,8 +93,8 @@ export class GithubStorage {
   }
 
   public async retrieveAllUsers() {
-    const dbObject = await this._retrieveStorageDataObject("userBase");
-    return Object.values(dbObject);
+    const { users } = await this._retrieveStorageDataObject("userBase");
+    return users;
   }
 
   // Functions for handling data
@@ -179,8 +178,9 @@ export class GithubStorage {
       } else {
         dbObject.session = null;
       }
-    } catch (er) {
-      throw logger.error("Failed to handle session", { er });
+    } catch {
+      await this._handleMissingStorageBranchOrFile(this.payloadRepoOwner, this.telegramSessionPath, "session");
+      return await this._storeData(dbObject);
     }
 
     return await this._storeData(dbObject);
@@ -204,9 +204,9 @@ export class GithubStorage {
     const dbObject = await this._retrieveStorageDataObject("userBase");
 
     if (action === "create" || action === "update") {
-      dbObject[user.telegram_id] = user;
+      dbObject.users[user.telegram_id] = user;
     } else {
-      delete dbObject[user.telegram_id];
+      delete dbObject.users[user.telegram_id];
     }
 
     return await this._storeData(dbObject);
@@ -310,7 +310,7 @@ export class GithubStorage {
       if (!isSuccessful) {
         throw new Error("Failed to retrieve storage data");
       }
-      return {} as RetrievalHelper<TType>;
+      return await this._retrieveStorageDataObject(type, withSha);
     }
   }
 
@@ -327,6 +327,20 @@ export class GithubStorage {
       await this._createStorageBranch(owner);
     }
 
+    let content: string | null = null;
+
+    if (type === "session") {
+      content = JSON.stringify({ session: null });
+    } else if (type === "allChats" || type === "singleChat") {
+      content = JSON.stringify({ chats: [] });
+    } else if (type === "userBase") {
+      content = JSON.stringify({ users: {} });
+    }
+
+    if (!content) {
+      throw new Error(`Invalid storage type: ${type}-${path}-${owner}`);
+    }
+
     try {
       await authedOctokit.rest.repos.createOrUpdateFileContents({
         owner,
@@ -334,7 +348,7 @@ export class GithubStorage {
         path,
         branch: this.storageBranch,
         message: `chore: create ${type.replace(/([A-Z])/g, " $1").toLowerCase()}`,
-        content: Buffer.from("{}").toString("base64"),
+        content: Buffer.from(content).toString("base64"),
       });
       return true;
     } catch {

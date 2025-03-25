@@ -25,11 +25,11 @@ export class PluginEnvContext {
       env.TELEGRAM_BOT_ENV = JSON.parse(env.TELEGRAM_BOT_ENV);
     }
 
+    const settings = "settings" in this._inputs ? this._inputs.settings : "{}";
     this._config = Value.Decode(
       pluginSettingsValidator.schema,
-      Value.Default(pluginSettingsValidator.schema, typeof this._inputs.settings === "string" ? JSON.parse(this._inputs.settings) : this._inputs.settings)
+      Value.Default(pluginSettingsValidator.schema, typeof settings === "string" ? JSON.parse(settings) : settings)
     );
-
     this._env = Value.Decode(envValidator.schema, Value.Default(envValidator.schema, env));
   }
 

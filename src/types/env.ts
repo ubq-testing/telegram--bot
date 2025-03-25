@@ -1,5 +1,6 @@
 import { Type as T } from "@sinclair/typebox";
 import { StaticDecode } from "@sinclair/typebox";
+import { KERNEL_APP_ID, KERNEL_PUBLIC_KEY } from "@ubiquity-os/plugin-sdk/constants";
 import "dotenv/config";
 import { StandardValidator } from "typebox-validators";
 
@@ -103,12 +104,12 @@ export const env = T.Object({
       return str;
     })
     .Encode((obj) => JSON.stringify(obj)),
-  APP_ID: T.String(),
+  APP_ID: T.String({ default: KERNEL_APP_ID }),
   APP_PRIVATE_KEY: T.String(),
   TEMP_SAFE_PAT: T.Optional(T.String()),
   OPENROUTER_API_KEY: T.Optional(T.String()),
   VOYAGEAI_API_KEY: T.String(),
-  KERNEL_PUBLIC_KEY: T.Optional(T.String()),
+  KERNEL_PUBLIC_KEY: T.Optional(T.String({ default: KERNEL_PUBLIC_KEY })),
 });
 
 export type Env = StaticDecode<typeof env>;

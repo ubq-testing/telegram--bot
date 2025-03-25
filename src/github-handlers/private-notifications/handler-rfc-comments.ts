@@ -61,7 +61,7 @@ export class RfcCommentHandler extends NotificationHandlerBase<"issue_comment.cr
   public async tryFollowupForAllUsers(): Promise<{ status: number; reason: string }> {
     const allUsers = await this.context.adapters.storage.retrieveAllUsers();
 
-    for (const user of allUsers) {
+    for (const user of Object.values(allUsers)) {
       await this._followUpRfcs(user);
       await this.context.adapters.storage.handleUserBaseStorage(user, "update");
     }
