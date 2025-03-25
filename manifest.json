@@ -30,7 +30,7 @@
       "aiConfig": {
         "default": {
           "model": "o1-mini",
-          "baseUrl": "https://openrouter.ai/api/v1"
+          "baseUrl": "https://api.openai.com/v1"
         },
         "type": "object",
         "properties": {
