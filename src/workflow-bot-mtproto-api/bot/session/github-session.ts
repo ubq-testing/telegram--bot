@@ -18,7 +18,7 @@ export class GitHubSession extends StringSession implements SessionManager {
     private _supabase: SupabaseClient,
     private _session?: string
   ) {
-    super(_session ? decrypt(_context.env.APP_PRIVATE_KEY, _session) : "");
+    super(_session && decrypt(_context.env.APP_PRIVATE_KEY, _session));
     this._storage = new GithubStorage(_context);
   }
 

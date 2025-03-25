@@ -21,7 +21,7 @@ export class BaseMtProto {
 
   async initialize(env: Context["env"], session?: string) {
     this._api = Api;
-    const sessionString = session ?? decrypt(env.APP_PRIVATE_KEY, session);
+    const sessionString = session && decrypt(env.APP_PRIVATE_KEY, session);
     this._session = new StringSession(sessionString);
     this._client = await this._mtProtoInit(env.TELEGRAM_BOT_ENV.mtProtoSettings, this._session);
 
