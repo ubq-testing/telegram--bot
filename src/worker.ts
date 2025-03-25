@@ -29,7 +29,7 @@ export default {
 };
 
 async function initWorkerPluginContext(request: Request, env: Env) {
-  const payload = (await request.clone().json()) as PluginInputs; // required cast
+  const payload = (await request.clone().json()) as PluginInputs;
   const pluginEnvContext = new PluginEnvContext(payload, env);
   const botFatherInstance = await initializeBotFatherInstance(pluginEnvContext);
   if (!botFatherInstance) {

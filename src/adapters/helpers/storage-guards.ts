@@ -12,8 +12,7 @@ export function isChatsStorage(data: unknown): data is ChatStorage {
 
 export function isUserBaseStorage(data: unknown): data is UserBaseStorage {
   if (typeof data !== "object" || !data) return false;
-  const firstItem = Object.values(data)[0];
-  return Reflect.has(firstItem, "github_id");
+  return "users" in data;
 }
 
 export function isSingleChatStorage(data: unknown): data is Chat {

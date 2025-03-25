@@ -7,7 +7,6 @@ import { logger } from "./utils/logger";
 import dotenv from "dotenv";
 import { runGitHubWorkflowEntry } from "./plugin";
 import { initializeBotFatherInstance } from "./botfather-bot/initialize-botfather-instance";
-import { KERNEL_PUBLIC_KEY } from "@ubiquity-os/plugin-sdk/constants";
 dotenv.config();
 
 async function initWorkflowPluginContext(inputs: PluginInputs, env: Env) {
@@ -31,7 +30,7 @@ async function run() {
     APP_PRIVATE_KEY: process.env.APP_PRIVATE_KEY,
     OPENROUTER_API_KEY: process.env.OPENROUTER_API_KEY,
     VOYAGEAI_API_KEY: process.env.VOYAGEAI_API_KEY,
-    KERNEL_PUBLIC_KEY: process.env.KERNEL_PUBLIC_KEY ?? KERNEL_PUBLIC_KEY,
+    KERNEL_PUBLIC_KEY: process.env.KERNEL_PUBLIC_KEY,
   };
 
   try {

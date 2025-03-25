@@ -35,7 +35,7 @@ export class CommentTriggerHelpers {
 
   public ownerRepoNumberFromCommentUrl(url: string) {
     url = url.split("#")[0];
-    const urlRegex = /https:\/\/github\.com\/(?<owner>[^/]+)\/(?<repo>[^/]+)\/issues\/(?<number>\d+)/;
+    const urlRegex = /https:\/\/github\.com\/(?<owner>[^/]+)\/(?<repo>[^/]+)\/(pull|issues)\/(?<number>\d+)/;
     const match = urlRegex.exec(url);
     if (match?.groups) {
       const { owner, repo, number } = match.groups;
