@@ -16,6 +16,7 @@ export class MtProtoWrapper extends BaseMtProto {
   }
 
   async initialize() {
+    await this._sessionManager.loadSession();
     const session = await this._sessionManager.getSession();
     const initialized = await super.initialize(this._context.env, session);
     await initialized.client.getDialogs();

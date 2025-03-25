@@ -1,8 +1,8 @@
 import { Context } from "../../../types";
-import { GithubStorage } from "../../../adapters/storage-layer";
 import { GitHubSession } from "./github-session";
 import { StringSession } from "telegram/sessions";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import { GithubStorage } from "../../../adapters/storage-layer";
 
 export interface SessionManager extends StringSession {
   getStorageHandler(): GithubStorage;
