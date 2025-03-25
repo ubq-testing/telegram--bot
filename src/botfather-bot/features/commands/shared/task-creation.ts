@@ -149,7 +149,7 @@ async function createTask(taskToCreate: string, ctx: GrammyContext, { owner, rep
   });
 
   if (!taskFromLlm) {
-    return await ctx.reply("Failed to create task");
+    return await ctx.reply("Failed to generate task from llm");
   }
 
   let taskDetails;
@@ -162,15 +162,12 @@ async function createTask(taskToCreate: string, ctx: GrammyContext, { owner, rep
 
   const user = await ctx.adapters.storage.retrieveUserByTelegramId(fromId);
 
-  if (!user) {
-    return await ctx.reply("Failed to retrieve user");
-  }
-
-  const username = user.github_username;
+  const username = user?.github_username ?? "unknown";
   const chatLink = ctx.chat?.type !== "private" && (await ctx.createChatInviteLink());
 
   const chatLinkText = chatLink ? ` [here](${chatLink.invite_link})` : "";
-  const fullSpec = `${taskDetails.body}\n\n_Originally created by @${username} via Telegram${chatLinkText}_`;
+  const createdBy = username ? `Originally created by @${username}` : "Suggested by an unregistered user";
+  const fullSpec = `${taskDetails.body}\n\n_${createdBy} via Telegram${chatLinkText}_`;
 
   logger.info("creating task", {
     taskDetails,

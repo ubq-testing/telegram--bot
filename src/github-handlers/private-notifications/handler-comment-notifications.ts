@@ -27,15 +27,18 @@ class CommentNotificationHandler extends NotificationHandlerBase<"issue_comment.
       } else {
         await this._rfcCommentHandler.tryFollowupForAllUsers();
       }
-      return { status: 200, reason: "success" };
     }
 
-    await this._dispatchCommentNotifications(users, results);
+    if (users?.length) {
+      await this._dispatchCommentNotifications(users, results);
+    }
+
     return { status: 200, reason: "success" };
   }
 
   private async _dispatchCommentNotifications(users: StorageUser[], results: { claimUrl?: string }[]) {
     let i = 0;
+
     for (const user of users.filter((u): u is StorageUser => !!u)) {
       if (!user) {
         i++;

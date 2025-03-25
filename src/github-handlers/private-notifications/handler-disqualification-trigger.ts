@@ -10,7 +10,7 @@ class DisqualificationDmHandler extends NotificationHandlerBase<"issues.unassign
   }
 
   protected shouldSkipNotification(dbUser: StorageUser) {
-    return !dbUser.listening_to["disqualification"];
+    return !dbUser.listening_to["disqualification"] || this.context.payload.sender.id === dbUser.github_id;
   }
 
   protected getMessage(username: string) {
