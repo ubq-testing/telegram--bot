@@ -15,7 +15,7 @@ export class Completions {
 
     this.client = new OpenAI({
       baseURL: baseUrl,
-      apiKey: env.OPENROUTER_API_KEY
+      apiKey: env.OPENROUTER_API_KEY,
     });
   }
 

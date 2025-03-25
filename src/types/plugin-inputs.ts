@@ -39,15 +39,14 @@ export const pluginSettingsSchema = T.Object({
   botId: T.Transform(T.Unknown({ default: 7543249164, description: "The ID given to you when creating a Telegram Bot via @TheBotFather." }))
     .Decode((value) => Number(value))
     .Encode((value) => value.toString()),
-  shouldUseGithubStorage: T.Boolean({ default: false, description: "Activates the GitHub storage module." }),
   storageOwner: T.String({
     default: "ubq-testing",
     description:
       "Determines the correct UbiquityOS install-authenticated Octokit instance to use and the storage location for this plugin (Required: GitHub Storage layer).",
   }),
   fuzzySearchThreshold: T.Number({ default: 0.2, description: "The threshold for fuzzy search when invoking the `/newtask` command (0 is a perfect match)." }),
-  aiConfig:
-    T.Object({
+  aiConfig: T.Object(
+    {
       model: T.String({ default: "openai/o1-mini", description: "The model to use.", examples: ["openai/o1-mini", "openai/gpt-4o"] }),
       baseUrl: T.String({
         default: "https://openrouter.ai/api/v1",
@@ -55,7 +54,9 @@ export const pluginSettingsSchema = T.Object({
         examples: ["https://openrouter.ai/api/v1", "https://openrouter.ai/api/v2"],
       }),
       similarityThreshold: T.Number({ default: 0.9, description: "The similarity threshold for when fetching embeddings-based context." }),
-    }, { default: { model: "o1-mini", baseUrl: "https://openrouter.ai/api/v1" } }),
+    },
+    { default: { model: "o1-mini", baseUrl: "https://api.openai.com/v1" } }
+  ),
   privateNotifications: T.Object(
     {
       rfcFollowUpPriorityScale,

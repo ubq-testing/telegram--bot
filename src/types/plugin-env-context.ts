@@ -1,4 +1,4 @@
-import { PluginInputs, pluginSettingsSchema } from "./plugin-inputs";
+import { PluginInputs, pluginSettingsValidator } from "./plugin-inputs";
 import { Env, envValidator } from "./env";
 import { Context } from "./context";
 import { App } from "octokit";
@@ -24,7 +24,12 @@ export class PluginEnvContext {
     if (env.TELEGRAM_BOT_ENV && typeof env.TELEGRAM_BOT_ENV === "string") {
       env.TELEGRAM_BOT_ENV = JSON.parse(env.TELEGRAM_BOT_ENV);
     }
-    this._config = Value.Decode(pluginSettingsSchema, Value.Default(pluginSettingsSchema, this._inputs.settings ?? {}));
+
+    this._config = Value.Decode(
+      pluginSettingsValidator.schema,
+      Value.Default(pluginSettingsValidator.schema, typeof this._inputs.settings === "string" ? JSON.parse(this._inputs.settings) : this._inputs.settings)
+    );
+
     this._env = Value.Decode(envValidator.schema, Value.Default(envValidator.schema, env));
   }
 
