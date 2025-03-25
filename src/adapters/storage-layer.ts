@@ -286,17 +286,8 @@ export class GithubStorage {
    * Fitted with a helper for returning the correct storage type depending on the param.
    */
   private async _retrieveStorageDataObject<TType extends StorageTypes = StorageTypes>(type: TType, withSha?: boolean): Promise<RetrievalHelper<TType>> {
-    const storagePaths = {
-      allChats: this.chatStoragePath,
-      singleChat: this.chatStoragePath,
-      userBase: this.userStoragePath,
-      session: this.telegramSessionPath,
-    };
-
-    const path = storagePaths[type];
+    const path = this._getStoragePath(type);
     const authedOctokit = await this.getOctokit();
-
-    let dataContent, sha;
 
     try {
       const { data } = await authedOctokit.rest.repos.getContent({
@@ -307,62 +298,52 @@ export class GithubStorage {
       });
 
       if ("content" in data) {
-        dataContent = Buffer.from(data.content, "base64").toString();
-        sha = data.sha;
+        const dataContent = Buffer.from(data.content, "base64").toString();
+        const sha = data.sha;
+        const parsedData = JSON.parse(dataContent);
+        return { ...parsedData, ...(withSha ? { sha } : {}) };
       } else {
-        throw logger.error("Data content not found");
+        throw new Error("Data content not found");
       }
-    } catch (er) {
+    } catch {
       const isSuccessful = await this._handleMissingStorageBranchOrFile(this.payloadRepoOwner, path, type);
       if (!isSuccessful) {
-        throw logger.error("Failed to retrieve storage data", { er });
+        throw new Error("Failed to retrieve storage data");
       }
-
       return {} as RetrievalHelper<TType>;
-    }
-
-    try {
-      const parsedData = JSON.parse(dataContent ?? "");
-      return { ...parsedData, ...(withSha ? { sha } : {}) };
-    } catch {
-      throw new Error("Failed to parse JSON data");
     }
   }
 
-  private async _handleMissingStorageBranchOrFile(owner: string, path: string, type: StorageTypes) {
-    let mostRecentDefaultHeadCommitSha;
-
+  private async _handleMissingStorageBranchOrFile(owner: string, path: string, type: StorageTypes): Promise<boolean> {
     const authedOctokit = await this.getOctokit();
-    let branch, branchError;
 
-    // Check if the branch exists
     try {
-      branch = await authedOctokit.rest.repos.getBranch({
+      await authedOctokit.rest.repos.getBranch({
         owner,
         repo: this.storageRepo,
         branch: this.storageBranch,
       });
-    } catch (e) {
-      branchError = e;
+    } catch {
+      await this._createStorageBranch(owner);
     }
 
-    if (branch) {
-      try {
-        await authedOctokit.rest.repos.createOrUpdateFileContents({
-          owner,
-          repo: this.storageRepo,
-          path,
-          branch: this.storageBranch,
-          message: `chore: create ${type.replace(/([A-Z])/g, " $1").toLowerCase()}`,
-          content: Buffer.from("{\n}").toString("base64"),
-          sha: branch.data.commit.sha,
-        });
-
-        return true;
-      } catch (err) {
-        throw logger.error("Failed to create new storage file", { err: String(err) });
-      }
+    try {
+      await authedOctokit.rest.repos.createOrUpdateFileContents({
+        owner,
+        repo: this.storageRepo,
+        path,
+        branch: this.storageBranch,
+        message: `chore: create ${type.replace(/([A-Z])/g, " $1").toLowerCase()}`,
+        content: Buffer.from("{}").toString("base64"),
+      });
+      return true;
+    } catch {
+      throw new Error("Failed to create new storage file");
     }
+  }
+
+  private async _createStorageBranch(owner: string): Promise<void> {
+    const authedOctokit = await this.getOctokit();
 
     try {
       const { data: defaultBranchData } = await authedOctokit.rest.repos.getCommit({
@@ -370,32 +351,26 @@ export class GithubStorage {
         repo: this.storageRepo,
         ref: "heads/main",
       });
-      mostRecentDefaultHeadCommitSha = defaultBranchData.sha;
-    } catch (er) {
-      logger.error("Failed to get default branch commit", { er });
-    }
 
-    if (mostRecentDefaultHeadCommitSha && !branchError) {
       await authedOctokit.rest.git.createRef({
         owner,
         repo: this.storageRepo,
         ref: `refs/heads/${this.storageBranch}`,
-        sha: mostRecentDefaultHeadCommitSha,
+        sha: defaultBranchData.sha,
       });
-
-      await authedOctokit.rest.repos.createOrUpdateFileContents({
-        owner,
-        repo: this.storageRepo,
-        path,
-        branch: this.storageBranch,
-        message: `chore: create ${type.replace(/([A-Z])/g, " $1").toLowerCase()}`,
-        content: Buffer.from("{\n}").toString("base64"),
-      });
-    } else {
-      throw logger.error("Failed to create new storage branch", { branchError });
+    } catch {
+      throw new Error("Failed to create new storage branch");
     }
+  }
 
-    return true;
+  private _getStoragePath(type: StorageTypes): string {
+    const storagePaths = {
+      allChats: this.chatStoragePath,
+      singleChat: this.chatStoragePath,
+      userBase: this.userStoragePath,
+      session: this.telegramSessionPath,
+    };
+    return storagePaths[type];
   }
   /**
    * Standardized storage paths for the partner's repository.

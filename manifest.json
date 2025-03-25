@@ -17,11 +17,6 @@
         "default": 7543249164,
         "description": "The ID given to you when creating a Telegram Bot via @TheBotFather."
       },
-      "shouldUseGithubStorage": {
-        "default": false,
-        "description": "Activates the GitHub storage module.",
-        "type": "boolean"
-      },
       "storageOwner": {
         "default": "ubq-testing",
         "description": "Determines the correct UbiquityOS install-authenticated Octokit instance to use and the storage location for this plugin (Required: GitHub Storage layer).",
