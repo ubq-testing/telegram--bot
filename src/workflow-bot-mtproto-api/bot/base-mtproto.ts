@@ -3,8 +3,8 @@ import { Api } from "telegram/tl";
 import { TelegramClientParams } from "telegram/client/telegramBaseClient";
 import { StringSession } from "telegram/sessions";
 import { Context } from "../../types";
-import CryptoJS from "crypto-js";
 import dotenv from "dotenv";
+import { decrypt } from "./encryption";
 dotenv.config();
 
 /**
@@ -21,7 +21,7 @@ export class BaseMtProto {
 
   async initialize(env: Context["env"], session?: string) {
     this._api = Api;
-    const sessionString = session ?? this._decrypt(env.APP_PRIVATE_KEY, session);
+    const sessionString = session ?? decrypt(env.APP_PRIVATE_KEY, session);
     this._session = new StringSession(sessionString);
     this._client = await this._mtProtoInit(env.TELEGRAM_BOT_ENV.mtProtoSettings, this._session);
 
@@ -59,12 +59,5 @@ export class BaseMtProto {
     const client = new TelegramClient(session ?? "", TELEGRAM_APP_ID, TELEGRAM_API_HASH, clientParams);
     await client.connect();
     return client;
-  }
-
-  private _decrypt(privateKey: string, text?: string): string {
-    if (!text) {
-      return "";
-    }
-    return CryptoJS.AES.decrypt(text, privateKey).toString(CryptoJS.enc.Utf8);
   }
 }

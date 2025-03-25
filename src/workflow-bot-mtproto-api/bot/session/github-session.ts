@@ -3,6 +3,7 @@ import { GithubStorage } from "../../../adapters/storage-layer";
 import { SessionManager } from "./session-manager";
 import { Context } from "../../../types";
 import { SupabaseClient } from "@supabase/supabase-js";
+import { decrypt } from "../encryption";
 
 /**
  * This class extends the StringSession class from the Telegram library.
@@ -17,7 +18,7 @@ export class GitHubSession extends StringSession implements SessionManager {
     private _supabase: SupabaseClient,
     private _session?: string
   ) {
-    super(_session);
+    super(_session ?? decrypt(_context.env.APP_PRIVATE_KEY, _session));
     this._storage = new GithubStorage(_context);
   }
 

@@ -3,7 +3,7 @@ import { PluginEnvContext } from "../types/plugin-env-context";
 import { Context } from "../types";
 import { isChatsStorage, isUserBaseStorage, isSingleChatStorage, isSessionStorage } from "./helpers/storage-guards";
 import { deleteAllShas } from "./helpers/delete-shas";
-import CryptoJS from "crypto-js";
+import { encrypt } from "../workflow-bot-mtproto-api/bot/encryption";
 
 export class GithubStorage {
   pluginEnvCtx: PluginEnvContext;
@@ -174,7 +174,7 @@ export class GithubStorage {
 
     try {
       if (action === "create") {
-        dbObject.session = this._encrypt(session);
+        dbObject.session = encrypt(this.pluginEnvCtx.getEnv().APP_PRIVATE_KEY, session);
       } else {
         dbObject.session = null;
       }
@@ -184,10 +184,6 @@ export class GithubStorage {
     }
 
     return await this._storeData(dbObject);
-  }
-
-  private _encrypt(text: string): string {
-    return CryptoJS.AES.encrypt(text, this.pluginEnvCtx.getEnv().APP_PRIVATE_KEY).toString();
   }
 
   /**
