@@ -1,4 +1,4 @@
-import { SessionStorage, ChatStorage, UserBaseStorage, Chat } from "../types/storage";
+import { SessionStorage, ChatStorage, UserBaseStorage, Chat } from "../../types/storage";
 
 export function isSessionStorage(data: unknown): data is SessionStorage {
   if (typeof data !== "object" || !data) return false;

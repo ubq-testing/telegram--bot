@@ -1,7 +1,7 @@
 import { Context } from "../types";
 import { SessionManagerFactory } from "../workflow-bot-mtproto-api/bot/session/session-manager";
-import { Completions } from "./openai/openai";
-import { Embeddings } from "./supabase/embeddings";
+import { Completions } from "./completions";
+import { Embeddings } from "./embeddings";
 import { VoyageAIClient } from "voyageai";
 
 export function createAdapters(ctx: Context) {

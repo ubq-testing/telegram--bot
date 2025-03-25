@@ -1,9 +1,9 @@
-import { logger } from "../../utils/logger";
-import { Chat, ChatAction, ChatStorage, HandleChatParams, RetrievalHelper, StorageTypes, UserBaseStorage, StorageUser } from "../../types/storage";
-import { PluginEnvContext } from "../../types/plugin-env-context";
-import { Context } from "../../types";
-import { isChatsStorage, isUserBaseStorage, isSingleChatStorage, isSessionStorage } from "../storage-guards";
-import { deleteAllShas } from "./helpers";
+import { logger } from "../utils/logger";
+import { Chat, ChatAction, ChatStorage, HandleChatParams, RetrievalHelper, StorageTypes, UserBaseStorage, StorageUser } from "../types/storage";
+import { PluginEnvContext } from "../types/plugin-env-context";
+import { Context } from "../types";
+import { isChatsStorage, isUserBaseStorage, isSingleChatStorage, isSessionStorage } from "./helpers/storage-guards";
+import { deleteAllShas } from "./helpers/delete-shas";
 import CryptoJS from "crypto-js";
 
 export class GithubStorage {
