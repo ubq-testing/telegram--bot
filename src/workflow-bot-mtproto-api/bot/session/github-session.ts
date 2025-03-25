@@ -1,5 +1,5 @@
 import { StringSession } from "telegram/sessions";
-import { GithubStorage } from "../../../adapters/github/storage-layer";
+import { GithubStorage } from "../../../adapters/storage-layer";
 import { SessionManager } from "./session-manager";
 import { Context } from "../../../types";
 import { SupabaseClient } from "@supabase/supabase-js";

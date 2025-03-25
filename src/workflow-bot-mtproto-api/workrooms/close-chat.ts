@@ -2,7 +2,7 @@ import { Api } from "telegram";
 import bigInt from "big-integer";
 import { Context } from "../../types";
 import { CallbackResult } from "../../types/proxy";
-import { GithubStorage } from "../../adapters/github/storage-layer";
+import { GithubStorage } from "../../adapters/storage-layer";
 import { Chat } from "../../types/storage";
 import { MtProtoHelper } from "../bot/mtproto-helpers";
 

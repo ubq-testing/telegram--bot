@@ -1,5 +1,5 @@
 import { Context } from "../../../types";
-import { GithubStorage } from "../../../adapters/github/storage-layer";
+import { GithubStorage } from "../../../adapters/storage-layer";
 import { GitHubSession } from "./github-session";
 import { StringSession } from "telegram/sessions";
 import { createClient, SupabaseClient } from "@supabase/supabase-js";

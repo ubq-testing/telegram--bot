@@ -3,7 +3,7 @@ import input from "input";
 import dotenv from "dotenv";
 import { Context } from "../../../types";
 import { logger } from "../../../utils/logger";
-import { GithubStorage } from "../../../adapters/github/storage-layer";
+import { GithubStorage } from "../../../adapters/storage-layer";
 import { Octokit } from "octokit";
 import { BaseMtProto } from "../base-mtproto";
 dotenv.config();

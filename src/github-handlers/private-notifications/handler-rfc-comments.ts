@@ -4,7 +4,7 @@ import { logger } from "../../utils/logger";
 import { retrieveUsersByGithubUsernames } from "./shared";
 import { NotificationMessage } from "./notification-message";
 import { NotificationHandlerBase } from "./notification-handler-base";
-import { getPriorityLabelValue } from "../labels";
+import { getPriorityLabelValue } from "../../utils/labels";
 import ms, { StringValue } from "ms";
 
 export type RfcComment = {
