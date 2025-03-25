@@ -1,12 +1,14 @@
 // @ts-expect-error no types for this package
 import input from "input";
 import dotenv from "dotenv";
-import { Context } from "../../../types";
+import { Context, Env, PluginInputs } from "../../../types";
 import { logger } from "../../../utils/logger";
 import { GithubStorage } from "../../../adapters/storage-layer";
 import { Octokit } from "octokit";
 import { BaseMtProto } from "../base-mtproto";
-dotenv.config();
+import { KERNEL_PUBLIC_KEY } from "@ubiquity-os/plugin-sdk/constants";
+import { PluginEnvContext } from "../../../types/plugin-env-context";
+dotenv.config({ path: "../../../../dev.vars" });
 
 /**
  * The account holder must run this script (to my knowledge only once) to login,
@@ -17,17 +19,17 @@ export class AuthHandler {
   private _storage: GithubStorage;
 
   constructor() {
-    const env = process.env.TELEGRAM_BOT_ENV;
-    if (!env) {
+    const telegramBotEnv = process.env.TELEGRAM_BOT_ENV;
+    if (!telegramBotEnv) {
       throw new Error("Have you ran the setup script? Try running 'yarn setup-env' first.");
     }
 
-    const parsedEnv: Context["env"]["TELEGRAM_BOT_ENV"] = JSON.parse(env);
-    if (!parsedEnv) {
+    const parsedTelegramBotEnvEnv: Context["env"]["TELEGRAM_BOT_ENV"] = JSON.parse(telegramBotEnv);
+    if (!parsedTelegramBotEnvEnv) {
       throw new Error("Failed to parse environment variables for Telegram Bot");
     }
 
-    const { botSettings, mtProtoSettings, storageSettings, workflowFunctions } = parsedEnv;
+    const { botSettings, mtProtoSettings, storageSettings, workflowFunctions } = parsedTelegramBotEnvEnv;
 
     if (!botSettings || !mtProtoSettings || !storageSettings || !workflowFunctions) {
       throw new Error("Missing required environment variables for Telegram Bot settings");
@@ -58,32 +60,28 @@ export class AuthHandler {
     const APP_PRIVATE_KEY = process.env.APP_PRIVATE_KEY;
     const APP_ID = process.env.APP_ID;
     const VOYAGEAI_API_KEY = process.env.VOYAGEAI_API_KEY;
-    const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
     const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
     const TEMP_SAFE_PAT = process.env.TEMP_SAFE_PAT;
 
-    if (!APP_PRIVATE_KEY || !APP_ID || !VOYAGEAI_API_KEY || !OPENAI_API_KEY || !OPENROUTER_API_KEY || !TEMP_SAFE_PAT) {
+    if (!APP_PRIVATE_KEY || !APP_ID || !VOYAGEAI_API_KEY || !OPENROUTER_API_KEY || !TEMP_SAFE_PAT) {
       throw new Error("Missing required environment variables for App settings");
     }
+
+    const env: Env = {
+      APP_ID,
+      APP_PRIVATE_KEY,
+      VOYAGEAI_API_KEY,
+      OPENROUTER_API_KEY,
+      TEMP_SAFE_PAT,
+      KERNEL_PUBLIC_KEY,
+      TELEGRAM_BOT_ENV: parsedTelegramBotEnvEnv,
+    };
 
     // we need to push the session data to GitHub
     this._storage = new GithubStorage({
       octokit: new Octokit({ auth: process.env.REPO_ADMIN_ACCESS_TOKEN ?? process.env.TEMP_SAFE_PAT }),
-      pluginEnvCtx: {
-        getEnv: () => {
-          return { APP_PRIVATE_KEY };
-        },
-      },
-      env: {
-        TELEGRAM_BOT_ENV: parsedEnv,
-        KERNEL_PUBLIC_KEY: process.env.KERNEL_PUBLIC_KEY,
-        OPENAI_API_KEY,
-        OPENROUTER_API_KEY,
-        TEMP_SAFE_PAT,
-        APP_ID,
-        APP_PRIVATE_KEY,
-        VOYAGEAI_API_KEY,
-      },
+      pluginEnvCtx: new PluginEnvContext({ settings: "{}" } as unknown as PluginInputs, env),
+      env,
     } as unknown as Context);
   }
 
@@ -122,7 +120,7 @@ export class AuthHandler {
       logger.ok("Successfully logged in and saved session data. You can now run the bot.");
       process.exit(0);
     } catch (err) {
-      logger.error("Failed to log in:", { err });
+      logger.error("Failed to log in:", { err, e: String(err) });
     }
     process.exit(1);
   }
