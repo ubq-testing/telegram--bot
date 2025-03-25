@@ -46,31 +46,16 @@ export const pluginSettingsSchema = T.Object({
       "Determines the correct UbiquityOS install-authenticated Octokit instance to use and the storage location for this plugin (Required: GitHub Storage layer).",
   }),
   fuzzySearchThreshold: T.Number({ default: 0.2, description: "The threshold for fuzzy search when invoking the `/newtask` command (0 is a perfect match)." }),
-  aiConfig: T.Union(
-    [
-      T.Object({
-        kind: T.Literal("OpenAi", { description: "The API provider you wish to use.", examples: ["OpenAi", "OpenRouter"] }),
-        model: T.String({ default: "o1-mini", description: "The model to use.", examples: ["o1-mini", "gpt-4o"] }),
-        baseUrl: T.String({
-          default: "https://api.openai.com/v1",
-          description: "The base URL of the API.",
-          examples: ["https://api.openai.com/v1", "https://api.openai.com/v2"],
-        }),
-        similarityThreshold: T.Number({ default: 0.9, description: "The similarity threshold for when fetching embeddings-based context." }),
+  aiConfig:
+    T.Object({
+      model: T.String({ default: "openai/o1-mini", description: "The model to use.", examples: ["openai/o1-mini", "openai/gpt-4o"] }),
+      baseUrl: T.String({
+        default: "https://openrouter.ai/api/v1",
+        description: "The base URL of the API.",
+        examples: ["https://openrouter.ai/api/v1", "https://openrouter.ai/api/v2"],
       }),
-      T.Object({
-        kind: T.Literal("OpenRouter", { description: "The API provider you wish to use.", examples: ["OpenAi", "OpenRouter"] }),
-        model: T.String({ default: "openai/o1-mini", description: "The model to use.", examples: ["openai/o1-mini", "openai/gpt-4o"] }),
-        baseUrl: T.String({
-          default: "https://openrouter.ai/api/v1",
-          description: "The base URL of the API.",
-          examples: ["https://openrouter.ai/api/v1", "https://openrouter.ai/api/v2"],
-        }),
-        similarityThreshold: T.Number({ default: 0.9, description: "The similarity threshold for when fetching embeddings-based context." }),
-      }),
-    ],
-    { default: { kind: "OpenAi", model: "o1-mini", baseUrl: "https://api.openai.com/v1" } }
-  ),
+      similarityThreshold: T.Number({ default: 0.9, description: "The similarity threshold for when fetching embeddings-based context." }),
+    }, { default: { model: "o1-mini", baseUrl: "https://openrouter.ai/api/v1" } }),
   privateNotifications: T.Object(
     {
       rfcFollowUpPriorityScale,

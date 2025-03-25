@@ -38,9 +38,10 @@ jobs:
             APP_PRIVATE_KEY
             CLOUDFLARE_ACCOUNT_ID
             CLOUDFLARE_API_TOKEN
-            OPENAI_API_KEY
             OPENROUTER_API_KEY
             VOYAGEAI_API_KEY
+            TEMP_SAFE_PAT
+            KERNEL_PUBLIC_KEY
         env:
           TELEGRAM_BOT_ENV: ${{ secrets.TELEGRAM_BOT_ENV }}
           APP_ID: ${{ secrets.APP_ID }}
@@ -50,6 +51,8 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           VOYAGEAI_API_KEY: ${{ secrets.VOYAGEAI_API_KEY }}
+          TEMP_SAFE_PAT: ${{ secrets.TEMP_SAFE_PAT }}
+          KERNEL_PUBLIC_KEY: ${{ secrets.KERNEL_PUBLIC_KEY }}
 
       - name: Write Deployment URL to Summary
         run: |

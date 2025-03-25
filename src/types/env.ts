@@ -106,7 +106,6 @@ export const env = T.Object({
   APP_ID: T.String(),
   APP_PRIVATE_KEY: T.String(),
   TEMP_SAFE_PAT: T.Optional(T.String()),
-  OPENAI_API_KEY: T.Optional(T.String()),
   OPENROUTER_API_KEY: T.Optional(T.String()),
   VOYAGEAI_API_KEY: T.String(),
   KERNEL_PUBLIC_KEY: T.Optional(T.String()),
