@@ -91,6 +91,8 @@ export class AuthHandler {
    * which the associated phone number is logged in.
    *
    * The session data will be saved to Supabase for future use.
+   * 
+   * 
    */
   async smsLogin() {
     const mtProto = new BaseMtProto();

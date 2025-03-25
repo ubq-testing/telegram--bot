@@ -180,10 +180,10 @@ export class GithubStorage {
       }
     } catch {
       await this._handleMissingStorageBranchOrFile(this.payloadRepoOwner, this.telegramSessionPath, "session");
-      return await this._storeData(dbObject);
+      return await this._storeData(dbObject, false);
     }
 
-    return await this._storeData(dbObject);
+    return await this._storeData(dbObject, false);
   }
 
   /**
@@ -216,7 +216,7 @@ export class GithubStorage {
    * Do we need a safety check to ensure we are not accidentally deleting data? Maybe, needs tested.
    */
 
-  private async _storeData<TType extends StorageTypes>(data: RetrievalHelper<TType>): Promise<boolean> {
+  private async _storeData<TType extends StorageTypes>(data: RetrievalHelper<TType>, formatJson = true): Promise<boolean> {
     if (!data) {
       throw new Error("No data provided to store");
     }
@@ -242,7 +242,7 @@ export class GithubStorage {
       throw new Error("Invalid data type");
     }
 
-    const content = JSON.stringify(data, null, 2);
+    const content = formatJson ? JSON.stringify(data, null, 2) : JSON.stringify(data);
     const authedOctokit = await this.getOctokit();
 
     try {
