@@ -34,70 +34,29 @@
       },
       "aiConfig": {
         "default": {
-          "kind": "OpenAi",
           "model": "o1-mini",
-          "baseUrl": "https://api.openai.com/v1"
+          "baseUrl": "https://openrouter.ai/api/v1"
         },
-        "anyOf": [
-          {
-            "type": "object",
-            "properties": {
-              "kind": {
-                "description": "The API provider you wish to use.",
-                "examples": ["OpenAi", "OpenRouter"],
-                "const": "OpenAi",
-                "type": "string"
-              },
-              "model": {
-                "default": "o1-mini",
-                "description": "The model to use.",
-                "examples": ["o1-mini", "gpt-4o"],
-                "type": "string"
-              },
-              "baseUrl": {
-                "default": "https://api.openai.com/v1",
-                "description": "The base URL of the API.",
-                "examples": ["https://api.openai.com/v1", "https://api.openai.com/v2"],
-                "type": "string"
-              },
-              "similarityThreshold": {
-                "default": 0.9,
-                "description": "The similarity threshold for when fetching embeddings-based context.",
-                "type": "number"
-              }
-            },
-            "required": ["kind"]
+        "type": "object",
+        "properties": {
+          "model": {
+            "default": "openai/o1-mini",
+            "description": "The model to use.",
+            "examples": ["openai/o1-mini", "openai/gpt-4o"],
+            "type": "string"
           },
-          {
-            "type": "object",
-            "properties": {
-              "kind": {
-                "description": "The API provider you wish to use.",
-                "examples": ["OpenAi", "OpenRouter"],
-                "const": "OpenRouter",
-                "type": "string"
-              },
-              "model": {
-                "default": "openai/o1-mini",
-                "description": "The model to use.",
-                "examples": ["openai/o1-mini", "openai/gpt-4o"],
-                "type": "string"
-              },
-              "baseUrl": {
-                "default": "https://openrouter.ai/api/v1",
-                "description": "The base URL of the API.",
-                "examples": ["https://openrouter.ai/api/v1", "https://openrouter.ai/api/v2"],
-                "type": "string"
-              },
-              "similarityThreshold": {
-                "default": 0.9,
-                "description": "The similarity threshold for when fetching embeddings-based context.",
-                "type": "number"
-              }
-            },
-            "required": ["kind"]
+          "baseUrl": {
+            "default": "https://openrouter.ai/api/v1",
+            "description": "The base URL of the API.",
+            "examples": ["https://openrouter.ai/api/v1", "https://openrouter.ai/api/v2"],
+            "type": "string"
+          },
+          "similarityThreshold": {
+            "default": 0.9,
+            "description": "The similarity threshold for when fetching embeddings-based context.",
+            "type": "number"
           }
-        ]
+        }
       },
       "privateNotifications": {
         "default": {},
